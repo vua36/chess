@@ -1301,7 +1301,8 @@ function drawBoardCanvas() {
   if (mvKey !== lastGlowKey) { lastGlowKey = mvKey; moveGlowStart = nowT; }
   const gAge = nowT - moveGlowStart, gK = Math.max(0, 1 - gAge / 2200), gPulse = 0.5 + 0.5 * Math.sin(gAge / 120);
   const rvm = (reviewMode && reviewPly > 0 && reviewData) ? reviewData.moves[reviewPly - 1] : null;
-  if (gK > 0 && lastMove && !glowRaf) glowRaf = requestAnimationFrame(() => { glowRaf = null; drawBoardCanvas(); });
+  // Disabled continuous glow RAF (caused green flashing on Android)
+  // if (gK > 0 && lastMove && !glowRaf) glowRaf = requestAnimationFrame(() => { glowRaf = null; drawBoardCanvas(); });
 
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
@@ -1318,17 +1319,10 @@ function drawBoardCanvas() {
 
       if (lastMove && (lastMove.from === sq || lastMove.to === sq)) {
         const isTo = lastMove.to === sq;
-        ctx.fillStyle = isTo ? "rgba(255, 210, 70, 0.55)" : "rgba(255, 210, 70, 0.34)";
+        ctx.fillStyle = isTo ? "rgba(255, 210, 70, 0.38)" : "rgba(255, 210, 70, 0.22)";
         ctx.fillRect(x, y, sqSize, sqSize);
-        if (gK > 0) {
-          const gg = ctx.createRadialGradient(x + sqSize / 2, y + sqSize / 2, sqSize * 0.05, x + sqSize / 2, y + sqSize / 2, sqSize * 0.75);
-          gg.addColorStop(0, `rgba(255, 244, 160, ${(0.5 + 0.4 * gPulse) * gK})`);
-          gg.addColorStop(1, "rgba(255, 220, 90, 0)");
-          ctx.fillStyle = gg;
-          ctx.fillRect(x, y, sqSize, sqSize);
-        }
-        ctx.strokeStyle = isTo ? `rgba(255, 196, 40, ${0.75 + 0.25 * gPulse * gK})` : "rgba(255, 196, 40, 0.45)";
-        ctx.lineWidth = Math.max(2, sqSize * (isTo ? 0.055 : 0.035));
+        ctx.strokeStyle = isTo ? "rgba(255, 196, 40, 0.65)" : "rgba(255, 196, 40, 0.35)";
+        ctx.lineWidth = Math.max(1.5, sqSize * (isTo ? 0.04 : 0.025));
         const lw = ctx.lineWidth / 2;
         ctx.strokeRect(x + lw, y + lw, sqSize - 2 * lw, sqSize - 2 * lw);
       }
@@ -1741,11 +1735,13 @@ $("resignBtn").onclick = async () => {
   if (!isOnlineGame || !roomId || game.game_over()) return;
   if (!confirm("Bạn chắc chắn muốn đầu hàng? Đối thủ sẽ thắng.")) return;
   playSound("end");
-  await checkGameOver(human === "w" ? "b" : "w", "Đầu hàng");
+  const winnerColor = human === "w" ? "b" : "w";
+  await checkGameOver(winnerColor, "Bạn đầu hàng");
+  $("resignBtn").hidden = true;
   if (fbReady && roomId) {
     await update(ref(db, `rooms/${roomId}`), {
       status: "resigned",
-      winner: human === "w" ? "b" : "w",
+      winner: winnerColor,
       updatedAt: serverTimestamp()
     });
   }
@@ -2140,6 +2136,20 @@ function subscribeRoom(id, myColor) {
     if(!snap.exists()) return;
     const data = snap.val();
     onlineRoomData = data;
+
+    // Phát hiện đầu hàng từ đối thủ
+    if(data.status === "resigned" && data.winner && !matchRecorded) {
+      const winnerColor = data.winner;
+      const resultForMe = (winnerColor === human) ? "win" : "loss";
+      playSound("end");
+      checkGameOver(winnerColor === human ? human : (human === "w" ? "b" : "w"), "Đối thủ đầu hàng");
+      $("gameStatus").textContent = resultForMe === "win"
+        ? "🎉 Đối thủ đầu hàng · Bạn thắng!"
+        : "Bạn đã đầu hàng.";
+      $("resignBtn").hidden = true;
+      return;
+    }
+
     if(data.pgn) {
       game.load_pgn(data.pgn);
       render();
