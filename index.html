@@ -8,84 +8,928 @@
 <style>
 :root{--bg:#0b1018;--panel:#121b27;--panel2:#172333;--line:#27384b;--gold:#d8b56d;--gold2:#f0d79d;--muted:#91a0b2;--text:#edf2f7;--green:#71c59a;--red:#e77e7e;--light:#eadcc2;--dark:#8c6b4d}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#203148 0%,var(--bg) 52%);color:var(--text);font:15px 'DM Sans',sans-serif;min-height:100vh}
-button,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#1b2a3c;color:var(--text);border-radius:12px;padding:11px 15px;transition:.18s}button:hover{border-color:var(--gold);transform:translateY(-1px)}button.primary{background:linear-gradient(135deg,#e6c987,#b68c47);color:#17130d;border:0;font-weight:700}button.ghost{background:transparent}button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#1b2a3c;color:var(--text);border-radius:12px;padding:11px 15px;transition:.18s}button:hover{border-color:var(--gold);transform:translateY(-1px)}button.primary{background:linear-gradient(135deg,#e6c987,#b68c47);color:#17130d;border:0;font-weight:700}button.ghost{background:transparent}button.danger{border-color:#743434;background:#351a1a;color:#f3a6a6}button:disabled{opacity:.4;cursor:not-allowed;transform:none}
 header{height:72px;border-bottom:1px solid #263548;background:#0c131dcc;backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100vw - 1250px)/2));position:sticky;top:0;z-index:5}
 .brand{display:flex;align-items:center;gap:12px;font:700 22px 'Playfair Display',serif;letter-spacing:.3px}.brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#f0d79d,#a77c39);display:grid;place-items:center;color:#17130d;font-size:25px}.brand em{font-style:normal;color:var(--gold)}
-.header-right{display:flex;align-items:center;gap:10px}.user-pill{color:var(--muted);font-size:13px}
+.header-right{display:flex;align-items:center;gap:10px}.user-pill{color:var(--muted);font-size:13px;background:#131f2e;padding:6px 12px;border-radius:20px;border:1px solid var(--line)}
 main{max-width:1250px;margin:0 auto;padding:30px 20px 60px}.eyebrow{color:var(--gold);font-size:11px;letter-spacing:2.4px;text-transform:uppercase;font-weight:700}.hero{display:flex;justify-content:space-between;align-items:end;gap:20px;margin:12px 0 28px}.hero h1{font:700 clamp(30px,4vw,46px) 'Playfair Display',serif;margin:8px 0}.hero p{color:var(--muted);margin:0;max-width:590px;line-height:1.6}
 .layout{display:grid;grid-template-columns: minmax(0,1.6fr) minmax(280px,.85fr);gap:22px}.panel{background:linear-gradient(160deg,#162333f2,#101925f2);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 18px 50px #0003}.panel h2{font:600 20px 'Playfair Display',serif;margin:0 0 15px}.mode-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.mode{padding:18px;text-align:left;min-height:120px;background:linear-gradient(145deg,#1c2d40,#142131);border:1px solid #2a3d52}.mode .ico{font-size:27px;display:block;margin-bottom:10px}.mode strong{display:block;font-size:16px}.mode small{display:block;color:var(--muted);margin-top:5px;line-height:1.4}.mode.selected{border-color:var(--gold);box-shadow:inset 0 0 0 1px #d8b56d55}
-.field{display:flex;flex-direction:column;gap:7px;margin:12px 0}.field label{font-size:12px;color:var(--muted)}input{background:#0d1723;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:12px;outline:none;width:100%}input:focus{border-color:var(--gold)}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.muted{color:var(--muted)}.gold{color:var(--gold)}.status{padding:12px 14px;background:#0d1723;border:1px solid var(--line);border-radius:12px;color:var(--gold2);margin:12px 0;min-height:44px}
-.game-wrap{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:16px;align-items:start}.board-col{min-width:0}.playerbar{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#101a27;border:1px solid var(--line);border-radius:12px;margin:8px 0}.playerbar span:last-child{color:var(--gold2);font-variant-numeric:tabular-nums}.board{width:100%;max-width:640px;aspect-ratio:1;display:grid;grid-template-columns:repeat(8,1fr);border:7px solid #263548;border-radius:8px;overflow:hidden;box-shadow:0 18px 45px #0007;touch-action:manipulation}.square{position:relative;display:grid;place-items:center;border:0;border-radius:0;padding:0;transform:none!important;font-family:'Segoe UI Symbol','Noto Sans Symbols 2',serif;font-size:clamp(24px,5.4vw,56px);line-height:1}.square.light{background:var(--light);color:#f8f4eb;text-shadow:0 2px 2px #322}.square.dark{background:var(--dark);color:#171717;text-shadow:0 1px 1px #fff7}.square.selected{box-shadow:inset 0 0 0 5px #e7c66b}.square.last{background-image:linear-gradient(#e8ce6c66,#e8ce6c66)}.square.legal:after{content:"";position:absolute;width:24%;height:24%;border-radius:50%;background:#214d36a8}.square.capture:after{content:"";position:absolute;inset:4px;border:5px solid #214d36a8;border-radius:50%}.square .coord{position:absolute;font:10px 'DM Sans';left:4px;top:3px;color:#29231b;opacity:.75}.sidebox{display:flex;flex-direction:column;gap:12px}.move-list{height:230px;overflow:auto;background:#0d1723;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px}.move-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:7px;padding:5px;border-bottom:1px solid #1c2b3a}.move-row span:first-child{color:var(--muted)}.tag{display:inline-flex;border:1px solid var(--line);padding:5px 9px;border-radius:20px;color:var(--muted);font-size:11px}.section{display:none}.section.active{display:block}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button.active{border-color:var(--gold);color:var(--gold2);background:#d8b56d16}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{font-size:12px;color:var(--muted);line-height:1.55}.friend-list{display:grid;gap:8px}.friend{padding:12px;background:#0d1723;border:1px solid var(--line);border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mode[data-mode="hell"].selected{border-color:var(--red);box-shadow:inset 0 0 0 1px #e77e7e66;background:linear-gradient(145deg,#331c24,#1d131a)}
+.field{display:flex;flex-direction:column;gap:7px;margin:12px 0}.field label{font-size:12px;color:var(--muted)}input,select{background:#0d1723;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:12px;outline:none;width:100%}input:focus,select:focus{border-color:var(--gold)}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.muted{color:var(--muted)}.gold{color:var(--gold)}.status{padding:12px 14px;background:#0d1723;border:1px solid var(--line);border-radius:12px;color:var(--gold2);margin:12px 0;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.game-wrap{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:start}.board-col{min-width:0}.playerbar{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#101a27;border:1px solid var(--line);border-radius:12px;margin:8px 0}.playerbar span:last-child{color:var(--gold2);font-variant-numeric:tabular-nums;font-weight:700}
+.board-shell{width:100%;max-width:640px;aspect-ratio:1;border:7px solid #263548;border-radius:8px;overflow:hidden;box-shadow:0 18px 45px #0007;background:#1b2634;position:relative}
+#boardCanvas{width:100%;height:100%;display:block;touch-action:manipulation;cursor:pointer}
+.sidebox{display:flex;flex-direction:column;gap:12px}.move-list{height:210px;overflow:auto;background:#0d1723;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px}.move-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:7px;padding:5px;border-bottom:1px solid #1c2b3a}.move-row span:first-child{color:var(--muted)}.tag{display:inline-flex;align-items:center;border:1px solid var(--line);padding:5px 9px;border-radius:20px;color:var(--muted);font-size:11px;gap:5px}.tag.ready{border-color:#2d6a4f;color:var(--green);background:#1b433244}.section{display:none}.section.active{display:block}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button.active{border-color:var(--gold);color:var(--gold2);background:#d8b56d16}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{font-size:12px;color:var(--muted);line-height:1.55}.friend-list{display:grid;gap:8px}.friend{padding:12px;background:#0d1723;border:1px solid var(--line);border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+/* Modal Đăng nhập */
+.modal-backdrop{position:fixed;inset:0;background:#060a0fcc;backdrop-filter:blur(8px);display:none;place-items:center;z-index:50;padding:16px}
+.modal-backdrop.open{display:grid}
+.modal{background:linear-gradient(160deg,#162333,#0f1824);border:1px solid var(--line);border-radius:22px;width:100%;max-width:420px;padding:24px;box-shadow:0 24px 60px #000a}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-head h3{font:700 22px 'Playfair Display',serif;margin:0}
+.divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 footer{text-align:center;color:#647487;font-size:12px;margin-top:30px}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.game-wrap{grid-template-columns:1fr}.sidebox{display:grid;grid-template-columns:1fr 1fr}.move-list{height:150px}}
-@media(max-width:560px){header{height:62px;padding:0 14px}.brand{font-size:18px}.user-pill{display:none}main{padding:22px 12px 40px}.panel{padding:14px;border-radius:16px}.mode-grid{grid-template-columns:1fr 1fr}.mode{padding:13px;min-height:110px}.sidebox{display:flex}.board{border-width:4px}.square{font-size:clamp(23px,9vw,43px)}.hero{display:block}.hero p{font-size:13px}}
+@media(max-width:560px){header{height:62px;padding:0 14px}.brand{font-size:18px}.user-pill{display:none}main{padding:22px 12px 40px}.panel{padding:14px;border-radius:16px}.mode-grid{grid-template-columns:1fr 1fr}.mode{padding:13px;min-height:110px}.sidebox{display:flex}.board-shell{border-width:4px}.hero{display:block}.hero p{font-size:13px}}
 </style>
 </head>
 <body>
-<header><div class="brand"><div class="brand-mark">♞</div>CHESS <em>ULTIMATE</em></div><div class="header-right"><span class="user-pill" id="userLabel">Chưa đăng nhập</span><button id="authBtn" class="primary">Đăng nhập</button></div></header>
+<header>
+  <div class="brand"><div class="brand-mark">♞</div>CHESS <em>ULTIMATE</em></div>
+  <div class="header-right">
+    <span class="user-pill" id="userLabel">Khách</span>
+    <button id="authBtn" class="primary">Đăng nhập</button>
+  </div>
+</header>
+
 <main>
-<div class="hero"><div><div class="eyebrow">Think deeper · Play smarter</div><h1>Chiến trường trí tuệ.</h1><p>Thử thách bản thân, chinh phục Stockfish và kết nối với những kỳ thủ khác trong một không gian cờ vua hiện đại.</p></div><span class="tag">♛ Chess platform</span></div>
-<div class="tabs"><button class="active" data-tab="home">Sảnh chính</button><button data-tab="game">Bàn cờ</button><button data-tab="friends">Bạn bè</button><button data-tab="profile">Hồ sơ</button></div>
+<div class="hero">
+  <div>
+    <div class="eyebrow">Think deeper · Play smarter</div>
+    <h1>Chiến trường trí tuệ.</h1>
+    <p>Thử thách bản thân trên bàn cờ HTML5 Canvas mượt mà, chinh phục Celestial Địa Ngục và kết nối với những kỳ thủ khác.</p>
+  </div>
+  <span class="tag" id="engineBadge">⏳ Đang tải Celestial...</span>
+</div>
+
+<div class="tabs">
+  <button class="active" data-tab="home">Sảnh chính</button>
+  <button data-tab="game">Bàn cờ Canvas</button>
+  <button data-tab="friends">Bạn bè & Online</button>
+  <button data-tab="profile">Tài khoản</button>
+</div>
+
 <section id="home" class="section active">
 <div class="layout">
-<div class="panel"><h2>Chọn chế độ</h2><div class="mode-grid">
-<button class="mode selected" data-mode="easy"><span class="ico">♙</span><strong>Khởi đầu</strong><small>Bot dễ · Làm quen luật và chiến thuật.</small></button>
-<button class="mode" data-mode="medium"><span class="ico">♘</span><strong>Thử thách</strong><small>Bot trung bình · Tư duy có kế hoạch.</small></button>
-<button class="mode" data-mode="hard"><span class="ico">♗</span><strong>Cao thủ</strong><small>Bot khó · Mục tiêu sức mạnh trên 1250 Elo.</small></button>
-<button class="mode" data-mode="hell"><span class="ico">♚</span><strong>Địa ngục</strong><small>Stockfish · Engine mạnh nhất cấu hình cho phép.</small></button>
-</div><div class="two"><div class="field"><label>Màu quân của bạn</label><select id="colorChoice"><option value="w">Trắng</option><option value="b">Đen</option></select></div><div class="field"><label>Thời gian</label><select id="timeChoice"><option value="0">Không giới hạn</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="900">15 phút</option></select></div></div><div class="actions"><button class="primary" id="startBtn">Bắt đầu trận đấu →</button><button id="analysisBtn">Phân tích vị trí</button></div><div class="notice" style="margin-top:12px">Mức Elo là mục tiêu tham khảo, không phải chứng nhận xếp hạng. Sức mạnh thực tế phụ thuộc engine, thiết bị và cấu hình.</div></div>
-<div class="panel"><h2>Trung tâm kỳ thủ</h2><div class="status">♛ &nbsp; Mỗi nước đi mở ra một cơ hội mới.</div><div class="friend-list"><div class="friend"><div><strong>Chế độ online</strong><div class="notice">Tạo phòng hoặc tham gia bằng mã.</div></div><span class="tag">Firebase</span></div><div class="friend"><div><strong>Hồ sơ kỳ thủ</strong><div class="notice">Lưu Elo và lịch sử trận đấu.</div></div><span class="tag">Cloud</span></div><div class="friend"><div><strong>Engine AI</strong><div class="notice" id="engineState">Đang chờ khởi tạo Stockfish.</div></div><span class="tag">UCI</span></div></div></div>
+  <div class="panel">
+    <h2>Chọn chế độ đấu máy</h2>
+    <div class="mode-grid">
+      <button class="mode selected" data-mode="easy"><span class="ico">♙</span><strong>Khởi đầu</strong><small>Celestial Skill 1 · Depth 3 · Dành cho người mới.</small></button>
+      <button class="mode" data-mode="medium"><span class="ico">♘</span><strong>Thử thách</strong><small>Celestial Skill 7 · Depth 8 · Tư duy chiến thuật.</small></button>
+      <button class="mode" data-mode="hard"><span class="ico">♗</span><strong>Cao thủ</strong><small>Celestial Skill 14 · Depth 13 · Lối đánh sắc bén.</small></button>
+      <button class="mode" data-mode="hell"><span class="ico">🔥</span><strong>Địa ngục (Celestial Max)</strong><small>Skill 20 · ~5 giây/nước · Sức mạnh tối đa không khoan nhượng.</small></button>
+    </div>
+    <div class="two">
+      <div class="field"><label>Màu quân của bạn</label><select id="colorChoice"><option value="w">Trắng (Đi trước)</option><option value="b">Đen (Đi sau)</option></select></div>
+      <div class="field"><label>Thời gian mỗi bên</label><select id="timeChoice"><option value="0">Không giới hạn</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="900">15 phút</option></select></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="startBtn">Bắt đầu trận đấu →</button>
+      <button id="analysisBtn">Vào bàn phân tích</button>
+    </div>
+    <div class="notice" style="margin-top:12px">Bàn cờ được render bằng <strong>HTML5 2D Canvas</strong> kết hợp lõi Celestial UCI ở mức Skill 20 (tối đa) cho chế độ Địa ngục.</div>
+  </div>
+  <div class="panel">
+    <h2>Trung tâm kỳ thủ</h2>
+    <div class="status"><span id="quickAuthText">♛ Đăng nhập để lưu Elo & đấu Online.</span></div>
+    <div class="friend-list">
+      <div class="friend"><div><strong>Engine Celestial UCI</strong><div class="notice" id="engineState">Đang khởi tạo Web Worker...</div></div><span class="tag" id="uciTag">UCI</span></div>
+      <div class="friend"><div><strong>Bàn cờ Đồ họa</strong><div class="notice">HTML5 Canvas 60FPS hỗ trợ cảm ứng & chuột.</div></div><span class="tag ready">Canvas</span></div>
+      <div class="friend"><div><strong>Hồ sơ & Phòng Online</strong><div class="notice">Đồng bộ Elo, lịch sử đấu và bạn bè qua Firebase.</div></div><span class="tag">Cloud</span></div>
+    </div>
+  </div>
 </div>
 </section>
-<section id="game" class="section"><div class="panel"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><h2 id="gameTitle">Đấu với máy</h2><button class="ghost" id="backHome">← Sảnh chính</button></div><div class="game-wrap"><div class="board-col"><div class="playerbar"><strong id="topName">Đối thủ · Bot</strong><span id="topClock">∞</span></div><div id="board" class="board" aria-label="Bàn cờ vua"></div><div class="playerbar"><strong id="bottomName">Bạn</strong><span id="bottomClock">∞</span></div></div><div class="sidebox"><div><div class="status" id="gameStatus">Trắng đi trước.</div><div class="move-list" id="moveList"></div></div><div class="panel" style="padding:13px"><h2 style="font-size:16px">Điều khiển</h2><div class="actions"><button id="undoBtn">↶ Hoàn tác</button><button id="flipBtn">⇅ Đảo bàn</button><button id="newBtn">Ván mới</button></div><div class="field"><label>Gợi ý nước đi</label><button id="hintBtn">✨ Gợi ý</button></div><div class="field"><label>Phân tích Stockfish</label><button id="evalBtn">Phân tích ngay</button></div><p class="notice" id="analysisText">Chưa có phân tích.</p></div></div></div></div></section>
-<section id="friends" class="section"><div class="layout"><div class="panel"><h2>Kết nối kỳ thủ</h2><div class="field"><label>ID người chơi</label><input id="friendId" placeholder="Nhập ID bạn bè"></div><div class="actions"><button class="primary" id="addFriendBtn">Gửi lời mời kết bạn</button></div><div class="status" id="friendStatus">Đăng nhập để sử dụng tính năng bạn bè.</div><h2 style="margin-top:22px">Danh sách bạn bè</h2><div id="friendsList" class="friend-list"><p class="notice">Chưa có dữ liệu.</p></div></div><div class="panel"><h2>Chơi online</h2><p class="notice">Tạo phòng riêng để mời bạn bè, hoặc tham gia phòng bằng mã được chia sẻ.</p><div class="actions"><button class="primary" id="createRoomBtn">＋ Tạo phòng</button></div><div class="field"><label>Mã phòng</label><input id="roomCode" placeholder="Nhập mã phòng"></div><button id="joinRoomBtn">Tham gia phòng</button><div class="status" id="roomStatus">Cần đăng nhập Firebase để tạo hoặc tham gia phòng.</div><p class="notice">Online cần cấu hình Firebase ở phần hướng dẫn cài đặt. Không chia sẻ mã phòng công khai nếu bạn chỉ muốn đấu riêng.</p></div></div></section>
-<section id="profile" class="section"><div class="layout"><div class="panel"><h2>Tài khoản kỳ thủ</h2><div class="status" id="profileStatus">Bạn đang chơi ở chế độ khách.</div><div class="field"><label>Email</label><input id="email" type="email" placeholder="email@example.com"></div><div class="field"><label>Mật khẩu</label><input id="password" type="password" placeholder="Tối thiểu 6 ký tự"></div><div class="actions"><button class="primary" id="signInBtn">Đăng nhập</button><button id="signUpBtn">Tạo tài khoản</button><button id="signOutBtn">Đăng xuất</button></div></div><div class="panel"><h2>Thống kê</h2><div class="two"><div class="status"><div class="notice">Elo online</div><strong id="eloValue">1000</strong></div><div class="status"><div class="notice">Số trận</div><strong id="gamesValue">0</strong></div></div><p class="notice">Dữ liệu xếp hạng chỉ được cập nhật khi triển khai xác thực và xử lý kết quả trận đấu an toàn phía máy chủ.</p></div></div></section>
-<footer>CHESS ULTIMATE · Built for thoughtful play</footer>
+
+<section id="game" class="section">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+      <h2 id="gameTitle">Đấu với máy</h2>
+      <button class="ghost" id="backHome">← Sảnh chính</button>
+    </div>
+    <div class="game-wrap">
+      <div class="board-col">
+        <div class="playerbar"><strong id="topName">Đối thủ · Bot</strong><span id="topClock">∞</span></div>
+        <div class="board-shell">
+          <canvas id="boardCanvas" width="640" height="640" aria-label="Bàn cờ vua Canvas"></canvas>
+        </div>
+        <div class="playerbar"><strong id="bottomName">Bạn</strong><span id="bottomClock">∞</span></div>
+      </div>
+      <div class="sidebox">
+        <div>
+          <div class="status" id="gameStatus">Trắng đi trước.</div>
+          <div class="move-list" id="moveList"></div>
+        </div>
+        <div class="panel" style="padding:13px">
+          <h2 style="font-size:16px">Điều khiển & Phân tích</h2>
+          <div class="actions">
+            <button id="undoBtn">↶ Hoàn tác</button>
+            <button id="flipBtn">⇅ Đảo bàn</button>
+            <button id="newBtn">Ván mới</button>
+          </div>
+          <div class="two" style="margin-top:10px">
+            <button id="hintBtn">✨ Gợi ý</button>
+            <button id="evalBtn">🔍 Đánh giá</button>
+          </div>
+          <p class="notice" id="analysisText" style="margin-top:10px">Chưa có phân tích.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="friends" class="section">
+  <div class="layout">
+    <div class="panel">
+      <h2>Kết nối kỳ thủ</h2>
+      <div class="field"><label>UID của bạn (Gửi mã này cho bạn bè)</label><input id="myUidInput" readonly value="Chưa đăng nhập"></div>
+      <div class="field"><label>Nhập UID bạn bè để kết bạn</label><input id="friendId" placeholder="Dán UID người chơi vào đây"></div>
+      <div class="actions"><button class="primary" id="addFriendBtn">Gửi lời mời kết bạn</button></div>
+      <div class="status" id="friendStatus">Đăng nhập để sử dụng tính năng bạn bè.</div>
+      <h2 style="margin-top:22px">Lời mời kết bạn</h2>
+      <div id="requestsList" class="friend-list"><p class="notice">Không có lời mời nào.</p></div>
+      <h2 style="margin-top:22px">Danh sách bạn bè</h2>
+      <div id="friendsList" class="friend-list"><p class="notice">Chưa có dữ liệu.</p></div>
+    </div>
+    <div class="panel">
+      <h2>Đấu trường Online</h2>
+      <p class="notice">Tạo phòng riêng để mời bạn bè, hoặc nhập mã phòng được chia sẻ để thi đấu trực tiếp.</p>
+      <div class="actions"><button class="primary" id="createRoomBtn">＋ Tạo phòng mới</button></div>
+      <div class="field"><label>Mã phòng</label><input id="roomCode" placeholder="Nhập mã phòng..."></div>
+      <button id="joinRoomBtn">Tham gia phòng</button>
+      <div class="status" id="roomStatus">Cần đăng nhập để tạo hoặc tham gia phòng.</div>
+    </div>
+  </div>
+</section>
+
+<section id="profile" class="section">
+  <div class="layout">
+    <div class="panel">
+      <h2>Tài khoản kỳ thủ</h2>
+      <div class="status" id="profileStatus">Bạn đang chơi ở chế độ khách.</div>
+      <div class="field"><label>Tên hiển thị</label><input id="displayName" placeholder="VD: Kỳ Thủ Vô Danh"></div>
+      <div class="field"><label>Email</label><input id="email" type="email" placeholder="email@example.com"></div>
+      <div class="field"><label>Mật khẩu</label><input id="password" type="password" placeholder="Tối thiểu 6 ký tự"></div>
+      <div class="actions">
+        <button class="primary" id="signInBtn">Đăng nhập</button>
+        <button id="signUpBtn">Tạo tài khoản</button>
+        <button id="googleAuthBtn">G Đăng nhập với Google</button>
+        <button class="danger" id="signOutBtn" style="display:none">Đăng xuất</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Thống kê cá nhân</h2>
+      <div class="two">
+        <div class="status"><div><div class="notice">Elo hiện tại</div><strong id="eloValue" style="font-size:20px">1000</strong></div></div>
+        <div class="status"><div><div class="notice">Số trận đã đấu</div><strong id="gamesValue" style="font-size:20px">0</strong></div></div>
+      </div>
+      <p class="notice">Khi bạn thắng chế độ Địa ngục hoặc thắng người chơi khác, hệ thống sẽ tự động cộng điểm Elo và lưu lên Firebase.</p>
+    </div>
+  </div>
+</section>
+
+<footer>CHESS ULTIMATE · Powered by HTML5 Canvas, Celestial UCI & Firebase</footer>
 </main>
+
+<!-- Modal Đăng Nhập Nhanh -->
+<div class="modal-backdrop" id="authModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Đăng nhập Kỳ Thủ</h3>
+      <button class="ghost" id="closeModalBtn">✕</button>
+    </div>
+    <p class="notice" style="margin-top:0">Đăng nhập để lưu điểm Elo, kết bạn và tạo phòng đấu Online.</p>
+    <div class="field"><label>Tên hiển thị (khi đăng ký mới)</label><input id="modalName" placeholder="Nhập biệt danh..."></div>
+    <div class="field"><label>Email</label><input id="modalEmail" type="email" placeholder="email@example.com"></div>
+    <div class="field"><label>Mật khẩu</label><input id="modalPass" type="password" placeholder="••••••••"></div>
+    <div class="status" id="modalMsg" style="display:none"></div>
+    <div class="actions">
+      <button class="primary" id="modalSignIn" style="flex:1">Đăng nhập</button>
+      <button id="modalSignUp" style="flex:1">Đăng ký</button>
+    </div>
+    <div class="divider">hoặc</div>
+    <button id="modalGoogle" style="width:100%">🌐 Tiếp tục với Google</button>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getDatabase,ref,set,get,push,onValue,update,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,GoogleAuthProvider,signInWithPopup,updateProfile,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getDatabase,ref,set,get,push,onValue,update,remove,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import {getAnalytics,isSupported as analyticsSupported} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
-// Dán cấu hình Firebase của bạn vào đây (Firebase Console > Project settings > Your apps).
-const firebaseConfig = {apiKey:"YOUR_API_KEY",authDomain:"YOUR_PROJECT.firebaseapp.com",databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",projectId:"YOUR_PROJECT",storageBucket:"YOUR_PROJECT.appspot.com",messagingSenderId:"YOUR_SENDER_ID",appId:"YOUR_APP_ID"};
-let auth=null,db=null,user=null,fbReady=false;
-try{if(firebaseConfig.apiKey!=="YOUR_API_KEY"){const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getDatabase(app);fbReady=true;onAuthStateChanged(auth,async u=>{user=u;renderUser();if(u){await set(ref(db,`users/${u.uid}/profile/lastSeen`),serverTimestamp());loadFriends();}})}}catch(e){console.warn("Firebase chưa cấu hình",e)}
+// ============================================================================
+// FIREBASE CONFIG (project chess-7a25e)
+// ============================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDHHYeQu-m99th0y26A7CoPyL6_cpOZ6nQ",
+  authDomain: "chess-7a25e.firebaseapp.com",
+  databaseURL: "https://chess-7a25e-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "chess-7a25e",
+  storageBucket: "chess-7a25e.firebasestorage.app",
+  messagingSenderId: "527529710794",
+  appId: "1:527529710794:web:ca1d6b93f89f955742d033",
+  measurementId: "G-6FYP4ER6YE"
+};
+
+let auth=null, db=null, user=null, fbReady=false, roomUnsub=null;
 const $=id=>document.getElementById(id);
-let game=new Chess(),selected=null,flipped=false,mode="easy",human="w",engine=null,engineReady=false,engineBusy=false,roomId=null,clockSeconds=0,clockTimer=null,remaining={w:0,b:0};
-const glyph={w:{k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:"♙"},b:{k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"}};
-const modeNames={easy:"Khởi đầu",medium:"Thử thách",hard:"Cao thủ",hell:"Địa ngục"};
-function tab(name){document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===name));document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===name))}
-document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>tab(b.dataset.tab));
-document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===b))});
-function renderUser(){ $("userLabel").textContent=user?(user.email||"Kỳ thủ"):"Chưa đăng nhập";$("authBtn").textContent=user?"Tài khoản":"Đăng nhập";$("profileStatus").textContent=user?`Đã đăng nhập: ${user.email}`:"Bạn đang chơi ở chế độ khách.";$("friendStatus").textContent=user?"Đã kết nối tài khoản.":"Đăng nhập để sử dụng tính năng bạn bè."}
-$("authBtn").onclick=()=>tab("profile");
-$("signInBtn").onclick=async()=>{try{await signInWithEmailAndPassword(auth,$("email").value,$("password").value)}catch(e){alert(e.message)}};
-$("signUpBtn").onclick=async()=>{try{const c=await createUserWithEmailAndPassword(auth,$("email").value,$("password").value);await set(ref(db,`users/${c.user.uid}/profile`),{email:c.user.email,elo:1000,createdAt:serverTimestamp()})}catch(e){alert(e.message)}};
-$("signOutBtn").onclick=async()=>{if(auth)await signOut(auth)};
-function startGame(){game=new Chess();selected=null;human=$("colorChoice").value;flipped=human==="b";clockSeconds=Number($("timeChoice").value);remaining={w:clockSeconds,b:clockSeconds};$("gameTitle").textContent=`${modeNames[mode]} · ${mode==="hell"?"Stockfish":"Bot"}`;$("topName").textContent=human==="w"?"Bot · Đen":"Bot · Trắng";$("bottomName").textContent="Bạn";$("analysisText").textContent="Chưa có phân tích.";tab("game");render();if(human==="b")setTimeout(botMove,250);startClock()}
-$("startBtn").onclick=startGame;$("backHome").onclick=()=>{stopClock();tab("home")};$("newBtn").onclick=startGame;
-function render(){const board=$("board");board.innerHTML="";const b=game.board();const files=flipped?[7,6,5,4,3,2,1,0]:[0,1,2,3,4,5,6,7];const ranks=flipped?[0,1,2,3,4,5,6,7]:[7,6,5,4,3,2,1,0];const legal=selected?game.moves({square:selected,verbose:true}):[];for(const r of ranks)for(const f of files){const sq="abcdefgh"[f]+(r+1),piece=b[7-r][f],btn=document.createElement("button");btn.className="square "+((r+f)%2?"dark":"light");if(selected===sq)btn.classList.add("selected");if(game.history({verbose:true}).slice(-1)[0]&&[game.history({verbose:true}).slice(-1)[0].from,game.history({verbose:true}).slice(-1)[0].to].includes(sq))btn.classList.add("last");if(legal.some(m=>m.to===sq))btn.classList.add(piece?"capture":"legal");btn.textContent=piece?glyph[piece.color][piece.type]:"";if(f===files[0]){const c=document.createElement("span");c.className="coord";c.textContent=r+1;btn.append(c)}btn.onclick=()=>squareClick(sq);board.append(btn)}$("moveList").innerHTML="";const hist=game.history();for(let i=0;i<hist.length;i+=2){const row=document.createElement("div");row.className="move-row";row.innerHTML=`<span>${i/2+1}.</span><span>${hist[i]||""}</span><span>${hist[i+1]||""}</span>`;$("moveList").append(row)}$("moveList").scrollTop=$("moveList").scrollHeight;const turn=game.turn()==="w"?"Trắng":"Đen";$("gameStatus").textContent=game.game_over()?(game.in_checkmate()?"Chiếu hết · "+(game.turn()==="w"?"Đen":"Trắng")+" thắng":game.in_draw()?"Ván cờ hòa":"Ván cờ kết thúc"):turn+" đi"+(game.in_check()?" · Đang bị chiếu":"");$("undoBtn").disabled=hist.length===0}
-function squareClick(sq){if(game.game_over()||engineBusy)return;if(game.turn()!==human)return;const p=game.get(sq);if(selected){const moves=game.moves({square:selected,verbose:true});const target=moves.find(m=>m.to===sq);if(target){let promotion="q";if(target.flags.includes("p")){const choice=prompt("Phong cấp thành: q (Hậu), r (Xe), b (Tượng), n (Mã)","q");promotion=["q","r","b","n"].includes((choice||"q").toLowerCase())?(choice||"q").toLowerCase():"q"}game.move({from:selected,to:sq,promotion});selected=null;render();if(game.game_over())return;setTimeout(botMove,80);return}}selected=p&&p.color===human?sq:null;render()}
-function botMove(){if(game.game_over()||game.turn()===human)return;if(engineReady&&engine){const depth={easy:2,medium:5,hard:10,hell:18}[mode];engineBusy=true;engine.postMessage("position fen "+game.fen());engine.postMessage("go depth "+depth);return}fallbackMove()}
-function fallbackMove(){const moves=game.moves({verbose:true});if(!moves.length)return;let move=moves[Math.floor(Math.random()*moves.length)];if(mode==="hard"||mode==="hell"){const scored=moves.map(m=>({m,s:(m.captured?({p:1,n:3,b:3,r:5,q:9}[m.captured]||0):0)+(m.san.includes("+")?2:0)+(m.san.includes("#")?100:0)})).sort((a,b)=>b.s-a.s);move=scored[0].m}game.move(move);render()}
-function initEngine(){try{engine=new Worker("./stockfish/stockfish.js");engine.onmessage=e=>{const line=String(e.data);if(line==="uciok"){engine.postMessage("isready")}if(line==="readyok"){engineReady=true;$("engineState").textContent="Stockfish đã sẵn sàng."}if(line.startsWith("bestmove")){const uci=line.split(" ")[1];engineBusy=false;if(uci&&uci!=="(none)"){const move={from:uci.slice(0,2),to:uci.slice(2,4),promotion:uci[4]||"q"};try{game.move(move);render()}catch{fallbackMove()}}}};engine.onerror=()=>{$("engineState").textContent="Chưa tìm thấy engine. Xem README để cài Stockfish.";engineReady=false};engine.postMessage("uci")}catch(e){$("engineState").textContent="Engine chưa được cài."}}
+
+try {
+  if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getDatabase(app);
+    fbReady = true;
+    analyticsSupported().then(ok => { if(ok) getAnalytics(app); }).catch(() => {});
+    onAuthStateChanged(auth, async u => {
+      user = u;
+      renderUser();
+      if(u){
+        $("authModal").classList.remove("open");
+        const pRef = ref(db, `users/${u.uid}/profile`);
+        const snap = await get(pRef);
+        if(!snap.exists()){
+          await set(pRef, {
+            name: u.displayName || u.email.split("@")[0],
+            email: u.email || "",
+            elo: 1000,
+            games: 0,
+            createdAt: serverTimestamp(),
+            lastSeen: serverTimestamp()
+          });
+        } else {
+          await update(pRef, { lastSeen: serverTimestamp() });
+        }
+        loadProfileStats();
+        loadFriends();
+      }
+    });
+  }
+} catch(e) { console.warn("Firebase chưa cấu hình:", e); }
+
+// ============================================================================
+// 2. TÍCH HỢP CELESTIAL UCI (Tự nạp qua CDN Blob Worker, hỗ trợ Chế độ Địa Ngục)
+// ============================================================================
+let game=new Chess(), selected=null, flipped=false, mode="easy", human="w";
+let engine=null, engineReady=false, engineBusy=false, engineMode="play";
+let roomId=null, isOnlineGame=false, clockSeconds=0, clockTimer=null, remaining={w:0,b:0};
+let hintArrow=null;
+
+const CELESTIAL_CDN = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
+
+const DIFFICULTY = {
+  easy:   { skill: 1,  depth: 3,  movetime: 250  },
+  medium: { skill: 7,  depth: 8,  movetime: 600  },
+  hard:   { skill: 14, depth: 13, movetime: 1200 },
+  hell:   { skill: 20, depth: 20, movetime: 2800 }
+};
+
+let engineKind = "sf10";
+const LOCAL_SF = "stockfish-19-lite-single.js"; // đặt cạnh index.html cùng file .wasm
+
+async function makeWorker(forceCdn){
+  if(!forceCdn){
+    try {
+      const head = await fetch(LOCAL_SF, { method: "HEAD", cache: "no-store" });
+      if(head.ok && /javascript/.test(head.headers.get("content-type") || "")){
+        engineKind = "sf19";
+        return new Worker(LOCAL_SF);
+      }
+    } catch {}
+  }
+  engineKind = "sf10";
+  const res = await fetch(CELESTIAL_CDN);
+  const scriptText = await res.text();
+  const blob = new Blob([scriptText], { type: "application/javascript" });
+  return new Worker(URL.createObjectURL(blob));
+}
+
+function useCdnEngine(){
+  engineKind = "sf10";
+  if(engine) engine.terminate();
+  engine = null; engineReady = false; engineBusy = false;
+  initEngine(true);
+}
+
+async function initEngine(forceCdn){
+  try {
+    engine = await makeWorker(forceCdn);
+    engine.onerror = () => { if(engineKind === "sf19" && !engineReady) useCdnEngine(); };
+
+    engine.onmessage = e => {
+      const line = String(e.data || "").trim();
+      if(line === "uciok") engine.postMessage("isready");
+      if(line === "readyok") {
+        engineReady = true;
+        $("engineState").textContent = engineKind === "sf19" ? "Celestial NNUE (WASM) đã sẵn sàng." : "Celestial (asm.js) đã sẵn sàng.";
+        $("engineBadge").textContent = "⚡ Celestial Ready";
+        $("engineBadge").classList.add("ready");
+        $("uciTag").classList.add("ready");
+      }
+      if(line.startsWith("info ") && line.includes(" score ")) {
+        const mateMatch = line.match(/score mate (-?\d+)/);
+        const cpMatch = line.match(/score cp (-?\d+)/);
+        const pvMatch = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+        if(engineMode === "eval" || mode === "hell") {
+          let evalStr = "";
+          if(mateMatch) evalStr = `Chiếu hết sau ${Math.abs(Number(mateMatch[1]))} nước`;
+          else if(cpMatch) {
+            const score = (Number(cpMatch[1]) / 100 * (game.turn()==="w"?1:-1)).toFixed(2);
+            evalStr = `Đánh giá: ${score > 0 ? "+"+score : score}`;
+          }
+          if(evalStr && pvMatch) {
+            const dM = line.match(/ depth (\d+)/), nM = line.match(/ nps (\d+)/);
+            const perf = dM ? ` · d${dM[1]}${nM ? " · " + Math.round(Number(nM[1])/1000) + "k nps" : ""}` : "";
+            $("analysisText").textContent = `${evalStr} · Nước tối ưu: ${pvMatch[1]}${perf}`;
+          }
+        }
+      }
+      if(line.startsWith("bestmove")) {
+        const uci = line.split(" ")[1];
+        engineBusy = false;
+        if(!uci || uci === "(none)") return;
+
+        if(engineMode === "hint") {
+          hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
+          $("analysisText").textContent = `✨ Celestial gợi ý nước đi: ${hintArrow.from} → ${hintArrow.to}`;
+          engineMode = "play";
+          render();
+          return;
+        }
+        if(engineMode === "eval") {
+          hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
+          $("analysisText").textContent += ` | Khuyên đi: ${uci}`;
+          engineMode = "play";
+          render();
+          return;
+        }
+
+        const moveObj = { from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" };
+        try {
+          game.move(moveObj);
+          hintArrow = null;
+          render();
+          checkGameOver();
+        } catch {
+          fallbackMove();
+        }
+      }
+    };
+    engine.postMessage("uci");
+    if(engineKind === "sf19") setTimeout(() => { if(engineKind === "sf19" && !engineReady) useCdnEngine(); }, 12000);
+  } catch(err) {
+    console.warn("Không thể tải Celestial CDN, chuyển sang bot dự phòng:", err);
+    $("engineState").textContent = "Đang dùng AI nội bộ (Không kết nối được CDN).";
+  }
+}
 initEngine();
-$("undoBtn").onclick=()=>{if(engineBusy)return;game.undo();if(game.turn()!==human)game.undo();selected=null;render()};
-$("flipBtn").onclick=()=>{flipped=!flipped;render()};
-$("hintBtn").onclick=()=>{const moves=game.moves({verbose:true});if(!moves.length)return;$("analysisText").textContent="Gợi ý nhanh: "+moves[0].san+" (gợi ý cơ bản; dùng phân tích Stockfish để đánh giá sâu hơn)."};
-$("analysisBtn").onclick=()=>{tab("game");$("analysisText").textContent="Bắt đầu một ván hoặc nhập vị trí để phân tích."};
-$("evalBtn").onclick=()=>{if(!engineReady){$("analysisText").textContent="Stockfish chưa sẵn sàng. Cài engine theo README.";return}engine.postMessage("position fen "+game.fen());engine.postMessage("go depth 14");$("analysisText").textContent="Stockfish đang phân tích vị trí hiện tại…"};
-function startClock(){stopClock();updateClock();if(!clockSeconds)return;clockTimer=setInterval(()=>{const side=game.turn();remaining[side]--;updateClock();if(remaining[side]<=0){stopClock();$("gameStatus").textContent=(side==="w"?"Trắng":"Đen")+" hết giờ."}},1000)}
-function stopClock(){if(clockTimer)clearInterval(clockTimer);clockTimer=null}
-function updateClock(){const fmt=n=>`${Math.floor(Math.max(0,n)/60)}:${String(Math.max(0,n)%60).padStart(2,"0")}`;$("topClock").textContent=clockSeconds?fmt(remaining[human==="w"?"b":"w"]):"∞";$("bottomClock").textContent=clockSeconds?fmt(remaining[human]):"∞"}
-// Firebase friends: friend requests are stored under the recipient's inbox. Rules must be deployed from firebase.rules.json.
-function loadFriends(){if(!db||!user)return;onValue(ref(db,`users/${user.uid}/friends`),snap=>{const el=$("friendsList");el.innerHTML="";if(!snap.exists()){el.innerHTML='<p class="notice">Chưa có bạn bè.</p>';return}Object.entries(snap.val()).forEach(([id,v])=>{const d=document.createElement("div");d.className="friend";d.innerHTML=`<span>${v.email||id}</span><span class="tag">Đã kết bạn</span>`;el.append(d)})})}
-$("addFriendBtn").onclick=async()=>{if(!fbReady||!user){$("friendStatus").textContent="Hãy cấu hình Firebase và đăng nhập trước.";return}const target=$("friendId").value.trim();if(!target||target===user.uid){$("friendStatus").textContent="ID không hợp lệ.";return}try{const s=await get(ref(db,`users/${target}/profile`));if(!s.exists())throw Error("Không tìm thấy người chơi.");await set(ref(db,`requests/${target}/${user.uid}`),{from:user.uid,email:user.email||"",createdAt:serverTimestamp()});$("friendStatus").textContent="Đã gửi lời mời kết bạn."}catch(e){$("friendStatus").textContent=e.message}};
-$("createRoomBtn").onclick=async()=>{if(!fbReady||!user){$("roomStatus").textContent="Cần cấu hình Firebase và đăng nhập.";return}const r=push(ref(db,"rooms"));roomId=r.key;await set(r,{host:user.uid,guest:null,status:"waiting",fen:new Chess().fen(),createdAt:serverTimestamp()});$("roomCode").value=roomId;$("roomStatus").textContent="Đã tạo phòng. Chia sẻ mã này cho bạn bè."};
-$("joinRoomBtn").onclick=async()=>{if(!fbReady||!user){$("roomStatus").textContent="Cần cấu hình Firebase và đăng nhập.";return}const id=$("roomCode").value.trim();if(!id)return;try{const r=ref(db,`rooms/${id}`),s=await get(r);if(!s.exists())throw Error("Không tìm thấy phòng.");if(s.val().guest)throw Error("Phòng đã đủ người.");await update(r,{guest:user.uid,status:"ready"});roomId=id;$("roomStatus").textContent="Đã tham gia phòng. Bản đồng bộ nước đi online sẽ được bật ở bước tiếp theo."}catch(e){$("roomStatus").textContent=e.message}};
-renderUser();render();
+
+// ============================================================================
+// 3. ĐIỀU HƯỚNG & ĐĂNG NHẬP
+// ============================================================================
+const glyph={w:{k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:"♙"},b:{k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"}};
+const modeNames={easy:"Khởi đầu",medium:"Thử thách",hard:"Cao thủ",hell:"🔥 ĐỊA NGỤC"};
+
+function tab(name){
+  document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===name));
+  document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
+  if(name==="game") setTimeout(render, 30);
+}
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>tab(b.dataset.tab));
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
+  mode=b.dataset.mode;
+  document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===b));
+});
+
+function renderUser(){
+  const name = user ? (user.displayName || user.email) : "Khách";
+  $("userLabel").textContent = name;
+  $("authBtn").textContent = user ? "Tài khoản" : "Đăng nhập";
+  $("profileStatus").textContent = user ? `Đã đăng nhập: ${name} (${user.email})` : "Bạn đang chơi ở chế độ khách.";
+  $("quickAuthText").textContent = user ? `♛ Xin chào, ${name}!` : "♛ Đăng nhập để lưu Elo & đấu Online.";
+  $("myUidInput").value = user ? user.uid : "Chưa đăng nhập";
+  $("signOutBtn").style.display = user ? "inline-block" : "none";
+  $("friendStatus").textContent = user ? "Sẵn sàng kết nối bạn bè." : "Đăng nhập để sử dụng tính năng bạn bè.";
+}
+
+$("authBtn").onclick = () => {
+  if(user) tab("profile");
+  else $("authModal").classList.add("open");
+};
+$("closeModalBtn").onclick = () => $("authModal").classList.remove("open");
+
+async function handleSignIn(email, pass, msgEl) {
+  if(!fbReady) return alert("Bạn chưa điền firebaseConfig trong file index.html!");
+  try {
+    await signInWithEmailAndPassword(auth, email.trim(), pass);
+  } catch(e) {
+    if(msgEl) { msgEl.style.display="flex"; msgEl.textContent = "Lỗi: " + e.message; }
+    else alert(e.message);
+  }
+}
+
+async function handleSignUp(name, email, pass, msgEl) {
+  if(!fbReady) return alert("Bạn chưa điền firebaseConfig trong file index.html!");
+  try {
+    const c = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+    const cleanName = (name || email.split("@")[0]).trim();
+    await updateProfile(c.user, { displayName: cleanName });
+    await set(ref(db, `users/${c.user.uid}/profile`), {
+      name: cleanName,
+      email: c.user.email,
+      elo: 1000,
+      games: 0,
+      createdAt: serverTimestamp(),
+      lastSeen: serverTimestamp()
+    });
+    renderUser();
+  } catch(e) {
+    if(msgEl) { msgEl.style.display="flex"; msgEl.textContent = "Lỗi: " + e.message; }
+    else alert(e.message);
+  }
+}
+
+async function handleGoogleLogin() {
+  if(!fbReady) return alert("Bạn chưa điền firebaseConfig trong file index.html!");
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) { alert("Đăng nhập Google thất bại: " + e.message); }
+}
+
+$("signInBtn").onclick = () => handleSignIn($("email").value, $("password").value);
+$("signUpBtn").onclick = () => handleSignUp($("displayName").value, $("email").value, $("password").value);
+$("googleAuthBtn").onclick = handleGoogleLogin;
+$("modalSignIn").onclick = () => handleSignIn($("modalEmail").value, $("modalPass").value, $("modalMsg"));
+$("modalSignUp").onclick = () => handleSignUp($("modalName").value, $("modalEmail").value, $("modalPass").value, $("modalMsg"));
+$("modalGoogle").onclick = handleGoogleLogin;
+$("signOutBtn").onclick = async () => { if(auth) await signOut(auth); };
+
+function loadProfileStats() {
+  if(!db || !user) return;
+  onValue(ref(db, `users/${user.uid}/profile`), snap => {
+    if(!snap.exists()) return;
+    const d = snap.val();
+    $("eloValue").textContent = d.elo ?? 1000;
+    $("gamesValue").textContent = d.games ?? 0;
+    if(d.name) $("displayName").value = d.name;
+  });
+}
+
+// ============================================================================
+// 4. BÀN CỜ HTML5 CANVAS 2D & LOGIC CHẾ ĐỘ ĐỊA NGỤC
+// ============================================================================
+const canvas = $("boardCanvas");
+const ctx = canvas.getContext("2d");
+
+function squareToGrid(sq) {
+  const f = "abcdefgh".indexOf(sq[0]);
+  const r = Number(sq[1]) - 1;
+  const col = flipped ? 7 - f : f;
+  const row = flipped ? r : 7 - r;
+  return { col, row };
+}
+
+function drawArrow(fromSq, toSq) {
+  const p1 = squareToGrid(fromSq);
+  const p2 = squareToGrid(toSq);
+  const size = canvas.width / 8;
+  const x1 = (p1.col + 0.5) * size;
+  const y1 = (p1.row + 0.5) * size;
+  const x2 = (p2.col + 0.5) * size;
+  const y2 = (p2.row + 0.5) * size;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headLen = size * 0.28;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(216, 181, 109, 0.88)";
+  ctx.fillStyle = "rgba(216, 181, 109, 0.88)";
+  ctx.lineWidth = size * 0.12;
+  ctx.lineCap = "round";
+
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2 - headLen * 0.6 * Math.cos(angle), y2 - headLen * 0.6 * Math.sin(angle));
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBoardCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  const displaySize = Math.max(280, Math.floor(rect.width || 640));
+  if (canvas.width !== displaySize * dpr) {
+    canvas.width = displaySize * dpr;
+    canvas.height = displaySize * dpr;
+  }
+  const sqSize = canvas.width / 8;
+  const b = game.board();
+  const files = flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  const ranks = flipped ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
+  const legal = selected ? game.moves({square: selected, verbose: true}) : [];
+  const lastMove = game.history({verbose: true}).slice(-1)[0];
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const r = ranks[row];
+      const f = files[col];
+      const sq = "abcdefgh"[f] + (r + 1);
+      const piece = b[7 - r][f];
+      const x = col * sqSize;
+      const y = row * sqSize;
+      const isDark = (r + f) % 2 === 1;
+
+      ctx.fillStyle = isDark ? "#8c6b4d" : "#eadcc2";
+      ctx.fillRect(x, y, sqSize, sqSize);
+
+      if (lastMove && (lastMove.from === sq || lastMove.to === sq)) {
+        ctx.fillStyle = "rgba(232, 206, 108, 0.45)";
+        ctx.fillRect(x, y, sqSize, sqSize);
+      }
+
+      if (selected === sq) {
+        ctx.strokeStyle = "#e7c66b";
+        ctx.lineWidth = Math.max(3, sqSize * 0.08);
+        ctx.strokeRect(x + ctx.lineWidth/2, y + ctx.lineWidth/2, sqSize - ctx.lineWidth, sqSize - ctx.lineWidth);
+      }
+
+      if (piece && piece.type === "k" && piece.color === game.turn() && game.in_check()) {
+        const grad = ctx.createRadialGradient(x + sqSize/2, y + sqSize/2, sqSize*0.1, x + sqSize/2, y + sqSize/2, sqSize*0.5);
+        grad.addColorStop(0, "rgba(231, 76, 60, 0.85)");
+        grad.addColorStop(1, "rgba(231, 76, 60, 0)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(x, y, sqSize, sqSize);
+      }
+
+      ctx.font = `600 ${Math.floor(sqSize * 0.16)}px "DM Sans", sans-serif`;
+      ctx.fillStyle = isDark ? "rgba(234, 220, 194, 0.8)" : "rgba(41, 35, 27, 0.75)";
+      if (col === 0) {
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText(String(r + 1), x + sqSize * 0.06, y + sqSize * 0.05);
+      }
+      if (row === 7) {
+        ctx.textAlign = "right";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("abcdefgh"[f], x + sqSize * 0.94, y + sqSize * 0.95);
+      }
+
+      if (piece) {
+        ctx.save();
+        ctx.font = `${Math.floor(sqSize * 0.74)}px "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        if (piece.color === "w") {
+          ctx.fillStyle = "#f8f4eb";
+          ctx.shadowColor = "rgba(35, 25, 20, 0.85)";
+          ctx.shadowBlur = sqSize * 0.05;
+          ctx.shadowOffsetY = sqSize * 0.03;
+        } else {
+          ctx.fillStyle = "#171717";
+          ctx.shadowColor = "rgba(255, 255, 255, 0.45)";
+          ctx.shadowBlur = sqSize * 0.03;
+          ctx.shadowOffsetY = sqSize * 0.015;
+        }
+        ctx.fillText(glyph[piece.color][piece.type], x + sqSize / 2, y + sqSize * 0.53);
+        ctx.restore();
+      }
+
+      if (legal.some(m => m.to === sq)) {
+        ctx.save();
+        if (piece) {
+          ctx.strokeStyle = "rgba(33, 77, 54, 0.72)";
+          ctx.lineWidth = Math.max(3, sqSize * 0.08);
+          ctx.beginPath();
+          ctx.arc(x + sqSize / 2, y + sqSize / 2, sqSize * 0.42, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = "rgba(33, 77, 54, 0.68)";
+          ctx.beginPath();
+          ctx.arc(x + sqSize / 2, y + sqSize / 2, sqSize * 0.14, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  if (hintArrow) {
+    drawArrow(hintArrow.from, hintArrow.to);
+  }
+}
+
+canvas.addEventListener("pointerdown", e => {
+  const rect = canvas.getBoundingClientRect();
+  const col = Math.floor(((e.clientX - rect.left) / rect.width) * 8);
+  const row = Math.floor(((e.clientY - rect.top) / rect.height) * 8);
+  if (col < 0 || col > 7 || row < 0 || row > 7) return;
+  const files = flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
+  const ranks = flipped ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
+  const sq = "abcdefgh"[files[col]] + (ranks[row] + 1);
+  squareClick(sq);
+});
+
+window.addEventListener("resize", () => render());
+
+function startGame(){
+  isOnlineGame = false;
+  if(roomUnsub) { roomUnsub(); roomUnsub = null; }
+  game = new Chess();
+  selected = null;
+  hintArrow = null;
+  human = $("colorChoice").value;
+  flipped = human === "b";
+  clockSeconds = Number($("timeChoice").value);
+  remaining = { w: clockSeconds, b: clockSeconds };
+
+  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
+  $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
+  $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
+  $("analysisText").textContent = mode==="hell" ? "🔥 Chế độ Địa ngục: Celestial dùng Skill 20 (tối đa)." : "Chưa có phân tích.";
+
+  if(engineReady && engine) {
+    const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
+    engine.postMessage("ucinewgame");
+    engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
+    if(engineKind === "sf19") engine.postMessage("setoption name Hash value 64");
+    else if(mode === "hell") engine.postMessage("setoption name Contempt value 24");
+  }
+
+  tab("game");
+  render();
+  if(human === "b") setTimeout(botMove, 300);
+  startClock();
+}
+
+$("startBtn").onclick = startGame;
+$("backHome").onclick = () => { stopClock(); tab("home"); };
+$("newBtn").onclick = startGame;
+
+function render(){
+  drawBoardCanvas();
+
+  $("moveList").innerHTML="";
+  const hist=game.history();
+  for(let i=0;i<hist.length;i+=2){
+    const row=document.createElement("div"); row.className="move-row";
+    row.innerHTML=`<span>${i/2+1}.</span><span>${hist[i]||""}</span><span>${hist[i+1]||""}</span>`;
+    $("moveList").append(row);
+  }
+  $("moveList").scrollTop=$("moveList").scrollHeight;
+
+  const turn=game.turn()==="w"?"Trắng":"Đen";
+  $("gameStatus").textContent = game.game_over()
+    ? (game.in_checkmate() ? "Chiếu hết · "+(game.turn()==="w"?"Đen":"Trắng")+" thắng!" : game.in_draw() ? "Ván cờ hòa" : "Ván cờ kết thúc")
+    : (engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":""));
+  $("undoBtn").disabled = hist.length===0 || isOnlineGame;
+}
+
+async function squareClick(sq){
+  if(game.game_over() || engineBusy) return;
+  if(game.turn() !== human) return;
+  const p = game.get(sq);
+  if(selected){
+    const moves = game.moves({square:selected, verbose:true});
+    const target = moves.find(m=>m.to===sq);
+    if(target){
+      let promotion="q";
+      if(target.flags.includes("p")){
+        const choice=prompt("Phong cấp thành: q (Hậu), r (Xe), b (Tượng), n (Mã)","q");
+        promotion=["q","r","b","n"].includes((choice||"q").toLowerCase())?(choice||"q").toLowerCase():"q";
+      }
+      const moveRes = game.move({from:selected, to:sq, promotion});
+      selected=null;
+      hintArrow=null;
+      render();
+      if(isOnlineGame && roomId && fbReady) {
+        await update(ref(db, `rooms/${roomId}`), {
+          fen: game.fen(),
+          lastMove: moveRes.san,
+          turn: game.turn(),
+          updatedAt: serverTimestamp()
+        });
+      }
+      if(checkGameOver()) return;
+      if(!isOnlineGame) setTimeout(botMove, 100);
+      return;
+    }
+  }
+  selected = p && p.color===human ? sq : null;
+  render();
+}
+
+function botMove(){
+  if(isOnlineGame || game.game_over() || game.turn()===human) return;
+  if(engineReady && engine){
+    const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
+    engineBusy = true;
+    engineMode = "play";
+    render();
+    engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
+    engine.postMessage("position fen " + game.fen());
+    if(mode === "hell") {
+      engine.postMessage(engineKind === "sf19" ? "go movetime 5000" : `go depth ${cfg.depth} movetime ${cfg.movetime}`);
+    } else {
+      engine.postMessage(`go depth ${cfg.depth}`);
+    }
+    return;
+  }
+  fallbackMove();
+}
+
+function fallbackMove(){
+  const moves=game.moves({verbose:true});
+  if(!moves.length) return;
+  let move=moves[Math.floor(Math.random()*moves.length)];
+  if(mode==="hard"||mode==="hell"){
+    const scored=moves.map(m=>({
+      m,
+      s:(m.captured?({p:1,n:3,b:3,r:5,q:9}[m.captured]||0):0)+(m.san.includes("+")?2:0)+(m.san.includes("#")?100:0)
+    })).sort((a,b)=>b.s-a.s);
+    move=scored[0].m;
+  }
+  game.move(move);
+  render();
+  checkGameOver();
+}
+
+async function checkGameOver() {
+  if(!game.game_over()) return false;
+  stopClock();
+  if(fbReady && user) {
+    const pRef = ref(db, `users/${user.uid}/profile`);
+    const snap = await get(pRef);
+    if(snap.exists()) {
+      const cur = snap.val();
+      let delta = 0;
+      if(game.in_checkmate()) {
+        const winner = game.turn() === "w" ? "b" : "w";
+        const bonus = { easy: 5, medium: 12, hard: 25, hell: 50 }[mode] || 15;
+        delta = winner === human ? bonus : -10;
+      }
+      await update(pRef, {
+        elo: Math.max(100, (cur.elo || 1000) + delta),
+        games: (cur.games || 0) + 1,
+        lastSeen: serverTimestamp()
+      });
+    }
+  }
+  return true;
+}
+
+$("undoBtn").onclick=()=>{
+  if(engineBusy || isOnlineGame) return;
+  game.undo();
+  if(game.turn()!==human) game.undo();
+  selected=null;
+  hintArrow=null;
+  render();
+};
+$("flipBtn").onclick=()=>{ flipped=!flipped; render(); };
+$("hintBtn").onclick=()=>{
+  if(!engineReady || engineBusy) return;
+  engineMode = "hint";
+  engineBusy = true;
+  $("analysisText").textContent = "Đang tính nước đi gợi ý...";
+  engine.postMessage("position fen " + game.fen());
+  engine.postMessage("go depth 15");
+};
+$("analysisBtn").onclick=()=>{ tab("game"); };
+$("evalBtn").onclick=()=>{
+  if(!engineReady || engineBusy) return;
+  engineMode = "eval";
+  engineBusy = true;
+  $("analysisText").textContent = "Celestial đang phân tích sâu vị trí hiện tại…";
+  engine.postMessage("position fen " + game.fen());
+  engine.postMessage("go depth 18");
+};
+
+function startClock(){
+  stopClock(); updateClock();
+  if(!clockSeconds) return;
+  clockTimer=setInterval(()=>{
+    const side=game.turn();
+    remaining[side]--;
+    updateClock();
+    if(remaining[side]<=0){
+      stopClock();
+      $("gameStatus").textContent=(side==="w"?"Trắng":"Đen")+" hết giờ!";
+    }
+  },1000);
+}
+function stopClock(){ if(clockTimer) clearInterval(clockTimer); clockTimer=null; }
+function updateClock(){
+  const fmt=n=>`${Math.floor(Math.max(0,n)/60)}:${String(Math.max(0,n)%60).padStart(2,"0")}`;
+  $("topClock").textContent=clockSeconds?fmt(remaining[human==="w"?"b":"w"]):"∞";
+  $("bottomClock").textContent=clockSeconds?fmt(remaining[human]):"∞";
+}
+
+// ============================================================================
+// 5. BẠN BÈ & PHÒNG CHƠI ONLINE (FIREBASE REALTIME DATABASE)
+// ============================================================================
+function loadFriends(){
+  if(!db||!user) return;
+  onValue(ref(db, `requests/${user.uid}`), snap => {
+    const el = $("requestsList"); el.innerHTML = "";
+    if(!snap.exists()){ el.innerHTML='<p class="notice">Không có lời mời nào.</p>'; return; }
+    Object.entries(snap.val()).forEach(([fromUid, v]) => {
+      const d = document.createElement("div"); d.className = "friend";
+      d.innerHTML = `<span>${v.email || fromUid}</span>`;
+      const btn = document.createElement("button");
+      btn.className = "primary"; btn.textContent = "Chấp nhận";
+      btn.onclick = async () => {
+        await set(ref(db, `users/${user.uid}/friends/${fromUid}`), { email: v.email || fromUid, since: serverTimestamp() });
+        await set(ref(db, `users/${fromUid}/friends/${user.uid}`), { email: user.email || user.uid, since: serverTimestamp() });
+        await remove(ref(db, `requests/${user.uid}/${fromUid}`));
+      };
+      d.append(btn); el.append(d);
+    });
+  });
+
+  onValue(ref(db,`users/${user.uid}/friends`),snap=>{
+    const el=$("friendsList"); el.innerHTML="";
+    if(!snap.exists()){ el.innerHTML='<p class="notice">Chưa có bạn bè.</p>'; return; }
+    Object.entries(snap.val()).forEach(([id,v])=>{
+      const d=document.createElement("div"); d.className="friend";
+      d.innerHTML=`<span>${v.email||id}</span><span class="tag ready">Bạn bè</span>`;
+      el.append(d);
+    });
+  });
+}
+
+$("addFriendBtn").onclick=async()=>{
+  if(!fbReady||!user){ $("authModal").classList.add("open"); return; }
+  const target=$("friendId").value.trim();
+  if(!target||target===user.uid){ $("friendStatus").textContent="UID không hợp lệ."; return; }
+  try{
+    const s=await get(ref(db,`users/${target}/profile`));
+    if(!s.exists()) throw Error("Không tìm thấy người chơi với UID này.");
+    await set(ref(db,`requests/${target}/${user.uid}`),{
+      from:user.uid,
+      email:user.displayName||user.email||"",
+      createdAt:serverTimestamp()
+    });
+    $("friendStatus").textContent="Đã gửi lời mời kết bạn thành công!";
+  }catch(e){ $("friendStatus").textContent=e.message; }
+};
+
+function subscribeRoom(id, myColor) {
+  if(roomUnsub) roomUnsub();
+  isOnlineGame = true;
+  human = myColor;
+  flipped = human === "b";
+  tab("game");
+  $("gameTitle").textContent = `Phòng Online: ${id}`;
+  roomUnsub = onValue(ref(db, `rooms/${id}`), snap => {
+    if(!snap.exists()) return;
+    const data = snap.val();
+    if(data.fen && data.fen !== game.fen()) {
+      game.load(data.fen);
+      render();
+    }
+    $("topName").textContent = data.guest ? "Đối thủ Online" : "Đang chờ người vào...";
+  });
+}
+
+$("createRoomBtn").onclick=async()=>{
+  if(!fbReady||!user){ $("authModal").classList.add("open"); return; }
+  const r=push(ref(db,"rooms"));
+  roomId=r.key;
+  game = new Chess();
+  await set(r,{
+    host:user.uid,
+    guest:null,
+    status:"waiting",
+    fen:game.fen(),
+    turn:"w",
+    createdAt:serverTimestamp()
+  });
+  $("roomCode").value=roomId;
+  $("roomStatus").textContent="Đã tạo phòng! Hãy gửi mã phòng cho bạn bè.";
+  subscribeRoom(roomId, "w");
+};
+
+$("joinRoomBtn").onclick=async()=>{
+  if(!fbReady||!user){ $("authModal").classList.add("open"); return; }
+  const id=$("roomCode").value.trim();
+  if(!id) return;
+  try{
+    const r=ref(db,`rooms/${id}`), s=await get(r);
+    if(!s.exists()) throw Error("NotFound");
+    const val = s.val();
+    if(val.guest && val.guest !== user.uid && val.host !== user.uid) throw Error("Phòng đã đủ 2 người.");
+    if(val.host !== user.uid) {
+      await update(r,{guest:user.uid, status:"playing", updatedAt:serverTimestamp()});
+    }
+    roomId=id;
+    subscribeRoom(roomId, val.host === user.uid ? "w" : "b");
+  }catch(e){ $("roomStatus").textContent=e.message; }
+};
+
+renderUser();
+render();
 </script>
-</body></html>
+</body>
+</html>
