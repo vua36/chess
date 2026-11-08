@@ -1885,10 +1885,14 @@ function startClock(){
   stopClock(); updateClock();
   if(!clockSeconds) return;
   clockTimer=setInterval(()=>{
-    const side=game.turn();
-    remaining[side]--;
+    // Xác định đúng bên đang đi
+    let side = game.turn();
+    if(isOnlineGame && onlineRoomData && onlineRoomData.turn) {
+      side = onlineRoomData.turn;
+    }
+    if(remaining[side] > 0) remaining[side]--;
     updateClock();
-    if(remaining[side]<=0){
+    if(remaining[side] <= 0){
       stopClock();
       const winnerSide = side === "w" ? "b" : "w";
       checkGameOver(winnerSide);
@@ -1898,8 +1902,9 @@ function startClock(){
 function stopClock(){ if(clockTimer) clearInterval(clockTimer); clockTimer=null; }
 function updateClock(){
   const fmt=n=>`${Math.floor(Math.max(0,n)/60)}:${String(Math.max(0,n)%60).padStart(2,"0")}`;
-  $("topClock").textContent=clockSeconds?fmt(remaining[human==="w"?"b":"w"]):"∞";
-  $("bottomClock").textContent=clockSeconds?fmt(remaining[human]):"∞";
+  const oppSide = human === "w" ? "b" : "w";
+  $("topClock").textContent = clockSeconds ? fmt(remaining[oppSide]) : "∞";
+  $("bottomClock").textContent = clockSeconds ? fmt(remaining[human]) : "∞";
 }
 
 // ============================================================================
@@ -2116,6 +2121,10 @@ function subscribeRoom(id, myColor) {
   isOnlineGame = true;
   matchRecorded = false;
   $("resignBtn").hidden = false;
+  // Khởi động đồng hồ cho online (dùng thời gian đã chọn hoặc mặc định)
+  if(!clockSeconds) clockSeconds = 600; // mặc định 10 phút nếu chưa chọn
+  remaining = { w: clockSeconds, b: clockSeconds };
+  startClock();
   human = myColor;
   flipped = human === "b";
   tab("game");
