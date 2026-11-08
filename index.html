@@ -34,6 +34,11 @@ footer{text-align:center;color:#647487;font-size:12px;margin-top:30px}
 @media(max-width:560px){header{height:62px;padding:0 14px}.brand{font-size:18px}.user-pill{display:none}main{padding:22px 12px 40px}.panel{padding:14px;border-radius:16px}.mode-grid{grid-template-columns:1fr 1fr}.mode{padding:13px;min-height:110px}.sidebox{display:flex}.board-shell{border-width:4px}.hero{display:block}.hero p{font-size:13px}}
 
 /* ===== GIAO DIỆN NÂNG CẤP ===== */
+.board-shell{aspect-ratio:auto}
+#boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block}
+.playerbar strong{flex:1;min-width:0}
+.thinking::after{white-space:nowrap;margin-left:auto;padding-left:8px}
+@media(max-width:560px){.board-shell{border-width:6px}}
 .layout{grid-template-columns:minmax(0,880px);justify-content:center}
 body{background:radial-gradient(ellipse at 50% -10%,#2a3f5c 0%,#0e1622 48%,#070b11 100%) fixed}
 header{background:linear-gradient(180deg,#0d1522ee,#0a111bd9);border-bottom:1px solid #d8b56d33;box-shadow:0 8px 30px #0006}
@@ -743,7 +748,7 @@ async function squareClick(sq){
           updatedAt: serverTimestamp()
         });
       }
-      if(checkGameOver()) return;
+      if(game.game_over()){ checkGameOver(); return; }
       if(!isOnlineGame) setTimeout(botMove, 100);
       return;
     }
