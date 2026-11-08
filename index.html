@@ -109,7 +109,6 @@ body.reviewing{padding-bottom:160px}
 
 <div class="tabs">
   <button class="active" data-tab="home">Sảnh chính</button>
-  <button data-tab="game">Bàn cờ Canvas</button>
   <button data-tab="leaderboard">🏆 Bảng xếp hạng</button>
   <button data-tab="friends">Bạn bè & Online</button>
   <button data-tab="profile">Tài khoản</button>
@@ -124,7 +123,7 @@ body.reviewing{padding-bottom:160px}
       <button class="mode selected" data-mode="easy"><span class="ico">♙</span><strong>Khởi đầu</strong><small>Skill 1 · Thắng +8 / Hoà -2 / Thua -15 Elo</small></button>
       <button class="mode" data-mode="medium"><span class="ico">♘</span><strong>Thử thách</strong><small>Skill 7 · Thắng +15 / Hoà +2 / Thua -12 Elo</small></button>
       <button class="mode" data-mode="hard"><span class="ico">♗</span><strong>Cao thủ</strong><small>Skill 14 · Thắng +28 / Hoà +6 / Thua -8 Elo</small></button>
-      <button class="mode" data-mode="hell"><span class="ico">🔥</span><strong>Địa ngục (Celestial Max)</strong><small>Skill 20 · Thắng +55 / Hoà +15 / Thua -5 Elo</small></button>
+      <button class="mode" data-mode="hell"><span class="ico">🔥</span><strong>Địa ngục (Celestial Max)</strong><small>Skill 20 · Elo ~3000+ · Thắng +55 / Hoà +15 / Thua -5 Elo</small></button>
     </div>
     <div class="two">
       <div class="field"><label>Màu quân của bạn</label><select id="colorChoice"><option value="w">Trắng (Đi trước)</option><option value="b">Đen (Đi sau)</option></select></div>
@@ -132,7 +131,6 @@ body.reviewing{padding-bottom:160px}
     </div>
     <div class="actions">
       <button class="primary" id="startBtn">Bắt đầu trận đấu →</button>
-      <button id="analysisBtn">Vào bàn cờ</button>
     </div>
     <div class="notice" style="margin-top:12px">Hệ thống tính điểm Elo tự động theo cấp độ Bot hoặc theo công thức Elo chuẩn quốc tế khi đấu Online với bạn bè.</div>
   </div>
@@ -458,7 +456,7 @@ const BOT_ELO_TABLE = {
   easy:   { win: +8,  draw: -2,  loss: -15, label: "Bot Khởi đầu (Skill 1)",   botElo: 800  },
   medium: { win: +15, draw: +2,  loss: -12, label: "Bot Thử thách (Skill 7)",  botElo: 1200 },
   hard:   { win: +28, draw: +6,  loss: -8,  label: "Bot Cao thủ (Skill 14)",   botElo: 1650 },
-  hell:   { win: +55, draw: +15, loss: -5,  label: "Bot Địa ngục (Skill 20)",  botElo: 2400 }
+  hell:   { win: +55, draw: +15, loss: -5,  label: "Bot Địa ngục (Elo ~3000+)", botElo: 3000 }
 };
 
 function calcPvpEloDelta(myElo, oppElo, score) {
@@ -1095,7 +1093,7 @@ function startGame(){
   clockSeconds = Number($("timeChoice").value);
   remaining = { w: clockSeconds, b: clockSeconds };
 
-  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~2400+)":"Celestial Bot"}`;
+  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
   $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
   document.body.classList.toggle("hell", mode === "hell");
@@ -1335,7 +1333,6 @@ $("hintBtn").onclick=()=>{
   engine.postMessage("position fen " + game.fen());
   engine.postMessage("go depth 15");
 };
-$("analysisBtn").onclick=()=>{ tab("game"); };
 $("evalBtn").onclick=()=>{
   if(!isAdminUser()) return;
   if(!engineReady || engineBusy || reviewMode) return;
@@ -1532,7 +1529,6 @@ async function inviteFriendToPlay(friendUid, friendName, btnEl) {
   btnEl.textContent = "Đang mời...";
 
   try {
-    // Tạo phòng mới nếu chưa ở trong phòng chờ
     const r = push(ref(db, "rooms"));
     roomId = r.key;
     game = new Chess();
@@ -1551,7 +1547,6 @@ async function inviteFriendToPlay(friendUid, friendName, btnEl) {
       createdAt: serverTimestamp()
     });
 
-    // Gửi lời mời thách đấu trực tiếp tới UID của bạn bè
     await set(ref(db, `gameInvites/${friendUid}/${user.uid}`), {
       fromUid: user.uid,
       fromName: myName,
@@ -1611,7 +1606,6 @@ async function declineGameInvite(fromUid) {
 function loadFriendsAndInvites(){
   if(!db||!user) return;
 
-  // Lời mời kết bạn
   onValue(ref(db, `requests/${user.uid}`), snap => {
     const el = $("requestsList"); el.innerHTML = "";
     if(!snap.exists()){ el.innerHTML='<p class="notice">Không có lời mời nào.</p>'; return; }
@@ -1630,13 +1624,11 @@ function loadFriendsAndInvites(){
     });
   });
 
-  // Danh sách bạn bè
   onValue(ref(db, `users/${user.uid}/friends`), snap => {
     myFriendsMap = snap.exists() ? snap.val() : {};
     renderFriendsListFromCache();
   });
 
-  // Lắng nghe lời mời thách đấu trực tiếp (Hiện cả trong tab & popup nổi toàn màn hình)
   onValue(ref(db, `gameInvites/${user.uid}`), snap => {
     const listEl = $("gameInvitesList");
     const floatEl = $("inviteFloatContainer");
@@ -1652,7 +1644,6 @@ function loadFriendsAndInvites(){
       const senderName = inv.fromName || "Bạn bè";
       const senderElo = inv.fromElo ?? 1000;
 
-      // 1. Hiển thị trong mục Đấu trường Online
       const row = document.createElement("div");
       row.className = "friend";
       row.innerHTML = `
@@ -1669,7 +1660,6 @@ function loadFriendsAndInvites(){
       row.querySelector("[data-dec]").onclick = () => declineGameInvite(fromUid);
       listEl.append(row);
 
-      // 2. Hiển thị Popup nổi góc dưới màn hình (Dù đang ở bất kỳ tab nào cũng thấy ngay)
       const card = document.createElement("div");
       card.className = "invite-card";
       card.innerHTML = `
