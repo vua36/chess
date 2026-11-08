@@ -7,20 +7,50 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0b1018;--panel:#121b27;--panel2:#172333;--line:#27384b;--gold:#d8b56d;--gold2:#f0d79d;--muted:#91a0b2;--text:#edf2f7;--green:#71c59a;--red:#e77e7e;--light:#eadcc2;--dark:#8c6b4d}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#203148 0%,var(--bg) 52%);color:var(--text);font:15px 'DM Sans',sans-serif;min-height:100vh}
-button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#1b2a3c;color:var(--text);border-radius:12px;padding:11px 15px;transition:.18s}button:hover{border-color:var(--gold);transform:translateY(-1px)}button.primary{background:linear-gradient(135deg,#e6c987,#b68c47);color:#17130d;border:0;font-weight:700}button.ghost{background:transparent}button.danger{border-color:#743434;background:#351a1a;color:#f3a6a6}button:disabled{opacity:.4;cursor:not-allowed;transform:none}
-header{height:72px;border-bottom:1px solid #263548;background:#0c131dcc;backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100vw - 1250px)/2));position:sticky;top:0;z-index:5}
-.brand{display:flex;align-items:center;gap:12px;font:700 22px 'Playfair Display',serif;letter-spacing:.3px}.brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#f0d79d,#a77c39);display:grid;place-items:center;color:#17130d;font-size:25px}.brand em{font-style:normal;color:var(--gold)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#2a3f5c 0%,#0e1622 48%,#070b11 100%) fixed;color:var(--text);font:15px 'DM Sans',sans-serif;min-height:100vh}
+button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#1b2a3c;color:var(--text);border-radius:12px;padding:11px 15px;transition:.18s}button:hover{border-color:var(--gold);transform:translateY(-1px)}button.primary{background:linear-gradient(135deg,#e6c987,#b68c47);color:#17130d;border:0;font-weight:700;box-shadow:0 6px 18px #b68c4755}button.ghost{background:transparent}button.danger{border-color:#743434;background:#351a1a;color:#f3a6a6}button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+header{height:72px;border-bottom:1px solid #d8b56d33;background:linear-gradient(180deg,#0d1522ee,#0a111bd9);backdrop-filter:blur(14px);box-shadow:0 8px 30px #0006;display:flex;align-items:center;justify-content:space-between;padding:0 max(20px,calc((100vw - 1250px)/2));position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:12px;font:700 22px 'Playfair Display',serif;letter-spacing:.5px}.brand-mark{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,#f0d79d,#a77c39);display:grid;place-items:center;color:#17130d;font-size:25px}.brand em{font-style:normal;color:var(--gold)}
 .header-right{display:flex;align-items:center;gap:10px}.user-pill{color:var(--muted);font-size:13px;background:#131f2e;padding:6px 12px;border-radius:20px;border:1px solid var(--line)}
+.admin-badge{background:linear-gradient(135deg,#ff6b6b,#c92a2a);color:#fff;font-size:11px;font-weight:700;padding:4px 9px;border-radius:12px;letter-spacing:.5px}
 main{max-width:1250px;margin:0 auto;padding:30px 20px 60px}.eyebrow{color:var(--gold);font-size:11px;letter-spacing:2.4px;text-transform:uppercase;font-weight:700}.hero{display:flex;justify-content:space-between;align-items:end;gap:20px;margin:12px 0 28px}.hero h1{font:700 clamp(30px,4vw,46px) 'Playfair Display',serif;margin:8px 0}.hero p{color:var(--muted);margin:0;max-width:590px;line-height:1.6}
-.layout{display:grid;grid-template-columns: minmax(0,1.6fr) minmax(280px,.85fr);gap:22px}.panel{background:linear-gradient(160deg,#162333f2,#101925f2);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 18px 50px #0003}.panel h2{font:600 20px 'Playfair Display',serif;margin:0 0 15px}.mode-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.mode{padding:18px;text-align:left;min-height:120px;background:linear-gradient(145deg,#1c2d40,#142131);border:1px solid #2a3d52}.mode .ico{font-size:27px;display:block;margin-bottom:10px}.mode strong{display:block;font-size:16px}.mode small{display:block;color:var(--muted);margin-top:5px;line-height:1.4}.mode.selected{border-color:var(--gold);box-shadow:inset 0 0 0 1px #d8b56d55}
+.layout{display:grid;grid-template-columns:minmax(0,880px);justify-content:center;gap:22px}
+.layout-wide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+.panel{background:linear-gradient(160deg,#16222fcc,#0f1822cc);border:1px solid #2c3f55;border-radius:20px;padding:20px;box-shadow:0 10px 30px #0004}.panel h2{font:600 20px 'Playfair Display',serif;margin:0 0 15px}.mode-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.mode{padding:18px;text-align:left;min-height:120px;background:linear-gradient(160deg,#16222fcc,#0f1822cc);border:1px solid #2c3f55;box-shadow:0 10px 30px #0004}.mode .ico{font-size:27px;display:block;margin-bottom:10px}.mode strong{display:block;font-size:16px}.mode small{display:block;color:var(--muted);margin-top:5px;line-height:1.4}
+.mode:hover{border-color:var(--gold);box-shadow:0 0 0 1px #d8b56d55,0 12px 28px #0006}
+.mode.selected{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold),0 0 24px #d8b56d33}
 .mode[data-mode="hell"].selected{border-color:var(--red);box-shadow:inset 0 0 0 1px #e77e7e66;background:linear-gradient(145deg,#331c24,#1d131a)}
 .field{display:flex;flex-direction:column;gap:7px;margin:12px 0}.field label{font-size:12px;color:var(--muted)}input,select{background:#0d1723;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:12px;outline:none;width:100%}input:focus,select:focus{border-color:var(--gold)}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.muted{color:var(--muted)}.gold{color:var(--gold)}.status{padding:12px 14px;background:#0d1723;border:1px solid var(--line);border-radius:12px;color:var(--gold2);margin:12px 0;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.game-wrap{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:start}.board-col{min-width:0}.playerbar{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#101a27;border:1px solid var(--line);border-radius:12px;margin:8px 0}.playerbar span:last-child{color:var(--gold2);font-variant-numeric:tabular-nums;font-weight:700}
-.board-shell{width:100%;max-width:640px;aspect-ratio:1;border:7px solid #263548;border-radius:8px;overflow:hidden;box-shadow:0 18px 45px #0007;background:#1b2634;position:relative}
-#boardCanvas{width:100%;height:100%;display:block;touch-action:manipulation;cursor:pointer}
-.sidebox{display:flex;flex-direction:column;gap:12px}.move-list{height:210px;overflow:auto;background:#0d1723;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px}.move-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:7px;padding:5px;border-bottom:1px solid #1c2b3a}.move-row span:first-child{color:var(--muted)}.tag{display:inline-flex;align-items:center;border:1px solid var(--line);padding:5px 9px;border-radius:20px;color:var(--muted);font-size:11px;gap:5px}.tag.ready{border-color:#2d6a4f;color:var(--green);background:#1b433244}.section{display:none}.section.active{display:block}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button.active{border-color:var(--gold);color:var(--gold2);background:#d8b56d16}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{font-size:12px;color:var(--muted);line-height:1.55}.friend-list{display:grid;gap:8px}.friend{padding:12px;background:#0d1723;border:1px solid var(--line);border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.muted{color:var(--muted)}.gold{color:var(--gold)}.status{padding:12px 14px;background:linear-gradient(160deg,#16222f,#0f1822);border:1px solid #2c3f55;border-radius:12px;color:var(--gold2);margin:12px 0;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.game-wrap{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:start}.board-col{min-width:0}
+.playerbar{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(160deg,#162233,#0e1723);border:1px solid #2c3f55;border-radius:14px;padding:11px 14px;margin:8px 0;box-shadow:0 6px 18px #0004;transition:.25s}
+.playerbar strong{display:flex;align-items:center;gap:9px;font-size:15px;flex:1;min-width:0}
+.playerbar span{font-variant-numeric:tabular-nums;color:var(--gold2);font-weight:700}
+.playerbar:has(.thinking){border-color:#ff5c5c77;background:linear-gradient(160deg,#2a1a22,#141a26)}
+.thinking::before{content:"";width:11px;height:11px;border-radius:50%;background:#ff2f2f;flex:none;animation:redpulse 1s ease-in-out infinite}
+.thinking::after{content:"đang suy nghĩ…";font-size:12px;font-weight:500;color:#ff9a9a;white-space:nowrap;margin-left:auto;padding-left:8px}
+@keyframes redpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 #ff2f2f99}50%{opacity:.2;box-shadow:0 0 0 8px #ff2f2f00}}
+.board-shell{width:100%;max-width:640px;border:9px solid #3b2a19;border-radius:14px;overflow:hidden;background:#2a1d12;box-shadow:0 0 0 2px #d8b56d88,0 26px 60px #000b,inset 0 0 18px #0008;transition:box-shadow .4s;position:relative}
+body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 60px #000b,inset 0 0 18px #0008}
+#boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block;touch-action:manipulation;cursor:pointer}
+.sidebox{display:flex;flex-direction:column;gap:12px}.sidebox>div{background:linear-gradient(160deg,#16222fcc,#0f1822cc);border-color:#2c3f55;box-shadow:0 10px 30px #0004}
+.move-list{height:210px;overflow:auto;background:#0c141d;border:1px solid #27384b;border-radius:12px;padding:10px;font-size:13px}.move-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:7px;padding:5px;border-bottom:1px solid #1c2b3a}.move-row span:first-child{color:var(--muted)}
+.tag{display:inline-flex;align-items:center;border:1px solid var(--line);padding:5px 9px;border-radius:20px;color:var(--muted);font-size:11px;gap:5px}.tag.ready{border-color:#2d6a4f;color:var(--green);background:#1b433244}.tag.loss{border-color:#743434;color:var(--red);background:#351a1a66}.tag.draw{border-color:#665c33;color:var(--gold2);background:#3a321966}
+.section{display:none}.section.active{display:block}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button.active{border-color:var(--gold);color:var(--gold2);background:#d8b56d16}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{font-size:12px;color:var(--muted);line-height:1.55}.friend-list{display:grid;gap:8px}.friend{padding:12px;background:linear-gradient(160deg,#16222fcc,#0f1822cc);border:1px solid #2c3f55;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+/* Bảng xếp hạng & Quản trị */
+.table-wrap{overflow-x:auto;border:1px solid #27384b;border-radius:14px;background:#0c141d}
+.data-table{width:100%;border-collapse:collapse;font-size:13.5px;text-align:left}
+.data-table th,.data-table td{padding:11px 13px;border-bottom:1px solid #1c2b3a}
+.data-table th{color:var(--gold2);font-weight:700;background:#121e2d;position:sticky;top:0}
+.data-table tr:hover td{background:#16243688}
+.rank-badge{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;font-weight:700;font-size:12px;background:#1b2a3c;color:var(--text)}
+.rank-1{background:linear-gradient(135deg,#ffd700,#b8860b);color:#111}
+.rank-2{background:linear-gradient(135deg,#e0e5ec,#8a95a5);color:#111}
+.rank-3{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff}
+.admin-box{margin-top:12px;padding:11px;border-radius:12px;border:1px dashed #d8b56d66;background:#131f2e99}
+.admin-box-title{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:6px}
+
 /* Modal Đăng nhập */
 .modal-backdrop{position:fixed;inset:0;background:#060a0fcc;backdrop-filter:blur(8px);display:none;place-items:center;z-index:50;padding:16px}
 .modal-backdrop.open{display:grid}
@@ -30,10 +60,7 @@ main{max-width:1250px;margin:0 auto;padding:30px 20px 60px}.eyebrow{color:var(--
 .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;margin:14px 0}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 footer{text-align:center;color:#647487;font-size:12px;margin-top:30px}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.game-wrap{grid-template-columns:1fr}.sidebox{display:grid;grid-template-columns:1fr 1fr}.move-list{height:150px}}
-@media(max-width:560px){header{height:62px;padding:0 14px}.brand{font-size:18px}.user-pill{display:none}main{padding:22px 12px 40px}.panel{padding:14px;border-radius:16px}.mode-grid{grid-template-columns:1fr 1fr}.mode{padding:13px;min-height:110px}.sidebox{display:flex}.board-shell{border-width:4px}.hero{display:block}.hero p{font-size:13px}}
 
-/* ===== GIAO DIỆN NÂNG CẤP ===== */
 [hidden]{display:none!important}
 .rv-modal{position:fixed;inset:0;background:#000a;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
 .rv-card{width:100%;max-width:420px;background:linear-gradient(160deg,#182637,#0f1822);border:1px solid #d8b56d55;border-radius:20px;padding:18px;box-shadow:0 20px 60px #000c;max-height:88vh;overflow:auto}
@@ -48,36 +75,16 @@ footer{text-align:center;color:#647487;font-size:12px;margin-top:30px}
 .rv-sub{color:var(--muted);font-size:13px;margin:6px 0 10px}
 .rv-nav{display:grid;grid-template-columns:repeat(4,1fr) 1.3fr;gap:8px}.rv-nav button{padding:10px 0}
 body.reviewing{padding-bottom:160px}
-.board-shell{aspect-ratio:auto}
-#boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block}
-.playerbar strong{flex:1;min-width:0}
-.thinking::after{white-space:nowrap;margin-left:auto;padding-left:8px}
-@media(max-width:560px){.board-shell{border-width:6px}}
-.layout{grid-template-columns:minmax(0,880px);justify-content:center}
-body{background:radial-gradient(ellipse at 50% -10%,#2a3f5c 0%,#0e1622 48%,#070b11 100%) fixed}
-header{background:linear-gradient(180deg,#0d1522ee,#0a111bd9);border-bottom:1px solid #d8b56d33;box-shadow:0 8px 30px #0006}
-.brand{letter-spacing:.5px}
-.panel,.sidebox>div,.mode,.friend{background:linear-gradient(160deg,#16222fcc,#0f1822cc);border-color:#2c3f55;box-shadow:0 10px 30px #0004}
-.mode:hover{border-color:var(--gold);box-shadow:0 0 0 1px #d8b56d55,0 12px 28px #0006}
-.mode.selected{box-shadow:0 0 0 1px var(--gold),0 0 24px #d8b56d33}
-button.primary{box-shadow:0 6px 18px #b68c4755}
-.board-shell{border:9px solid #3b2a19;border-radius:14px;background:#2a1d12;box-shadow:0 0 0 2px #d8b56d88,0 26px 60px #000b,inset 0 0 18px #0008;transition:box-shadow .4s}
-body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 60px #000b,inset 0 0 18px #0008}
-.playerbar{background:linear-gradient(160deg,#162233,#0e1723);border:1px solid #2c3f55;border-radius:14px;padding:11px 14px;box-shadow:0 6px 18px #0004;transition:.25s}
-.playerbar strong{display:flex;align-items:center;gap:9px;font-size:15px}
-.playerbar span{font-variant-numeric:tabular-nums;color:var(--gold2);font-weight:700}
-.playerbar:has(.thinking){border-color:#ff5c5c77;background:linear-gradient(160deg,#2a1a22,#141a26)}
-.thinking::before{content:"";width:11px;height:11px;border-radius:50%;background:#ff2f2f;flex:none;animation:redpulse 1s ease-in-out infinite}
-.thinking::after{content:"đang suy nghĩ…";font-size:12px;font-weight:500;color:#ff9a9a}
-@keyframes redpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 #ff2f2f99}50%{opacity:.2;box-shadow:0 0 0 8px #ff2f2f00}}
-.status{background:linear-gradient(160deg,#16222f,#0f1822);border:1px solid #2c3f55;border-radius:12px}
-.move-list{background:#0c141d;border:1px solid #27384b;border-radius:12px}
+
+@media(max-width:850px){.layout,.layout-wide{grid-template-columns:1fr}.game-wrap{grid-template-columns:1fr}.sidebox{display:grid;grid-template-columns:1fr 1fr}.move-list{height:150px}}
+@media(max-width:560px){header{height:62px;padding:0 14px}.brand{font-size:18px}.user-pill{display:none}main{padding:22px 12px 40px}.panel{padding:14px;border-radius:16px}.mode-grid{grid-template-columns:1fr 1fr}.mode{padding:13px;min-height:110px}.sidebox{display:flex}.board-shell{border-width:6px}.hero{display:block}.hero p{font-size:13px}}
 </style>
 </head>
 <body>
 <header>
   <div class="brand"><div class="brand-mark">♞</div>CHESS <em>ULTIMATE</em></div>
   <div class="header-right">
+    <span id="adminBadge" class="admin-badge" hidden>ADMIN</span>
     <span class="user-pill" id="userLabel">Khách</span>
     <button id="authBtn" class="primary">Đăng nhập</button>
   </div>
@@ -88,7 +95,7 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
   <div>
     <div class="eyebrow">Think deeper · Play smarter</div>
     <h1>Chiến trường trí tuệ.</h1>
-    <p>Thử thách bản thân trên bàn cờ HTML5 Canvas mượt mà, chinh phục Celestial Địa Ngục và kết nối với những kỳ thủ khác.</p>
+    <p>Thử thách bản thân trên bàn cờ HTML5 Canvas mượt mà, chinh phục Celestial Địa Ngục và tranh tài trên Bảng Xếp Hạng Elo.</p>
   </div>
   <span class="tag" id="engineBadge">⏳ Đang tải Celestial...</span>
 </div>
@@ -96,8 +103,10 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
 <div class="tabs">
   <button class="active" data-tab="home">Sảnh chính</button>
   <button data-tab="game">Bàn cờ Canvas</button>
+  <button data-tab="leaderboard">🏆 Bảng xếp hạng</button>
   <button data-tab="friends">Bạn bè & Online</button>
   <button data-tab="profile">Tài khoản</button>
+  <button data-tab="admin" id="adminTabBtn" hidden>🛡️ Quản trị</button>
 </div>
 
 <section id="home" class="section active">
@@ -105,10 +114,10 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
   <div class="panel">
     <h2>Chọn chế độ đấu máy</h2>
     <div class="mode-grid">
-      <button class="mode selected" data-mode="easy"><span class="ico">♙</span><strong>Khởi đầu</strong><small>Celestial Skill 1 · Depth 3 · Dành cho người mới.</small></button>
-      <button class="mode" data-mode="medium"><span class="ico">♘</span><strong>Thử thách</strong><small>Celestial Skill 7 · Depth 8 · Tư duy chiến thuật.</small></button>
-      <button class="mode" data-mode="hard"><span class="ico">♗</span><strong>Cao thủ</strong><small>Celestial Skill 14 · Depth 13 · Lối đánh sắc bén.</small></button>
-      <button class="mode" data-mode="hell"><span class="ico">🔥</span><strong>Địa ngục (Celestial Max)</strong><small>Skill 20 · ~5 giây/nước · Sức mạnh tối đa không khoan nhượng.</small></button>
+      <button class="mode selected" data-mode="easy"><span class="ico">♙</span><strong>Khởi đầu</strong><small>Skill 1 · Thắng +8 / Hoà -2 / Thua -15 Elo</small></button>
+      <button class="mode" data-mode="medium"><span class="ico">♘</span><strong>Thử thách</strong><small>Skill 7 · Thắng +15 / Hoà +2 / Thua -12 Elo</small></button>
+      <button class="mode" data-mode="hard"><span class="ico">♗</span><strong>Cao thủ</strong><small>Skill 14 · Thắng +28 / Hoà +6 / Thua -8 Elo</small></button>
+      <button class="mode" data-mode="hell"><span class="ico">🔥</span><strong>Địa ngục (Celestial Max)</strong><small>Skill 20 · Thắng +55 / Hoà +15 / Thua -5 Elo</small></button>
     </div>
     <div class="two">
       <div class="field"><label>Màu quân của bạn</label><select id="colorChoice"><option value="w">Trắng (Đi trước)</option><option value="b">Đen (Đi sau)</option></select></div>
@@ -116,9 +125,9 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
     </div>
     <div class="actions">
       <button class="primary" id="startBtn">Bắt đầu trận đấu →</button>
-      <button id="analysisBtn">Vào bàn phân tích</button>
+      <button id="analysisBtn">Vào bàn cờ</button>
     </div>
-    <div class="notice" style="margin-top:12px">Bàn cờ được render bằng <strong>HTML5 2D Canvas</strong> kết hợp lõi Celestial UCI ở mức Skill 20 (tối đa) cho chế độ Địa ngục.</div>
+    <div class="notice" style="margin-top:12px">Hệ thống tính điểm Elo tự động theo cấp độ Bot hoặc theo công thức Elo chuẩn quốc tế khi đấu Online với người chơi khác.</div>
   </div>
 </div>
 </section>
@@ -139,30 +148,63 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
         <button id="reviewBtn" class="primary" hidden style="width:100%;margin-top:4px">📊 Xem lại trận</button>
       </div>
       <div class="sidebox">
-        <div>
-          <div class="status" id="gameStatus">Trắng đi trước.</div>
+        <div style="padding:13px;border-radius:16px;border:1px solid #2c3f55">
+          <div class="status" id="gameStatus" style="margin-top:0">Trắng đi trước.</div>
           <div class="move-list" id="moveList"></div>
         </div>
         <div class="panel" style="padding:13px">
-          <h2 style="font-size:16px">Điều khiển & Phân tích</h2>
+          <h2 style="font-size:16px">Điều khiển bàn cờ</h2>
           <div class="actions">
             <button id="undoBtn">↶ Hoàn tác</button>
             <button id="flipBtn">⇅ Đảo bàn</button>
             <button id="newBtn">Ván mới</button>
           </div>
-          <div class="two" style="margin-top:10px">
-            <button id="hintBtn">✨ Gợi ý</button>
-            <button id="evalBtn">🔍 Đánh giá</button>
+          <!-- CHỈ HIỆN VỚI QUẢN TRỊ VIÊN duong158209@gmail.com -->
+          <div id="adminControlsBox" class="admin-box" hidden>
+            <div class="admin-box-title">🛡️ Đặc quyền Quản trị</div>
+            <div class="two">
+              <button id="hintBtn">✨ Gợi ý</button>
+              <button id="evalBtn">🔍 Đánh giá</button>
+            </div>
+            <p class="notice" id="analysisText" style="margin:8px 0 0">Sẵn sàng phân tích cho Admin.</p>
           </div>
-          <p class="notice" id="analysisText" style="margin-top:10px">Chưa có phân tích.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<section id="friends" class="section">
+<!-- BẢNG XẾP HẠNG ELO -->
+<section id="leaderboard" class="section">
   <div class="layout">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <h2 style="margin:0">🏆 Bảng Xếp Hạng Kỳ Thủ</h2>
+        <span class="tag ready" id="lbCountTag">Đang tải...</span>
+      </div>
+      <p class="notice" style="margin-top:0">Xếp hạng cập nhật theo thời gian thực dựa trên điểm Elo khi đấu với Bot (mọi cấp độ) và đấu Online PvP.</p>
+      <div class="table-wrap" style="max-height:540px">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:60px">Hạng</th>
+              <th>Kỳ thủ</th>
+              <th>Elo</th>
+              <th>Tổng trận</th>
+              <th>Thắng / Hoà / Thua</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody">
+            <tr><td colspan="5" class="notice">Đang tải dữ liệu bảng xếp hạng...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="friends" class="section">
+  <div class="layout-wide">
     <div class="panel">
       <h2>Kết nối kỳ thủ</h2>
       <div class="field"><label>UID của bạn (Gửi mã này cho bạn bè)</label><input id="myUidInput" readonly value="Chưa đăng nhập"></div>
@@ -175,8 +217,8 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
       <div id="friendsList" class="friend-list"><p class="notice">Chưa có dữ liệu.</p></div>
     </div>
     <div class="panel">
-      <h2>Đấu trường Online</h2>
-      <p class="notice">Tạo phòng riêng để mời bạn bè, hoặc nhập mã phòng được chia sẻ để thi đấu trực tiếp.</p>
+      <h2>Đấu trường Online (PvP Tính Elo)</h2>
+      <p class="notice">Tạo phòng riêng để mời bạn bè hoặc nhập mã phòng để thi đấu trực tiếp. Khi ván đấu kết thúc, hệ thống sẽ tự động cộng/trừ Elo cả 2 người chơi theo chuẩn Elo quốc tế.</p>
       <div class="actions"><button class="primary" id="createRoomBtn">＋ Tạo phòng mới</button></div>
       <div class="field"><label>Mã phòng</label><input id="roomCode" placeholder="Nhập mã phòng..."></div>
       <button id="joinRoomBtn">Tham gia phòng</button>
@@ -186,7 +228,7 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
 </section>
 
 <section id="profile" class="section">
-  <div class="layout">
+  <div class="layout-wide">
     <div class="panel">
       <h2>Tài khoản kỳ thủ</h2>
       <div class="status" id="profileStatus">Bạn đang chơi ở chế độ khách.</div>
@@ -201,12 +243,88 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
       </div>
     </div>
     <div class="panel">
-      <h2>Thống kê cá nhân</h2>
+      <h2>Thống kê & Lịch sử đấu của bạn</h2>
       <div class="two">
-        <div class="status"><div><div class="notice">Elo hiện tại</div><strong id="eloValue" style="font-size:20px">1000</strong></div></div>
-        <div class="status"><div><div class="notice">Số trận đã đấu</div><strong id="gamesValue" style="font-size:20px">0</strong></div></div>
+        <div class="status"><div><div class="notice">Elo hiện tại</div><strong id="eloValue" style="font-size:22px">1000</strong></div></div>
+        <div class="status"><div><div class="notice">Thắng / Hoà / Thua</div><strong id="wdlValue" style="font-size:18px">0 / 0 / 0</strong></div></div>
       </div>
-      <p class="notice">Khi bạn thắng chế độ Địa ngục hoặc thắng người chơi khác, hệ thống sẽ tự động cộng điểm Elo và lưu lên Firebase.</p>
+      <h3 style="font-size:15px;margin:14px 0 8px">Lịch sử 20 trận gần nhất</h3>
+      <div class="table-wrap" style="max-height:270px">
+        <table class="data-table">
+          <thead>
+            <tr><th>Đối thủ</th><th>Chế độ</th><th>Kết quả</th><th>Elo</th></tr>
+          </thead>
+          <tbody id="myHistoryBody">
+            <tr><td colspan="4" class="notice">Đăng nhập để xem lịch sử đấu.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANG QUẢN TRỊ (CHỈ DÀNH CHO duong158209@gmail.com) -->
+<section id="admin" class="section">
+  <div class="panel" style="margin-bottom:22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class="eyebrow">Quản trị hệ thống tối cao</div>
+        <h2 style="margin:4px 0 0">🛡️ Trung Tâm Quản Trị (duong158209@gmail.com)</h2>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="tag ready" id="adminStatsUsers">0 Tài khoản</span>
+        <span class="tag ready" id="adminStatsMatches">0 Trận đấu</span>
+      </div>
+    </div>
+    <p class="notice" style="margin:8px 0 0">Bạn đang có quyền Quản trị viên: Mở khoá tính năng <strong>✨ Gợi ý</strong> và <strong>🔍 Đánh giá</strong> trực tiếp trong bàn cờ, đồng thời giám sát toàn bộ tài khoản và lịch sử đấu (Bot & Người) dưới đây.</p>
+  </div>
+
+  <div class="layout-wide">
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px">
+        <h2 style="margin:0">👥 Danh sách tài khoản đã tạo</h2>
+        <input id="adminUserSearch" placeholder="Tìm tên hoặc email..." style="max-width:210px;padding:8px 11px">
+      </div>
+      <p class="notice" style="margin-top:0">Nhấn vào một tài khoản bất kỳ để lọc riêng lịch sử đấu của người đó ở bảng bên phải.</p>
+      <div class="table-wrap" style="max-height:500px">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tên & Email</th>
+              <th>Elo</th>
+              <th>W / D / L</th>
+              <th>Chi tiết</th>
+            </tr>
+          </thead>
+          <tbody id="adminUsersBody">
+            <tr><td colspan="4" class="notice">Đang tải danh sách người dùng...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <h2 style="margin:0" id="adminHistoryTitle">⚔️ Lịch sử đấu toàn hệ thống</h2>
+        <button class="ghost" id="adminResetFilterBtn" style="padding:7px 12px;font-size:13px" hidden>Xem tất cả người chơi</button>
+      </div>
+      <p class="notice" style="margin-top:0">Bao gồm toàn bộ các trận đấu với Bot (Khởi đầu, Thử thách, Cao thủ, Địa ngục) và các trận PvP Online.</p>
+      <div class="table-wrap" style="max-height:500px">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Người chơi</th>
+              <th>Đối thủ & Chế độ</th>
+              <th>Kết quả</th>
+              <th>Biến động Elo</th>
+            </tr>
+          </thead>
+          <tbody id="adminMatchesBody">
+            <tr><td colspan="5" class="notice">Đang tải lịch sử đấu...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </section>
@@ -232,7 +350,7 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
       <h3>Đăng nhập Kỳ Thủ</h3>
       <button class="ghost" id="closeModalBtn">✕</button>
     </div>
-    <p class="notice" style="margin-top:0">Đăng nhập để lưu điểm Elo, kết bạn và tạo phòng đấu Online.</p>
+    <p class="notice" style="margin-top:0">Đăng nhập để lưu điểm Elo trên Bảng xếp hạng, kết bạn và đấu Online.</p>
     <div class="field"><label>Tên hiển thị (khi đăng ký mới)</label><input id="modalName" placeholder="Nhập biệt danh..."></div>
     <div class="field"><label>Email</label><input id="modalEmail" type="email" placeholder="email@example.com"></div>
     <div class="field"><label>Mật khẩu</label><input id="modalPass" type="password" placeholder="••••••••"></div>
@@ -254,8 +372,10 @@ import {getDatabase,ref,set,get,push,onValue,update,remove,serverTimestamp} from
 import {getAnalytics,isSupported as analyticsSupported} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
 // ============================================================================
-// FIREBASE CONFIG (project chess-7a25e)
+// 1. CẤU HÌNH FIREBASE & QUẢN TRỊ VIÊN
 // ============================================================================
+const ADMIN_EMAIL = "duong158209@gmail.com";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDHHYeQu-m99th0y26A7CoPyL6_cpOZ6nQ",
   authDomain: "chess-7a25e.firebaseapp.com",
@@ -268,7 +388,12 @@ const firebaseConfig = {
 };
 
 let auth=null, db=null, user=null, fbReady=false, roomUnsub=null;
-const $=id=>document.getElementById(id)||document.createElement("span"); // phần tử đã xoá khỏi giao diện vẫn an toàn khi code ghi vào
+let allUsersCache = {}, allMatchesCache = [], adminFilterUid = null;
+const $=id=>document.getElementById(id)||document.createElement("span");
+
+function isAdminUser(u = user) {
+  return Boolean(u && u.email && u.email.toLowerCase().trim() === ADMIN_EMAIL);
+}
 
 try {
   if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
@@ -277,6 +402,8 @@ try {
     db = getDatabase(app);
     fbReady = true;
     analyticsSupported().then(ok => { if(ok) getAnalytics(app); }).catch(() => {});
+    initLeaderboardAndAdminListeners();
+
     onAuthStateChanged(auth, async u => {
       user = u;
       renderUser();
@@ -290,11 +417,17 @@ try {
             email: u.email || "",
             elo: 1000,
             games: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
             createdAt: serverTimestamp(),
             lastSeen: serverTimestamp()
           });
         } else {
-          await update(pRef, { lastSeen: serverTimestamp() });
+          await update(pRef, {
+            email: u.email || snap.val().email || "",
+            lastSeen: serverTimestamp()
+          });
         }
         loadProfileStats();
         loadFriends();
@@ -304,15 +437,35 @@ try {
 } catch(e) { console.warn("Firebase chưa cấu hình:", e); }
 
 // ============================================================================
-// 2. TÍCH HỢP CELESTIAL UCI (Tự nạp qua CDN Blob Worker, hỗ trợ Chế độ Địa Ngục)
+// 2. CƠ CHẾ TÍNH ĐIỂM ELO (BOT THEO CẤP ĐỘ & NGƯỜI CHƠI ONLINE)
+// ============================================================================
+const BOT_ELO_TABLE = {
+  easy:   { win: +8,  draw: -2,  loss: -15, label: "Bot Khởi đầu (Skill 1)",   botElo: 800  },
+  medium: { win: +15, draw: +2,  loss: -12, label: "Bot Thử thách (Skill 7)",  botElo: 1200 },
+  hard:   { win: +28, draw: +6,  loss: -8,  label: "Bot Cao thủ (Skill 14)",   botElo: 1650 },
+  hell:   { win: +55, draw: +15, loss: -5,  label: "Bot Địa ngục (Skill 20)",  botElo: 2400 }
+};
+
+function calcPvpEloDelta(myElo, oppElo, score) {
+  // score: 1 (Thắng), 0.5 (Hoà), 0 (Thua)
+  const K = 32;
+  const expected = 1 / (1 + Math.pow(10, (oppElo - myElo) / 400));
+  let delta = Math.round(K * (score - expected));
+  if(score === 1 && delta < 5) delta = 5;
+  if(score === 0 && delta > -5) delta = -5;
+  return delta;
+}
+
+// ============================================================================
+// 3. TÍCH HỢP CELESTIAL UCI ENGINE
 // ============================================================================
 let game=new Chess(), selected=null, flipped=false, mode="easy", human="w";
 let engine=null, engineReady=false, engineBusy=false, engineMode="play";
-let roomId=null, isOnlineGame=false, clockSeconds=0, clockTimer=null, remaining={w:0,b:0};
+let roomId=null, isOnlineGame=false, onlineRoomData=null, matchRecorded=false;
+let clockSeconds=0, clockTimer=null, remaining={w:0,b:0};
 let hintArrow=null;
 
 const CELESTIAL_CDN = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
-
 const DIFFICULTY = {
   easy:   { skill: 1,  depth: 3,  movetime: 250  },
   medium: { skill: 7,  depth: 8,  movetime: 600  },
@@ -322,20 +475,21 @@ const DIFFICULTY = {
 
 let engineKind = "sf10", botWatch = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
+
 function armBotWatch(ms){
   clearTimeout(botWatch);
   botWatch = setTimeout(() => {
     if(!engineBusy || engineMode !== "play") return;
-    if(engine) engine.postMessage("stop");           // ép engine trả nước tốt nhất hiện có
+    if(engine) engine.postMessage("stop");
     botWatch = setTimeout(() => {
       if(!engineBusy || engineMode !== "play") return;
       engineBusy = false;
-      if(engineKind === "sf19") useCdnEngine();       // engine mới treo -> chuyển engine dự phòng
+      if(engineKind === "sf19") useCdnEngine();
       fallbackMove();
     }, 2500);
   }, ms);
 }
-const LOCAL_SF = "stockfish-19-lite-single.js"; // đặt cạnh index.html cùng file .wasm
+const LOCAL_SF = "stockfish-19-lite-single.js";
 
 async function makeWorker(forceCdn){
   if(!forceCdn){
@@ -373,27 +527,24 @@ async function initEngine(forceCdn){
       if(line === "uciok") engine.postMessage("isready");
       if(line === "readyok") {
         engineReady = true;
-        $("engineState").textContent = engineKind === "sf19" ? "Celestial NNUE (WASM) đã sẵn sàng." : "Celestial (asm.js) đã sẵn sàng.";
         $("engineBadge").textContent = "⚡ Celestial Ready";
         $("engineBadge").classList.add("ready");
-        $("uciTag").classList.add("ready");
       }
-      if(line.startsWith("info ") && line.includes(" score ")) {
+      // Chỉ hiển thị phân tích info nếu người dùng là Admin và đang ấn nút Đánh giá
+      if(line.startsWith("info ") && line.includes(" score ") && isAdminUser() && engineMode === "eval") {
         const mateMatch = line.match(/score mate (-?\d+)/);
         const cpMatch = line.match(/score cp (-?\d+)/);
         const pvMatch = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
-        if(engineMode === "eval" || mode === "hell") {
-          let evalStr = "";
-          if(mateMatch) evalStr = `Chiếu hết sau ${Math.abs(Number(mateMatch[1]))} nước`;
-          else if(cpMatch) {
-            const score = (Number(cpMatch[1]) / 100 * (game.turn()==="w"?1:-1)).toFixed(2);
-            evalStr = `Đánh giá: ${score > 0 ? "+"+score : score}`;
-          }
-          if(evalStr && pvMatch) {
-            const dM = line.match(/ depth (\d+)/), nM = line.match(/ nps (\d+)/);
-            const perf = dM ? ` · d${dM[1]}${nM ? " · " + Math.round(Number(nM[1])/1000) + "k nps" : ""}` : "";
-            $("analysisText").textContent = `${evalStr} · Nước tối ưu: ${pvMatch[1]}${perf}`;
-          }
+        let evalStr = "";
+        if(mateMatch) evalStr = `Chiếu hết sau ${Math.abs(Number(mateMatch[1]))} nước`;
+        else if(cpMatch) {
+          const score = (Number(cpMatch[1]) / 100 * (game.turn()==="w"?1:-1)).toFixed(2);
+          evalStr = `Đánh giá: ${score > 0 ? "+"+score : score}`;
+        }
+        if(evalStr && pvMatch) {
+          const dM = line.match(/ depth (\d+)/), nM = line.match(/ nps (\d+)/);
+          const perf = dM ? ` · d${dM[1]}${nM ? " · " + Math.round(Number(nM[1])/1000) + "k nps" : ""}` : "";
+          $("analysisText").textContent = `${evalStr} · Nước tối ưu: ${pvMatch[1]}${perf}`;
         }
       }
       if(line.startsWith("bestmove")) {
@@ -403,15 +554,19 @@ async function initEngine(forceCdn){
         if(!uci || uci === "(none)") return;
 
         if(engineMode === "hint") {
-          hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
-          $("analysisText").textContent = `✨ Celestial gợi ý nước đi: ${hintArrow.from} → ${hintArrow.to}`;
+          if(isAdminUser()) {
+            hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
+            $("analysisText").textContent = `✨ Celestial gợi ý nước đi: ${hintArrow.from} → ${hintArrow.to}`;
+          }
           engineMode = "play";
           render();
           return;
         }
         if(engineMode === "eval") {
-          hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
-          $("analysisText").textContent += ` | Khuyên đi: ${uci}`;
+          if(isAdminUser()) {
+            hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
+            $("analysisText").textContent += ` | Khuyên đi: ${uci}`;
+          }
           engineMode = "play";
           render();
           return;
@@ -431,19 +586,19 @@ async function initEngine(forceCdn){
     engine.postMessage("uci");
     if(engineKind === "sf19") setTimeout(() => { if(engineKind === "sf19" && !engineReady) useCdnEngine(); }, 12000);
   } catch(err) {
-    console.warn("Không thể tải Celestial CDN, chuyển sang bot dự phòng:", err);
-    $("engineState").textContent = "Đang dùng AI nội bộ (Không kết nối được CDN).";
+    console.warn("Không thể tải Celestial CDN:", err);
   }
 }
 initEngine();
 
 // ============================================================================
-// 3. ĐIỀU HƯỚNG & ĐĂNG NHẬP
+// 4. ĐIỀU HƯỚNG, PHÂN QUYỀN ADMIN & ĐĂNG NHẬP
 // ============================================================================
 const glyph={w:{k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:"♙"},b:{k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"}};
 const modeNames={easy:"Khởi đầu",medium:"Thử thách",hard:"Cao thủ",hell:"🔥 ĐỊA NGỤC"};
 
 function tab(name){
+  if(name === "admin" && !isAdminUser()) name = "home";
   document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===name));
   document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
   if(name==="game") setTimeout(render, 30);
@@ -456,13 +611,22 @@ document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
 
 function renderUser(){
   const name = user ? (user.displayName || user.email) : "Khách";
+  const admin = isAdminUser();
   $("userLabel").textContent = name;
   $("authBtn").textContent = user ? "Tài khoản" : "Đăng nhập";
   $("profileStatus").textContent = user ? `Đã đăng nhập: ${name} (${user.email})` : "Bạn đang chơi ở chế độ khách.";
-  $("quickAuthText").textContent = user ? `♛ Xin chào, ${name}!` : "♛ Đăng nhập để lưu Elo & đấu Online.";
   $("myUidInput").value = user ? user.uid : "Chưa đăng nhập";
   $("signOutBtn").style.display = user ? "inline-block" : "none";
   $("friendStatus").textContent = user ? "Sẵn sàng kết nối bạn bè." : "Đăng nhập để sử dụng tính năng bạn bè.";
+
+  // Chỉ hiện tính năng Quản trị + Gợi ý & Đánh giá cho duong158209@gmail.com
+  $("adminBadge").hidden = !admin;
+  $("adminTabBtn").hidden = !admin;
+  $("adminControlsBox").hidden = !admin;
+  if(!admin) {
+    hintArrow = null;
+    if(document.querySelector("#admin.section.active")) tab("home");
+  }
 }
 
 $("authBtn").onclick = () => {
@@ -472,7 +636,7 @@ $("authBtn").onclick = () => {
 $("closeModalBtn").onclick = () => $("authModal").classList.remove("open");
 
 async function handleSignIn(email, pass, msgEl) {
-  if(!fbReady) return alert("Bạn chưa điền firebaseConfig trong file index.html!");
+  if(!fbReady) return alert("Chưa kết nối Firebase!");
   try {
     await signInWithEmailAndPassword(auth, email.trim(), pass);
   } catch(e) {
@@ -482,7 +646,7 @@ async function handleSignIn(email, pass, msgEl) {
 }
 
 async function handleSignUp(name, email, pass, msgEl) {
-  if(!fbReady) return alert("Bạn chưa điền firebaseConfig trong file index.html!");
+  if(!fbReady) return alert("Chưa kết nối Firebase!");
   try {
     const c = await createUserWithEmailAndPassword(auth, email.trim(), pass);
     const cleanName = (name || email.split("@")[0]).trim();
@@ -492,6 +656,9 @@ async function handleSignUp(name, email, pass, msgEl) {
       email: c.user.email,
       elo: 1000,
       games: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
       createdAt: serverTimestamp(),
       lastSeen: serverTimestamp()
     });
@@ -503,7 +670,7 @@ async function handleSignUp(name, email, pass, msgEl) {
 }
 
 async function handleGoogleLogin() {
-  if(!fbReady) return alert("Bạn chưa điền firebaseConfig trong file index.html!");
+  if(!fbReady) return alert("Chưa kết nối Firebase!");
   try {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
@@ -524,18 +691,184 @@ function loadProfileStats() {
     if(!snap.exists()) return;
     const d = snap.val();
     $("eloValue").textContent = d.elo ?? 1000;
-    $("gamesValue").textContent = d.games ?? 0;
+    $("wdlValue").textContent = `${d.wins || 0} / ${d.draws || 0} / ${d.losses || 0}`;
     if(d.name) $("displayName").value = d.name;
   });
 }
 
 // ============================================================================
-// 4. BÀN CỜ HTML5 CANVAS 2D & LOGIC CHẾ ĐỘ ĐỊA NGỤC
+// 5. BẢNG XẾP HẠNG & TRUNG TÂM QUẢN TRỊ (REALTIME)
+// ============================================================================
+function initLeaderboardAndAdminListeners() {
+  if(!db) return;
+
+  onValue(ref(db, "users"), snap => {
+    allUsersCache = snap.exists() ? snap.val() : {};
+    renderLeaderboardUI();
+    renderAdminUsersUI();
+  });
+
+  onValue(ref(db, "matchHistory"), snap => {
+    const raw = snap.exists() ? snap.val() : {};
+    allMatchesCache = Object.entries(raw).map(([id, m]) => ({ id, ...m }))
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    renderMyHistoryUI();
+    renderAdminMatchesUI();
+  });
+}
+
+function renderLeaderboardUI() {
+  const list = Object.entries(allUsersCache)
+    .map(([uid, obj]) => ({ uid, ...(obj.profile || {}) }))
+    .filter(p => p.name || p.email)
+    .sort((a, b) => (b.elo ?? 1000) - (a.elo ?? 1000));
+
+  $("lbCountTag").textContent = `${list.length} Kỳ thủ`;
+  const tbody = $("leaderboardBody");
+  if(!list.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="notice">Chưa có kỳ thủ nào trên bảng xếp hạng.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map((p, idx) => {
+    const rank = idx + 1;
+    const rCls = rank === 1 ? "rank-1" : rank === 2 ? "rank-2" : rank === 3 ? "rank-3" : "";
+    const isMe = user && user.uid === p.uid;
+    return `<tr style="${isMe ? 'background:#d8b56d1f' : ''}">
+      <td><span class="rank-badge ${rCls}">${rank}</span></td>
+      <td><strong>${escapeHtml(p.name || "Kỳ thủ")}</strong> ${isMe ? '<span class="tag ready">Bạn</span>' : ''}</td>
+      <td><strong class="gold" style="font-size:16px">${p.elo ?? 1000}</strong></td>
+      <td>${p.games || 0}</td>
+      <td><span style="color:var(--green)">${p.wins || 0}W</span> · <span style="color:var(--gold2)">${p.draws || 0}D</span> · <span style="color:var(--red)">${p.losses || 0}L</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderMyHistoryUI() {
+  const tbody = $("myHistoryBody");
+  if(!user) {
+    tbody.innerHTML = `<tr><td colspan="4" class="notice">Đăng nhập để xem lịch sử đấu.</td></tr>`;
+    return;
+  }
+  const mine = allMatchesCache.filter(m => m.uid === user.uid).slice(0, 20);
+  if(!mine.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="notice">Bạn chưa có trận đấu nào được ghi nhận.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = mine.map(m => {
+    const resBadge = m.result === "win"
+      ? `<span class="tag ready">Thắng</span>`
+      : m.result === "draw"
+      ? `<span class="tag draw">Hoà</span>`
+      : `<span class="tag loss">Thua</span>`;
+    const sign = m.eloDelta > 0 ? `+${m.eloDelta}` : m.eloDelta;
+    return `<tr>
+      <td><strong>${escapeHtml(m.opponentName || "Bot")}</strong></td>
+      <td>${escapeHtml(m.modeLabel || m.mode || "")}</td>
+      <td>${resBadge}</td>
+      <td><strong>${sign}</strong> (${m.eloAfter ?? 1000})</td>
+    </tr>`;
+  }).join("");
+}
+
+function renderAdminUsersUI() {
+  if(!isAdminUser()) return;
+  const q = ($("adminUserSearch").value || "").toLowerCase().trim();
+  const users = Object.entries(allUsersCache)
+    .map(([uid, obj]) => ({ uid, ...(obj.profile || {}) }))
+    .filter(u => u.name || u.email)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+  $("adminStatsUsers").textContent = `${users.length} Tài khoản`;
+
+  const filtered = q
+    ? users.filter(u => (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q) || u.uid.toLowerCase().includes(q))
+    : users;
+
+  const tbody = $("adminUsersBody");
+  if(!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="notice">Không tìm thấy tài khoản phù hợp.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(u => {
+    const createdStr = u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—";
+    return `<tr>
+      <td>
+        <strong>${escapeHtml(u.name || "Chưa đặt tên")}</strong>
+        <div class="notice">${escapeHtml(u.email || "Không email")} · Tạo: ${createdStr}</div>
+      </td>
+      <td><strong class="gold">${u.elo ?? 1000}</strong></td>
+      <td>${u.wins || 0} / ${u.draws || 0} / ${u.losses || 0} <span class="notice">(${u.games || 0} trận)</span></td>
+      <td><button class="ghost" data-filter-uid="${u.uid}" style="padding:6px 10px;font-size:12px">Xem lịch sử</button></td>
+    </tr>`;
+  }).join("");
+
+  tbody.querySelectorAll("[data-filter-uid]").forEach(btn => {
+    btn.onclick = () => {
+      adminFilterUid = btn.dataset.filterUid;
+      const targetUser = allUsersCache[adminFilterUid]?.profile;
+      $("adminHistoryTitle").textContent = `⚔️ Lịch sử đấu: ${targetUser?.name || targetUser?.email || adminFilterUid}`;
+      $("adminResetFilterBtn").hidden = false;
+      renderAdminMatchesUI();
+    };
+  });
+}
+
+function renderAdminMatchesUI() {
+  if(!isAdminUser()) return;
+  $("adminStatsMatches").textContent = `${allMatchesCache.length} Trận đấu`;
+  const list = adminFilterUid
+    ? allMatchesCache.filter(m => m.uid === adminFilterUid)
+    : allMatchesCache;
+
+  const tbody = $("adminMatchesBody");
+  if(!list.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="notice">Chưa có lịch sử trận đấu nào.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.slice(0, 150).map(m => {
+    const timeStr = m.timestamp ? new Date(m.timestamp).toLocaleString("vi-VN") : "—";
+    const resBadge = m.result === "win"
+      ? `<span class="tag ready">Thắng</span>`
+      : m.result === "draw"
+      ? `<span class="tag draw">Hoà</span>`
+      : `<span class="tag loss">Thua</span>`;
+    const sign = m.eloDelta > 0 ? `+${m.eloDelta}` : m.eloDelta;
+    return `<tr>
+      <td class="notice">${timeStr}</td>
+      <td>
+        <strong>${escapeHtml(m.userName || "Kỳ thủ")}</strong>
+        <div class="notice">${escapeHtml(m.userEmail || "")}</div>
+      </td>
+      <td>
+        <strong>${escapeHtml(m.opponentName || "Bot")}</strong>
+        <div class="notice">${escapeHtml(m.modeLabel || "")} · ${m.movesCount || 0} nước</div>
+      </td>
+      <td>${resBadge} <span class="notice">(${escapeHtml(m.reason || "")})</span></td>
+      <td><strong>${sign}</strong> <span class="notice">(${m.eloBefore ?? 1000} → ${m.eloAfter ?? 1000})</span></td>
+    </tr>`;
+  }).join("");
+}
+
+$("adminUserSearch").oninput = renderAdminUsersUI;
+$("adminResetFilterBtn").onclick = () => {
+  adminFilterUid = null;
+  $("adminHistoryTitle").textContent = "⚔️ Lịch sử đấu toàn hệ thống";
+  $("adminResetFilterBtn").hidden = true;
+  renderAdminMatchesUI();
+};
+
+function escapeHtml(str) {
+  return String(str || "").replace(/[&<>"']/g, s => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[s]));
+}
+
+// ============================================================================
+// 6. BÀN CỜ HTML5 CANVAS 2D & XỬ LÝ VÁN ĐẤU
 // ============================================================================
 const canvas = $("boardCanvas");
 const ctx = canvas.getContext("2d");
 let lastGlowKey = "", moveGlowStart = 0, glowRaf = null;
 const spriteCache = {};
+
 function pieceSprite(color, type, size){
   const key = color + type + size;
   if (spriteCache[key]) return spriteCache[key];
@@ -554,9 +887,9 @@ function pieceSprite(color, type, size){
   sh.addColorStop(1, "rgba(255,255,255,0)");
   b.fillStyle = sh; b.fillRect(0, 0, size, size);
   const [spr, g] = mk();
-  g.lineWidth = size * 0.08; g.strokeStyle = white ? "#2a190b" : "#f6e2a2"; g.strokeText(ch, cx, cy); // viền ngoài tương phản
+  g.lineWidth = size * 0.08; g.strokeStyle = white ? "#2a190b" : "#f6e2a2"; g.strokeText(ch, cx, cy);
   g.drawImage(body, 0, 0);
-  g.lineWidth = size * 0.02; g.strokeStyle = white ? "#7a5a2c" : "#e0b84e"; g.strokeText(ch, cx, cy);   // viền mảnh: nâu (trắng) / vàng (đen)
+  g.lineWidth = size * 0.02; g.strokeStyle = white ? "#7a5a2c" : "#e0b84e"; g.strokeText(ch, cx, cy);
   return (spriteCache[key] = spr);
 }
 
@@ -717,7 +1050,7 @@ function drawBoardCanvas() {
     }
   }
 
-  if (hintArrow) {
+  if (hintArrow && isAdminUser()) {
     drawArrow(hintArrow.from, hintArrow.to);
   }
 }
@@ -738,6 +1071,8 @@ window.addEventListener("resize", () => render());
 function startGame(){
   stopReviewJob(); reviewMode = false; reviewFull = null; $("reviewBar").hidden = true; $("reviewModal").hidden = true; document.body.classList.remove("reviewing");
   isOnlineGame = false;
+  onlineRoomData = null;
+  matchRecorded = false;
   if(roomUnsub) { roomUnsub(); roomUnsub = null; }
   game = new Chess();
   selected = null;
@@ -747,11 +1082,11 @@ function startGame(){
   clockSeconds = Number($("timeChoice").value);
   remaining = { w: clockSeconds, b: clockSeconds };
 
-  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
+  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~2400+)":"Celestial Bot"}`;
   $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
   document.body.classList.toggle("hell", mode === "hell");
-  $("analysisText").textContent = mode==="hell" ? "🔥 Chế độ Địa ngục: Celestial dùng Skill 20 (tối đa)." : "Chưa có phân tích.";
+  if(isAdminUser()) $("analysisText").textContent = "Sẵn sàng phân tích cho Admin.";
 
   if(engineReady && engine) {
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
@@ -783,9 +1118,9 @@ function render(){
   $("moveList").scrollTop=$("moveList").scrollHeight;
 
   const turn=game.turn()==="w"?"Trắng":"Đen";
-  $("gameStatus").textContent = game.game_over()
-    ? (game.in_checkmate() ? "Chiếu hết · "+(game.turn()==="w"?"Đen":"Trắng")+" thắng!" : game.in_draw() ? "Ván cờ hòa" : "Ván cờ kết thúc")
-    : (engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":""));
+  if(!game.game_over()) {
+    $("gameStatus").textContent = engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":"");
+  }
   const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
   $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
@@ -813,6 +1148,8 @@ async function squareClick(sq){
       if(isOnlineGame && roomId && fbReady) {
         await update(ref(db, `rooms/${roomId}`), {
           fen: game.fen(),
+          pgn: game.pgn(),
+          movesCount: game.history().length,
           lastMove: moveRes.san,
           turn: game.turn(),
           updatedAt: serverTimestamp()
@@ -863,26 +1200,105 @@ function fallbackMove(){
   checkGameOver();
 }
 
-async function checkGameOver() {
-  if(!game.game_over()) return false;
+// ============================================================================
+// 7. KẾT THÚC VÁN ĐẤU: CẬP NHẬT ELO & GHI LỊCH SỬ TOÀN HỆ THỐNG
+// ============================================================================
+async function checkGameOver(timeoutWinnerColor = null) {
+  if(!game.game_over() && !timeoutWinnerColor) return false;
+  if(matchRecorded) return true;
+  matchRecorded = true;
   stopClock();
-  if(fbReady && user) {
+
+  let resultForHuman = "draw"; // "win" | "draw" | "loss"
+  let reason = "Hoà cờ";
+
+  if(timeoutWinnerColor) {
+    resultForHuman = (timeoutWinnerColor === human) ? "win" : "loss";
+    reason = "Hết thời gian";
+  } else if(game.in_checkmate()) {
+    const winnerColor = game.turn() === "w" ? "b" : "w";
+    resultForHuman = (winnerColor === human) ? "win" : "loss";
+    reason = "Chiếu hết";
+  } else if(game.in_stalemate()) {
+    reason = "Hoà cờ (Hết nước đi)";
+  } else if(game.in_threefold_repetition()) {
+    reason = "Hoà cờ (Lặp lại 3 lần)";
+  } else if(game.insufficient_material()) {
+    reason = "Hoà cờ (Không đủ quân chiếu hết)";
+  }
+
+  if(!fbReady || !user) {
+    const label = resultForHuman === "win" ? "🎉 Bạn thắng!" : resultForHuman === "loss" ? "Bạn đã thua." : "🤝 Ván cờ hoà.";
+    $("gameStatus").textContent = `${reason} · ${label} (Đăng nhập để lưu Elo)`;
+    return true;
+  }
+
+  try {
     const pRef = ref(db, `users/${user.uid}/profile`);
     const snap = await get(pRef);
-    if(snap.exists()) {
-      const cur = snap.val();
-      let delta = 0;
-      if(game.in_checkmate()) {
-        const winner = game.turn() === "w" ? "b" : "w";
-        const bonus = { easy: 5, medium: 12, hard: 25, hell: 50 }[mode] || 15;
-        delta = winner === human ? bonus : -10;
+    const cur = snap.exists() ? snap.val() : { name: user.displayName || user.email, email: user.email, elo: 1000, games: 0, wins: 0, draws: 0, losses: 0 };
+    const eloBefore = cur.elo ?? 1000;
+    let delta = 0;
+    let opponentName = "";
+    let opponentType = "bot";
+    let modeLabel = "";
+
+    if(isOnlineGame && onlineRoomData) {
+      opponentType = "human";
+      modeLabel = "PvP Online";
+      const oppUid = human === "w" ? onlineRoomData.guest : onlineRoomData.host;
+      let oppElo = 1000;
+      opponentName = "Đối thủ Online";
+
+      if(oppUid) {
+        const oppSnap = await get(ref(db, `users/${oppUid}/profile`));
+        if(oppSnap.exists()) {
+          oppElo = oppSnap.val().elo ?? 1000;
+          opponentName = oppSnap.val().name || oppSnap.val().email || "Đối thủ Online";
+        }
       }
-      await update(pRef, {
-        elo: Math.max(100, (cur.elo || 1000) + delta),
-        games: (cur.games || 0) + 1,
-        lastSeen: serverTimestamp()
-      });
+      const numScore = resultForHuman === "win" ? 1 : resultForHuman === "draw" ? 0.5 : 0;
+      delta = calcPvpEloDelta(eloBefore, oppElo, numScore);
+    } else {
+      const botRule = BOT_ELO_TABLE[mode] || BOT_ELO_TABLE.easy;
+      delta = botRule[resultForHuman];
+      opponentName = botRule.label;
+      modeLabel = `Đấu máy · ${modeNames[mode]}`;
     }
+
+    const eloAfter = Math.max(100, eloBefore + delta);
+    await update(pRef, {
+      elo: eloAfter,
+      games: (cur.games || 0) + 1,
+      wins: (cur.wins || 0) + (resultForHuman === "win" ? 1 : 0),
+      draws: (cur.draws || 0) + (resultForHuman === "draw" ? 1 : 0),
+      losses: (cur.losses || 0) + (resultForHuman === "loss" ? 1 : 0),
+      lastSeen: serverTimestamp()
+    });
+
+    // Lưu lịch sử đấu lên node matchHistory cho cả người chơi & Quản trị viên
+    await push(ref(db, "matchHistory"), {
+      uid: user.uid,
+      userName: cur.name || user.displayName || user.email,
+      userEmail: cur.email || user.email || "",
+      opponentType,
+      opponentName,
+      mode: isOnlineGame ? "online" : mode,
+      modeLabel,
+      result: resultForHuman,
+      reason,
+      eloBefore,
+      eloDelta: delta,
+      eloAfter,
+      movesCount: game.history().length,
+      timestamp: Date.now()
+    });
+
+    const signStr = delta > 0 ? `+${delta}` : `${delta}`;
+    const resText = resultForHuman === "win" ? "🎉 Bạn thắng!" : resultForHuman === "loss" ? "Bạn thua!" : "🤝 Hoà cờ!";
+    $("gameStatus").textContent = `${reason} · ${resText} (${signStr} Elo → ${eloAfter})`;
+  } catch(err) {
+    console.error("Lỗi cập nhật Elo:", err);
   }
   return true;
 }
@@ -896,16 +1312,20 @@ $("undoBtn").onclick=()=>{
   render();
 };
 $("flipBtn").onclick=()=>{ flipped=!flipped; render(); };
+
+// CHỈ ADMIN MỚI GỌI ĐƯỢC GỢI Ý & ĐÁNH GIÁ
 $("hintBtn").onclick=()=>{
+  if(!isAdminUser()) return;
   if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "hint";
   engineBusy = true;
-  $("analysisText").textContent = "Đang tính nước đi gợi ý...";
+  $("analysisText").textContent = "Đang tính nước đi gợi ý cho Admin...";
   engine.postMessage("position fen " + game.fen());
   engine.postMessage("go depth 15");
 };
 $("analysisBtn").onclick=()=>{ tab("game"); };
 $("evalBtn").onclick=()=>{
+  if(!isAdminUser()) return;
   if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "eval";
   engineBusy = true;
@@ -915,7 +1335,7 @@ $("evalBtn").onclick=()=>{
 };
 
 // ============================================================================
-// ĐÁNH GIÁ NƯỚC ĐI (chỉ hiện sau khi ván kết thúc, ở chế độ "Xem lại trận")
+// 8. XEM LẠI TRẬN ĐẤU SAU KHI KẾT THÚC
 // ============================================================================
 const BADGES = {
   brilliant:{sym:"!!",c:"#1bbfd0",name:"Thiên tài"}, great:{sym:"!",c:"#5b8bd9",name:"Tuyệt vời"},
@@ -926,7 +1346,7 @@ const BADGES = {
 const winPct = cp => 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
 const PV = {p:1,n:3,b:3,r:5,q:9,k:0};
 
-function isSac(fenAfter, m){   // nước vừa đi có hy sinh quân (mất >= 2 điểm vật chất) không
+function isSac(fenAfter, m){
   if(m.piece === "k" || m.piece === "p") return false;
   const g = new Chess(fenAfter);
   const caps = g.moves({verbose:true}).filter(x => x.to === m.to && x.captured).sort((a, b) => PV[a.piece] - PV[b.piece]);
@@ -1046,7 +1466,8 @@ function startClock(){
     updateClock();
     if(remaining[side]<=0){
       stopClock();
-      $("gameStatus").textContent=(side==="w"?"Trắng":"Đen")+" hết giờ!";
+      const winnerSide = side === "w" ? "b" : "w";
+      checkGameOver(winnerSide);
     }
   },1000);
 }
@@ -1058,7 +1479,7 @@ function updateClock(){
 }
 
 // ============================================================================
-// 5. BẠN BÈ & PHÒNG CHƠI ONLINE (FIREBASE REALTIME DATABASE)
+// 9. BẠN BÈ & PHÒNG CHƠI ONLINE PVP
 // ============================================================================
 function loadFriends(){
   if(!db||!user) return;
@@ -1067,7 +1488,7 @@ function loadFriends(){
     if(!snap.exists()){ el.innerHTML='<p class="notice">Không có lời mời nào.</p>'; return; }
     Object.entries(snap.val()).forEach(([fromUid, v]) => {
       const d = document.createElement("div"); d.className = "friend";
-      d.innerHTML = `<span>${v.email || fromUid}</span>`;
+      d.innerHTML = `<span>${escapeHtml(v.email || fromUid)}</span>`;
       const btn = document.createElement("button");
       btn.className = "primary"; btn.textContent = "Chấp nhận";
       btn.onclick = async () => {
@@ -1084,7 +1505,7 @@ function loadFriends(){
     if(!snap.exists()){ el.innerHTML='<p class="notice">Chưa có bạn bè.</p>'; return; }
     Object.entries(snap.val()).forEach(([id,v])=>{
       const d=document.createElement("div"); d.className="friend";
-      d.innerHTML=`<span>${v.email||id}</span><span class="tag ready">Bạn bè</span>`;
+      d.innerHTML=`<span>${escapeHtml(v.email||id)}</span><span class="tag ready">Bạn bè</span>`;
       el.append(d);
     });
   });
@@ -1109,6 +1530,7 @@ $("addFriendBtn").onclick=async()=>{
 function subscribeRoom(id, myColor) {
   if(roomUnsub) roomUnsub();
   isOnlineGame = true;
+  matchRecorded = false;
   human = myColor;
   flipped = human === "b";
   tab("game");
@@ -1116,11 +1538,18 @@ function subscribeRoom(id, myColor) {
   roomUnsub = onValue(ref(db, `rooms/${id}`), snap => {
     if(!snap.exists()) return;
     const data = snap.val();
-    if(data.fen && data.fen !== game.fen()) {
+    onlineRoomData = data;
+    if(data.pgn) {
+      game.load_pgn(data.pgn);
+      render();
+      if(game.game_over()) checkGameOver();
+    } else if(data.fen && data.fen !== game.fen()) {
       game.load(data.fen);
       render();
+      if(game.game_over()) checkGameOver();
     }
-    $("topName").textContent = data.guest ? "Đối thủ Online" : "Đang chờ người vào...";
+    const oppName = myColor === "w" ? (data.guestName || (data.guest ? "Đối thủ Online" : "Đang chờ người vào...")) : (data.hostName || "Chủ phòng");
+    $("topName").textContent = oppName;
   });
 }
 
@@ -1131,9 +1560,12 @@ $("createRoomBtn").onclick=async()=>{
   game = new Chess();
   await set(r,{
     host:user.uid,
+    hostName:user.displayName||user.email,
     guest:null,
+    guestName:null,
     status:"waiting",
     fen:game.fen(),
+    pgn:"",
     turn:"w",
     createdAt:serverTimestamp()
   });
@@ -1148,11 +1580,16 @@ $("joinRoomBtn").onclick=async()=>{
   if(!id) return;
   try{
     const r=ref(db,`rooms/${id}`), s=await get(r);
-    if(!s.exists()) throw Error("NotFound");
+    if(!s.exists()) throw Error("Không tìm thấy mã phòng này.");
     const val = s.val();
     if(val.guest && val.guest !== user.uid && val.host !== user.uid) throw Error("Phòng đã đủ 2 người.");
     if(val.host !== user.uid) {
-      await update(r,{guest:user.uid, status:"playing", updatedAt:serverTimestamp()});
+      await update(r,{
+        guest:user.uid,
+        guestName:user.displayName||user.email,
+        status:"playing",
+        updatedAt:serverTimestamp()
+      });
     }
     roomId=id;
     subscribeRoom(roomId, val.host === user.uid ? "w" : "b");
