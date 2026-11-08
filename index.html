@@ -36,7 +36,14 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
 .sidebox{display:flex;flex-direction:column;gap:12px}.sidebox>div{background:linear-gradient(160deg,#16222fcc,#0f1822cc);border-color:#2c3f55;box-shadow:0 10px 30px #0004}
 .move-list{height:210px;overflow:auto;background:#0c141d;border:1px solid #27384b;border-radius:12px;padding:10px;font-size:13px}.move-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:7px;padding:5px;border-bottom:1px solid #1c2b3a}.move-row span:first-child{color:var(--muted)}
 .tag{display:inline-flex;align-items:center;border:1px solid var(--line);padding:5px 9px;border-radius:20px;color:var(--muted);font-size:11px;gap:5px}.tag.ready{border-color:#2d6a4f;color:var(--green);background:#1b433244}.tag.loss{border-color:#743434;color:var(--red);background:#351a1a66}.tag.draw{border-color:#665c33;color:var(--gold2);background:#3a321966}
-.section{display:none}.section.active{display:block}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button.active{border-color:var(--gold);color:var(--gold2);background:#d8b56d16}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{font-size:12px;color:var(--muted);line-height:1.55}.friend-list{display:grid;gap:8px}.friend{padding:12px;background:linear-gradient(160deg,#16222fcc,#0f1822cc);border:1px solid #2c3f55;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.section{display:none}.section.active{display:block}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.tabs button.active{border-color:var(--gold);color:var(--gold2);background:#d8b56d16}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{font-size:12px;color:var(--muted);line-height:1.55}.friend-list{display:grid;gap:8px}.friend{padding:12px;background:linear-gradient(160deg,#16222fcc,#0f1822cc);border:1px solid #2c3f55;border-radius:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* Hộp thông báo lời mời thách đấu nổi toàn trang */
+.invite-float{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;flex-direction:column;gap:10px;max-width:360px;width:calc(100vw - 36px);pointer-events:none}
+.invite-card{pointer-events:auto;background:linear-gradient(155deg,#1d2d42,#101925);border:1px solid var(--gold);border-radius:16px;padding:14px 16px;box-shadow:0 16px 40px #000c,0 0 24px #d8b56d33;animation:slideIn .25s ease-out}
+.invite-card h4{margin:0 0 5px;font:700 16px 'Playfair Display',serif;color:var(--gold2);display:flex;align-items:center;gap:7px}
+.invite-card p{margin:0 0 11px;font-size:13px;color:var(--text);line-height:1.45}
+@keyframes slideIn{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* Bảng xếp hạng & Quản trị */
 .table-wrap{overflow-x:auto;border:1px solid #27384b;border-radius:14px;background:#0c141d}
@@ -95,7 +102,7 @@ body.reviewing{padding-bottom:160px}
   <div>
     <div class="eyebrow">Think deeper · Play smarter</div>
     <h1>Chiến trường trí tuệ.</h1>
-    <p>Thử thách bản thân trên bàn cờ HTML5 Canvas mượt mà, chinh phục Celestial Địa Ngục và tranh tài trên Bảng Xếp Hạng Elo.</p>
+    <p>Thử thách bản thân trên bàn cờ HTML5 Canvas mượt mà, chinh phục Celestial Địa Ngục, mời bạn bè so tài trực tiếp và đua Top Bảng Xếp Hạng Elo.</p>
   </div>
   <span class="tag" id="engineBadge">⏳ Đang tải Celestial...</span>
 </div>
@@ -127,7 +134,7 @@ body.reviewing{padding-bottom:160px}
       <button class="primary" id="startBtn">Bắt đầu trận đấu →</button>
       <button id="analysisBtn">Vào bàn cờ</button>
     </div>
-    <div class="notice" style="margin-top:12px">Hệ thống tính điểm Elo tự động theo cấp độ Bot hoặc theo công thức Elo chuẩn quốc tế khi đấu Online với người chơi khác.</div>
+    <div class="notice" style="margin-top:12px">Hệ thống tính điểm Elo tự động theo cấp độ Bot hoặc theo công thức Elo chuẩn quốc tế khi đấu Online với bạn bè.</div>
   </div>
 </div>
 </section>
@@ -206,23 +213,26 @@ body.reviewing{padding-bottom:160px}
 <section id="friends" class="section">
   <div class="layout-wide">
     <div class="panel">
-      <h2>Kết nối kỳ thủ</h2>
+      <h2>Kết nối & Mời bạn bè</h2>
       <div class="field"><label>UID của bạn (Gửi mã này cho bạn bè)</label><input id="myUidInput" readonly value="Chưa đăng nhập"></div>
       <div class="field"><label>Nhập UID bạn bè để kết bạn</label><input id="friendId" placeholder="Dán UID người chơi vào đây"></div>
       <div class="actions"><button class="primary" id="addFriendBtn">Gửi lời mời kết bạn</button></div>
       <div class="status" id="friendStatus">Đăng nhập để sử dụng tính năng bạn bè.</div>
       <h2 style="margin-top:22px">Lời mời kết bạn</h2>
       <div id="requestsList" class="friend-list"><p class="notice">Không có lời mời nào.</p></div>
-      <h2 style="margin-top:22px">Danh sách bạn bè</h2>
+      <h2 style="margin-top:22px">Danh sách bạn bè (Nhấn Mời đấu để tạo phòng ngay)</h2>
       <div id="friendsList" class="friend-list"><p class="notice">Chưa có dữ liệu.</p></div>
     </div>
     <div class="panel">
       <h2>Đấu trường Online (PvP Tính Elo)</h2>
-      <p class="notice">Tạo phòng riêng để mời bạn bè hoặc nhập mã phòng để thi đấu trực tiếp. Khi ván đấu kết thúc, hệ thống sẽ tự động cộng/trừ Elo cả 2 người chơi theo chuẩn Elo quốc tế.</p>
+      <p class="notice">Bạn có thể nhấn nút <strong>⚔️ Mời đấu</strong> trực tiếp ở danh sách bạn bè bên trái, hoặc tự tạo mã phòng thủ công dưới đây.</p>
       <div class="actions"><button class="primary" id="createRoomBtn">＋ Tạo phòng mới</button></div>
       <div class="field"><label>Mã phòng</label><input id="roomCode" placeholder="Nhập mã phòng..."></div>
       <button id="joinRoomBtn">Tham gia phòng</button>
       <div class="status" id="roomStatus">Cần đăng nhập để tạo hoặc tham gia phòng.</div>
+
+      <h2 style="margin-top:22px">Lời mời thách đấu đang chờ</h2>
+      <div id="gameInvitesList" class="friend-list"><p class="notice">Chưa có lời mời thách đấu nào.</p></div>
     </div>
   </div>
 </section>
@@ -329,6 +339,9 @@ body.reviewing{padding-bottom:160px}
   </div>
 </section>
 
+<!-- Hộp thông báo lời mời thách đấu nổi góc dưới màn hình -->
+<div id="inviteFloatContainer" class="invite-float"></div>
+
 <div id="reviewModal" class="rv-modal" hidden><div class="rv-card">
   <h3>📊 Nhìn lại trận đấu</h3>
   <div id="rvProgress"><div class="rv-prog"><i id="rvFill"></i></div><p class="notice" id="rvPtxt">Đang phân tích…</p></div>
@@ -350,7 +363,7 @@ body.reviewing{padding-bottom:160px}
       <h3>Đăng nhập Kỳ Thủ</h3>
       <button class="ghost" id="closeModalBtn">✕</button>
     </div>
-    <p class="notice" style="margin-top:0">Đăng nhập để lưu điểm Elo trên Bảng xếp hạng, kết bạn và đấu Online.</p>
+    <p class="notice" style="margin-top:0">Đăng nhập để lưu điểm Elo trên Bảng xếp hạng, kết bạn và mời bạn bè đấu Online.</p>
     <div class="field"><label>Tên hiển thị (khi đăng ký mới)</label><input id="modalName" placeholder="Nhập biệt danh..."></div>
     <div class="field"><label>Email</label><input id="modalEmail" type="email" placeholder="email@example.com"></div>
     <div class="field"><label>Mật khẩu</label><input id="modalPass" type="password" placeholder="••••••••"></div>
@@ -430,7 +443,9 @@ try {
           });
         }
         loadProfileStats();
-        loadFriends();
+        loadFriendsAndInvites();
+      } else {
+        $("inviteFloatContainer").innerHTML = "";
       }
     });
   }
@@ -447,7 +462,6 @@ const BOT_ELO_TABLE = {
 };
 
 function calcPvpEloDelta(myElo, oppElo, score) {
-  // score: 1 (Thắng), 0.5 (Hoà), 0 (Thua)
   const K = 32;
   const expected = 1 / (1 + Math.pow(10, (oppElo - myElo) / 400));
   let delta = Math.round(K * (score - expected));
@@ -530,7 +544,6 @@ async function initEngine(forceCdn){
         $("engineBadge").textContent = "⚡ Celestial Ready";
         $("engineBadge").classList.add("ready");
       }
-      // Chỉ hiển thị phân tích info nếu người dùng là Admin và đang ấn nút Đánh giá
       if(line.startsWith("info ") && line.includes(" score ") && isAdminUser() && engineMode === "eval") {
         const mateMatch = line.match(/score mate (-?\d+)/);
         const cpMatch = line.match(/score cp (-?\d+)/);
@@ -617,9 +630,8 @@ function renderUser(){
   $("profileStatus").textContent = user ? `Đã đăng nhập: ${name} (${user.email})` : "Bạn đang chơi ở chế độ khách.";
   $("myUidInput").value = user ? user.uid : "Chưa đăng nhập";
   $("signOutBtn").style.display = user ? "inline-block" : "none";
-  $("friendStatus").textContent = user ? "Sẵn sàng kết nối bạn bè." : "Đăng nhập để sử dụng tính năng bạn bè.";
+  $("friendStatus").textContent = user ? "Sẵn sàng kết nối & mời bạn bè thách đấu." : "Đăng nhập để sử dụng tính năng bạn bè.";
 
-  // Chỉ hiện tính năng Quản trị + Gợi ý & Đánh giá cho duong158209@gmail.com
   $("adminBadge").hidden = !admin;
   $("adminTabBtn").hidden = !admin;
   $("adminControlsBox").hidden = !admin;
@@ -706,6 +718,7 @@ function initLeaderboardAndAdminListeners() {
     allUsersCache = snap.exists() ? snap.val() : {};
     renderLeaderboardUI();
     renderAdminUsersUI();
+    if(user) renderFriendsListFromCache();
   });
 
   onValue(ref(db, "matchHistory"), snap => {
@@ -1209,7 +1222,7 @@ async function checkGameOver(timeoutWinnerColor = null) {
   matchRecorded = true;
   stopClock();
 
-  let resultForHuman = "draw"; // "win" | "draw" | "loss"
+  let resultForHuman = "draw";
   let reason = "Hoà cờ";
 
   if(timeoutWinnerColor) {
@@ -1276,7 +1289,6 @@ async function checkGameOver(timeoutWinnerColor = null) {
       lastSeen: serverTimestamp()
     });
 
-    // Lưu lịch sử đấu lên node matchHistory cho cả người chơi & Quản trị viên
     await push(ref(db, "matchHistory"), {
       uid: user.uid,
       userName: cur.name || user.displayName || user.email,
@@ -1479,34 +1491,198 @@ function updateClock(){
 }
 
 // ============================================================================
-// 9. BẠN BÈ & PHÒNG CHƠI ONLINE PVP
+// 9. BẠN BÈ, MỜI ĐẤU TRỰC TIẾP & PHÒNG CHƠI ONLINE PVP
 // ============================================================================
-function loadFriends(){
+let myFriendsMap = {};
+
+function renderFriendsListFromCache() {
+  const el = $("friendsList");
+  el.innerHTML = "";
+  const entries = Object.entries(myFriendsMap);
+  if(!entries.length) {
+    el.innerHTML = '<p class="notice">Chưa có bạn bè. Hãy nhập UID để kết bạn!</p>';
+    return;
+  }
+  entries.forEach(([fUid, fVal]) => {
+    const fProfile = allUsersCache[fUid]?.profile || {};
+    const displayName = fProfile.name || fVal.name || fVal.email || fUid;
+    const elo = fProfile.elo ?? 1000;
+    const d = document.createElement("div");
+    d.className = "friend";
+    d.innerHTML = `
+      <div>
+        <strong>${escapeHtml(displayName)}</strong>
+        <div class="notice">Elo: <span class="gold">${elo}</span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="tag ready">Bạn bè</span>
+        <button class="primary" style="padding:7px 12px;font-size:13px" data-invite-uid="${fUid}">⚔️ Mời đấu</button>
+      </div>
+    `;
+    const inviteBtn = d.querySelector("[data-invite-uid]");
+    inviteBtn.onclick = () => inviteFriendToPlay(fUid, displayName, inviteBtn);
+    el.append(d);
+  });
+}
+
+async function inviteFriendToPlay(friendUid, friendName, btnEl) {
+  if(!fbReady || !user) { $("authModal").classList.add("open"); return; }
+  const origText = btnEl.textContent;
+  btnEl.disabled = true;
+  btnEl.textContent = "Đang mời...";
+
+  try {
+    // Tạo phòng mới nếu chưa ở trong phòng chờ
+    const r = push(ref(db, "rooms"));
+    roomId = r.key;
+    game = new Chess();
+    const myName = user.displayName || user.email.split("@")[0];
+    const myElo = allUsersCache[user.uid]?.profile?.elo ?? 1000;
+
+    await set(r, {
+      host: user.uid,
+      hostName: myName,
+      guest: null,
+      guestName: null,
+      status: "waiting",
+      fen: game.fen(),
+      pgn: "",
+      turn: "w",
+      createdAt: serverTimestamp()
+    });
+
+    // Gửi lời mời thách đấu trực tiếp tới UID của bạn bè
+    await set(ref(db, `gameInvites/${friendUid}/${user.uid}`), {
+      fromUid: user.uid,
+      fromName: myName,
+      fromElo: myElo,
+      roomId: roomId,
+      createdAt: Date.now()
+    });
+
+    $("roomCode").value = roomId;
+    $("roomStatus").textContent = `Đã gửi lời mời thách đấu tới ${friendName}! Đang chờ bạn vào phòng...`;
+    $("friendStatus").textContent = `⚔️ Đã mời ${friendName} vào phòng ${roomId}.`;
+    subscribeRoom(roomId, "w");
+  } catch(e) {
+    alert("Không thể gửi lời mời: " + e.message);
+  } finally {
+    btnEl.disabled = false;
+    btnEl.textContent = origText;
+  }
+}
+
+async function acceptGameInvite(fromUid, invData) {
+  if(!fbReady || !user) return;
+  try {
+    const r = ref(db, `rooms/${invData.roomId}`);
+    const s = await get(r);
+    await remove(ref(db, `gameInvites/${user.uid}/${fromUid}`));
+    if(!s.exists()) {
+      alert("Phòng đấu này không còn tồn tại.");
+      return;
+    }
+    const val = s.val();
+    if(val.guest && val.guest !== user.uid && val.host !== user.uid) {
+      alert("Phòng này đã đủ 2 người chơi.");
+      return;
+    }
+    if(val.host !== user.uid) {
+      await update(r, {
+        guest: user.uid,
+        guestName: user.displayName || user.email.split("@")[0],
+        status: "playing",
+        updatedAt: serverTimestamp()
+      });
+    }
+    roomId = invData.roomId;
+    $("roomCode").value = roomId;
+    subscribeRoom(roomId, val.host === user.uid ? "w" : "b");
+  } catch(e) {
+    alert("Lỗi khi vào phòng: " + e.message);
+  }
+}
+
+async function declineGameInvite(fromUid) {
+  if(!fbReady || !user) return;
+  await remove(ref(db, `gameInvites/${user.uid}/${fromUid}`));
+}
+
+function loadFriendsAndInvites(){
   if(!db||!user) return;
+
+  // Lời mời kết bạn
   onValue(ref(db, `requests/${user.uid}`), snap => {
     const el = $("requestsList"); el.innerHTML = "";
     if(!snap.exists()){ el.innerHTML='<p class="notice">Không có lời mời nào.</p>'; return; }
     Object.entries(snap.val()).forEach(([fromUid, v]) => {
       const d = document.createElement("div"); d.className = "friend";
-      d.innerHTML = `<span>${escapeHtml(v.email || fromUid)}</span>`;
+      d.innerHTML = `<span><strong>${escapeHtml(v.name || v.email || fromUid)}</strong></span>`;
       const btn = document.createElement("button");
       btn.className = "primary"; btn.textContent = "Chấp nhận";
       btn.onclick = async () => {
-        await set(ref(db, `users/${user.uid}/friends/${fromUid}`), { email: v.email || fromUid, since: serverTimestamp() });
-        await set(ref(db, `users/${fromUid}/friends/${user.uid}`), { email: user.email || user.uid, since: serverTimestamp() });
+        const myName = user.displayName || user.email || user.uid;
+        await set(ref(db, `users/${user.uid}/friends/${fromUid}`), { email: v.email || fromUid, name: v.name || v.email || fromUid, since: serverTimestamp() });
+        await set(ref(db, `users/${fromUid}/friends/${user.uid}`), { email: user.email || user.uid, name: myName, since: serverTimestamp() });
         await remove(ref(db, `requests/${user.uid}/${fromUid}`));
       };
       d.append(btn); el.append(d);
     });
   });
 
-  onValue(ref(db,`users/${user.uid}/friends`),snap=>{
-    const el=$("friendsList"); el.innerHTML="";
-    if(!snap.exists()){ el.innerHTML='<p class="notice">Chưa có bạn bè.</p>'; return; }
-    Object.entries(snap.val()).forEach(([id,v])=>{
-      const d=document.createElement("div"); d.className="friend";
-      d.innerHTML=`<span>${escapeHtml(v.email||id)}</span><span class="tag ready">Bạn bè</span>`;
-      el.append(d);
+  // Danh sách bạn bè
+  onValue(ref(db, `users/${user.uid}/friends`), snap => {
+    myFriendsMap = snap.exists() ? snap.val() : {};
+    renderFriendsListFromCache();
+  });
+
+  // Lắng nghe lời mời thách đấu trực tiếp (Hiện cả trong tab & popup nổi toàn màn hình)
+  onValue(ref(db, `gameInvites/${user.uid}`), snap => {
+    const listEl = $("gameInvitesList");
+    const floatEl = $("inviteFloatContainer");
+    listEl.innerHTML = "";
+    floatEl.innerHTML = "";
+
+    if(!snap.exists()) {
+      listEl.innerHTML = '<p class="notice">Chưa có lời mời thách đấu nào.</p>';
+      return;
+    }
+
+    Object.entries(snap.val()).forEach(([fromUid, inv]) => {
+      const senderName = inv.fromName || "Bạn bè";
+      const senderElo = inv.fromElo ?? 1000;
+
+      // 1. Hiển thị trong mục Đấu trường Online
+      const row = document.createElement("div");
+      row.className = "friend";
+      row.innerHTML = `
+        <div>
+          <strong>⚔️ ${escapeHtml(senderName)}</strong> <span class="tag ready">Elo ${senderElo}</span>
+          <div class="notice">Mời bạn vào phòng đấu Online</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="primary" style="padding:7px 11px;font-size:13px" data-acc="1">Vào bàn</button>
+          <button class="ghost" style="padding:7px 10px;font-size:13px" data-dec="1">Từ chối</button>
+        </div>
+      `;
+      row.querySelector("[data-acc]").onclick = () => acceptGameInvite(fromUid, inv);
+      row.querySelector("[data-dec]").onclick = () => declineGameInvite(fromUid);
+      listEl.append(row);
+
+      // 2. Hiển thị Popup nổi góc dưới màn hình (Dù đang ở bất kỳ tab nào cũng thấy ngay)
+      const card = document.createElement("div");
+      card.className = "invite-card";
+      card.innerHTML = `
+        <h4>⚔️ Lời mời thách đấu!</h4>
+        <p>Kỳ thủ <strong>${escapeHtml(senderName)}</strong> (Elo ${senderElo}) vừa mời bạn vào bàn cờ trực tiếp.</p>
+        <div style="display:flex;gap:8px">
+          <button class="primary" style="flex:1;padding:8px 12px;font-size:13px" data-facc="1">⚔️ Chấp nhận vào bàn</button>
+          <button class="ghost" style="padding:8px 12px;font-size:13px" data-fdec="1">Bỏ qua</button>
+        </div>
+      `;
+      card.querySelector("[data-facc]").onclick = () => acceptGameInvite(fromUid, inv);
+      card.querySelector("[data-fdec]").onclick = () => declineGameInvite(fromUid);
+      floatEl.append(card);
     });
   });
 }
@@ -1520,7 +1696,8 @@ $("addFriendBtn").onclick=async()=>{
     if(!s.exists()) throw Error("Không tìm thấy người chơi với UID này.");
     await set(ref(db,`requests/${target}/${user.uid}`),{
       from:user.uid,
-      email:user.displayName||user.email||"",
+      name:user.displayName||user.email.split("@")[0]||"",
+      email:user.email||"",
       createdAt:serverTimestamp()
     });
     $("friendStatus").textContent="Đã gửi lời mời kết bạn thành công!";
@@ -1535,6 +1712,7 @@ function subscribeRoom(id, myColor) {
   flipped = human === "b";
   tab("game");
   $("gameTitle").textContent = `Phòng Online: ${id}`;
+  $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
   roomUnsub = onValue(ref(db, `rooms/${id}`), snap => {
     if(!snap.exists()) return;
     const data = snap.val();
@@ -1548,7 +1726,7 @@ function subscribeRoom(id, myColor) {
       render();
       if(game.game_over()) checkGameOver();
     }
-    const oppName = myColor === "w" ? (data.guestName || (data.guest ? "Đối thủ Online" : "Đang chờ người vào...")) : (data.hostName || "Chủ phòng");
+    const oppName = myColor === "w" ? (data.guestName || (data.guest ? "Đối thủ Online" : "⏳ Đang chờ bạn bè vào...")) : (data.hostName || "Chủ phòng");
     $("topName").textContent = oppName;
   });
 }
@@ -1570,7 +1748,7 @@ $("createRoomBtn").onclick=async()=>{
     createdAt:serverTimestamp()
   });
   $("roomCode").value=roomId;
-  $("roomStatus").textContent="Đã tạo phòng! Hãy gửi mã phòng cho bạn bè.";
+  $("roomStatus").textContent="Đã tạo phòng! Hãy gửi mã phòng hoặc nhấn Mời đấu ở danh sách bạn bè.";
   subscribeRoom(roomId, "w");
 };
 
