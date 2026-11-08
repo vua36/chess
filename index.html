@@ -32,6 +32,27 @@ main{max-width:1250px;margin:0 auto;padding:30px 20px 60px}.eyebrow{color:var(--
 footer{text-align:center;color:#647487;font-size:12px;margin-top:30px}
 @media(max-width:850px){.layout{grid-template-columns:1fr}.game-wrap{grid-template-columns:1fr}.sidebox{display:grid;grid-template-columns:1fr 1fr}.move-list{height:150px}}
 @media(max-width:560px){header{height:62px;padding:0 14px}.brand{font-size:18px}.user-pill{display:none}main{padding:22px 12px 40px}.panel{padding:14px;border-radius:16px}.mode-grid{grid-template-columns:1fr 1fr}.mode{padding:13px;min-height:110px}.sidebox{display:flex}.board-shell{border-width:4px}.hero{display:block}.hero p{font-size:13px}}
+
+/* ===== GIAO DIỆN NÂNG CẤP ===== */
+.layout{grid-template-columns:minmax(0,880px);justify-content:center}
+body{background:radial-gradient(ellipse at 50% -10%,#2a3f5c 0%,#0e1622 48%,#070b11 100%) fixed}
+header{background:linear-gradient(180deg,#0d1522ee,#0a111bd9);border-bottom:1px solid #d8b56d33;box-shadow:0 8px 30px #0006}
+.brand{letter-spacing:.5px}
+.panel,.sidebox>div,.mode,.friend{background:linear-gradient(160deg,#16222fcc,#0f1822cc);border-color:#2c3f55;box-shadow:0 10px 30px #0004}
+.mode:hover{border-color:var(--gold);box-shadow:0 0 0 1px #d8b56d55,0 12px 28px #0006}
+.mode.selected{box-shadow:0 0 0 1px var(--gold),0 0 24px #d8b56d33}
+button.primary{box-shadow:0 6px 18px #b68c4755}
+.board-shell{border:9px solid #3b2a19;border-radius:14px;background:#2a1d12;box-shadow:0 0 0 2px #d8b56d88,0 26px 60px #000b,inset 0 0 18px #0008;transition:box-shadow .4s}
+body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 60px #000b,inset 0 0 18px #0008}
+.playerbar{background:linear-gradient(160deg,#162233,#0e1723);border:1px solid #2c3f55;border-radius:14px;padding:11px 14px;box-shadow:0 6px 18px #0004;transition:.25s}
+.playerbar strong{display:flex;align-items:center;gap:9px;font-size:15px}
+.playerbar span{font-variant-numeric:tabular-nums;color:var(--gold2);font-weight:700}
+.playerbar:has(.thinking){border-color:#ff5c5c77;background:linear-gradient(160deg,#2a1a22,#141a26)}
+.thinking::before{content:"";width:11px;height:11px;border-radius:50%;background:#ff2f2f;flex:none;animation:redpulse 1s ease-in-out infinite}
+.thinking::after{content:"đang suy nghĩ…";font-size:12px;font-weight:500;color:#ff9a9a}
+@keyframes redpulse{0%,100%{opacity:1;box-shadow:0 0 0 0 #ff2f2f99}50%{opacity:.2;box-shadow:0 0 0 8px #ff2f2f00}}
+.status{background:linear-gradient(160deg,#16222f,#0f1822);border:1px solid #2c3f55;border-radius:12px}
+.move-list{background:#0c141d;border:1px solid #27384b;border-radius:12px}
 </style>
 </head>
 <body>
@@ -79,15 +100,6 @@ footer{text-align:center;color:#647487;font-size:12px;margin-top:30px}
       <button id="analysisBtn">Vào bàn phân tích</button>
     </div>
     <div class="notice" style="margin-top:12px">Bàn cờ được render bằng <strong>HTML5 2D Canvas</strong> kết hợp lõi Celestial UCI ở mức Skill 20 (tối đa) cho chế độ Địa ngục.</div>
-  </div>
-  <div class="panel">
-    <h2>Trung tâm kỳ thủ</h2>
-    <div class="status"><span id="quickAuthText">♛ Đăng nhập để lưu Elo & đấu Online.</span></div>
-    <div class="friend-list">
-      <div class="friend"><div><strong>Engine Celestial UCI</strong><div class="notice" id="engineState">Đang khởi tạo Web Worker...</div></div><span class="tag" id="uciTag">UCI</span></div>
-      <div class="friend"><div><strong>Bàn cờ Đồ họa</strong><div class="notice">HTML5 Canvas 60FPS hỗ trợ cảm ứng & chuột.</div></div><span class="tag ready">Canvas</span></div>
-      <div class="friend"><div><strong>Hồ sơ & Phòng Online</strong><div class="notice">Đồng bộ Elo, lịch sử đấu và bạn bè qua Firebase.</div></div><span class="tag">Cloud</span></div>
-    </div>
   </div>
 </div>
 </section>
@@ -225,7 +237,7 @@ const firebaseConfig = {
 };
 
 let auth=null, db=null, user=null, fbReady=false, roomUnsub=null;
-const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id)||document.createElement("span"); // phần tử đã xoá khỏi giao diện vẫn an toàn khi code ghi vào
 
 try {
   if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
@@ -277,7 +289,20 @@ const DIFFICULTY = {
   hell:   { skill: 20, depth: 20, movetime: 2800 }
 };
 
-let engineKind = "sf10";
+let engineKind = "sf10", botWatch = null;
+function armBotWatch(ms){
+  clearTimeout(botWatch);
+  botWatch = setTimeout(() => {
+    if(!engineBusy || engineMode !== "play") return;
+    if(engine) engine.postMessage("stop");           // ép engine trả nước tốt nhất hiện có
+    botWatch = setTimeout(() => {
+      if(!engineBusy || engineMode !== "play") return;
+      engineBusy = false;
+      if(engineKind === "sf19") useCdnEngine();       // engine mới treo -> chuyển engine dự phòng
+      fallbackMove();
+    }, 2500);
+  }, ms);
+}
 const LOCAL_SF = "stockfish-19-lite-single.js"; // đặt cạnh index.html cùng file .wasm
 
 async function makeWorker(forceCdn){
@@ -339,6 +364,7 @@ async function initEngine(forceCdn){
       }
       if(line.startsWith("bestmove")) {
         const uci = line.split(" ")[1];
+        clearTimeout(botWatch);
         engineBusy = false;
         if(!uci || uci === "(none)") return;
 
@@ -541,7 +567,7 @@ function drawBoardCanvas() {
       const y = row * sqSize;
       const isDark = (r + f) % 2 === 1;
 
-      ctx.fillStyle = isDark ? "#8c6b4d" : "#eadcc2";
+      ctx.fillStyle = isDark ? "#9b6e46" : "#f1e2bd";
       ctx.fillRect(x, y, sqSize, sqSize);
 
       if (lastMove && (lastMove.from === sq || lastMove.to === sq)) {
@@ -578,21 +604,24 @@ function drawBoardCanvas() {
 
       if (piece) {
         ctx.save();
-        ctx.font = `${Math.floor(sqSize * 0.74)}px "Segoe UI Symbol", "Noto Sans Symbols 2", "Apple Symbols", serif`;
+        const white = piece.color === "w", ch = glyph.b[piece.type] + "\uFE0E";
+        const cx = x + sqSize / 2, cy = y + sqSize * 0.54;
+        ctx.font = `${Math.floor(sqSize * 0.8)}px "Noto Sans Symbols 2","Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        if (piece.color === "w") {
-          ctx.fillStyle = "#f8f4eb";
-          ctx.shadowColor = "rgba(35, 25, 20, 0.85)";
-          ctx.shadowBlur = sqSize * 0.05;
-          ctx.shadowOffsetY = sqSize * 0.03;
-        } else {
-          ctx.fillStyle = "#171717";
-          ctx.shadowColor = "rgba(255, 255, 255, 0.45)";
-          ctx.shadowBlur = sqSize * 0.03;
-          ctx.shadowOffsetY = sqSize * 0.015;
-        }
-        ctx.fillText(glyph[piece.color][piece.type], x + sqSize / 2, y + sqSize * 0.53);
+        ctx.lineJoin = "round";
+        const pg = ctx.createLinearGradient(0, cy - sqSize * 0.4, 0, cy + sqSize * 0.4);
+        if (white) { pg.addColorStop(0, "#ffffff"); pg.addColorStop(1, "#d6c8a8"); }
+        else { pg.addColorStop(0, "#5a606c"); pg.addColorStop(1, "#0c0e12"); }
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = sqSize * 0.1;
+        ctx.shadowOffsetY = sqSize * 0.04;
+        ctx.fillStyle = pg;
+        ctx.fillText(ch, cx, cy);
+        ctx.shadowColor = "transparent";
+        ctx.lineWidth = Math.max(1.2, sqSize * 0.03);
+        ctx.strokeStyle = white ? "#3b2b1a" : "#e8d7a6";
+        ctx.strokeText(ch, cx, cy);
         ctx.restore();
       }
 
@@ -647,14 +676,14 @@ function startGame(){
   $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
   $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
+  document.body.classList.toggle("hell", mode === "hell");
   $("analysisText").textContent = mode==="hell" ? "🔥 Chế độ Địa ngục: Celestial dùng Skill 20 (tối đa)." : "Chưa có phân tích.";
 
   if(engineReady && engine) {
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     engine.postMessage("ucinewgame");
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
-    if(engineKind === "sf19") engine.postMessage("setoption name Hash value 64");
-    else if(mode === "hell") engine.postMessage("setoption name Contempt value 24");
+    if(engineKind !== "sf19" && mode === "hell") engine.postMessage("setoption name Contempt value 24");
   }
 
   tab("game");
@@ -683,6 +712,9 @@ function render(){
   $("gameStatus").textContent = game.game_over()
     ? (game.in_checkmate() ? "Chiếu hết · "+(game.turn()==="w"?"Đen":"Trắng")+" thắng!" : game.in_draw() ? "Ván cờ hòa" : "Ván cờ kết thúc")
     : (engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":""));
+  const over = game.game_over(), topSide = human === "w" ? "b" : "w";
+  $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
+  $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
   $("undoBtn").disabled = hist.length===0 || isOnlineGame;
 }
 
@@ -734,6 +766,7 @@ function botMove(){
     } else {
       engine.postMessage(`go depth ${cfg.depth}`);
     }
+    armBotWatch(12000);
     return;
   }
   fallbackMove();
