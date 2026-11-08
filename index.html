@@ -34,6 +34,20 @@ footer{text-align:center;color:#647487;font-size:12px;margin-top:30px}
 @media(max-width:560px){header{height:62px;padding:0 14px}.brand{font-size:18px}.user-pill{display:none}main{padding:22px 12px 40px}.panel{padding:14px;border-radius:16px}.mode-grid{grid-template-columns:1fr 1fr}.mode{padding:13px;min-height:110px}.sidebox{display:flex}.board-shell{border-width:4px}.hero{display:block}.hero p{font-size:13px}}
 
 /* ===== GIAO DIỆN NÂNG CẤP ===== */
+[hidden]{display:none!important}
+.rv-modal{position:fixed;inset:0;background:#000a;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.rv-card{width:100%;max-width:420px;background:linear-gradient(160deg,#182637,#0f1822);border:1px solid #d8b56d55;border-radius:20px;padding:18px;box-shadow:0 20px 60px #000c;max-height:88vh;overflow:auto}
+.rv-card h3{margin:0 0 12px;font:700 21px 'Playfair Display',serif}
+.rv-prog{height:10px;border-radius:6px;background:#0c141d;overflow:hidden}.rv-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,#b68c47,#f0d79d);transition:width .2s}
+.rv-row{display:grid;grid-template-columns:1fr 64px 64px;align-items:center;padding:7px 0;border-bottom:1px solid #27384b}.rv-row b{text-align:center}.rv-head b{color:var(--gold2)}
+.rv-dot{display:inline-grid;place-items:center;min-width:28px;height:22px;border-radius:11px;margin-right:8px;font:800 12px/1 'DM Sans',sans-serif;font-style:normal;color:#fff;padding:0 6px}
+.rv-actions{display:flex;gap:10px;margin-top:14px}.rv-actions button{flex:1}
+#reviewBar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:linear-gradient(180deg,#121d2bf2,#0a111bf8);border-top:1px solid #d8b56d66;padding:12px 14px calc(12px + env(safe-area-inset-bottom));backdrop-filter:blur(10px)}
+.rv-line{display:flex;align-items:center;gap:10px;font-size:17px}.rv-line em{font-style:normal;font-weight:700}
+.rv-badge{display:inline-grid;place-items:center;min-width:34px;height:28px;border-radius:14px;color:#fff;font:800 14px/1 'DM Sans',sans-serif;padding:0 7px}
+.rv-sub{color:var(--muted);font-size:13px;margin:6px 0 10px}
+.rv-nav{display:grid;grid-template-columns:repeat(4,1fr) 1.3fr;gap:8px}.rv-nav button{padding:10px 0}
+body.reviewing{padding-bottom:160px}
 .board-shell{aspect-ratio:auto}
 #boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block}
 .playerbar strong{flex:1;min-width:0}
@@ -122,6 +136,7 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
           <canvas id="boardCanvas" width="640" height="640" aria-label="Bàn cờ vua Canvas"></canvas>
         </div>
         <div class="playerbar"><strong id="bottomName">Bạn</strong><span id="bottomClock">∞</span></div>
+        <button id="reviewBtn" class="primary" hidden style="width:100%;margin-top:4px">📊 Xem lại trận</button>
       </div>
       <div class="sidebox">
         <div>
@@ -196,6 +211,17 @@ body.hell .board-shell{box-shadow:0 0 0 2px #e77e7ecc,0 0 46px #e0404055,0 26px 
   </div>
 </section>
 
+<div id="reviewModal" class="rv-modal" hidden><div class="rv-card">
+  <h3>📊 Nhìn lại trận đấu</h3>
+  <div id="rvProgress"><div class="rv-prog"><i id="rvFill"></i></div><p class="notice" id="rvPtxt">Đang phân tích…</p></div>
+  <div id="rvSummary" hidden></div>
+  <div class="rv-actions"><button id="rvStart" class="primary" hidden>Xem từng nước</button><button id="rvClose" class="ghost">Đóng</button></div>
+</div></div>
+<div id="reviewBar" hidden>
+  <div class="rv-line"><span id="rvBadge" class="rv-badge">!!</span><strong id="rvMove">—</strong><em id="rvName"></em></div>
+  <div class="rv-sub" id="rvSub"></div>
+  <div class="rv-nav"><button id="rvFirst">⏮</button><button id="rvPrev">◀</button><button id="rvNext">▶</button><button id="rvLast">⏭</button><button id="rvExit" class="ghost">Thoát</button></div>
+</div>
 <footer>CHESS ULTIMATE · Powered by HTML5 Canvas, Celestial UCI & Firebase</footer>
 </main>
 
@@ -295,6 +321,7 @@ const DIFFICULTY = {
 };
 
 let engineKind = "sf10", botWatch = null;
+let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 function armBotWatch(ms){
   clearTimeout(botWatch);
   botWatch = setTimeout(() => {
@@ -341,6 +368,8 @@ async function initEngine(forceCdn){
 
     engine.onmessage = e => {
       const line = String(e.data || "").trim();
+      if(swallowBest && line.startsWith("bestmove")){ swallowBest = false; return; }
+      if(reviewJob){ reviewLine(line); return; }
       if(line === "uciok") engine.postMessage("isready");
       if(line === "readyok") {
         engineReady = true;
@@ -505,6 +534,31 @@ function loadProfileStats() {
 // ============================================================================
 const canvas = $("boardCanvas");
 const ctx = canvas.getContext("2d");
+let lastGlowKey = "", moveGlowStart = 0, glowRaf = null;
+const spriteCache = {};
+function pieceSprite(color, type, size){
+  const key = color + type + size;
+  if (spriteCache[key]) return spriteCache[key];
+  const white = color === "w", ch = glyph.b[type] + "\uFE0E";
+  const font = `${Math.floor(size * 0.82)}px "Noto Sans Symbols 2","Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif`;
+  const cx = size / 2, cy = size * 0.54;
+  const mk = () => { const c = document.createElement("canvas"); c.width = c.height = size; const g = c.getContext("2d"); g.font = font; g.textAlign = "center"; g.textBaseline = "middle"; g.lineJoin = "round"; return [c, g]; };
+  const [body, b] = mk();
+  const gr = b.createLinearGradient(0, size * 0.1, 0, size * 0.92);
+  if (white) { gr.addColorStop(0, "#fffdf4"); gr.addColorStop(0.55, "#f1e3c0"); gr.addColorStop(1, "#c9b383"); }
+  else { gr.addColorStop(0, "#5c6579"); gr.addColorStop(0.5, "#262b36"); gr.addColorStop(1, "#080a0e"); }
+  b.fillStyle = gr; b.fillText(ch, cx, cy);
+  b.globalCompositeOperation = "source-atop";
+  const sh = b.createRadialGradient(size * 0.36, size * 0.3, size * 0.02, size * 0.36, size * 0.3, size * 0.46);
+  sh.addColorStop(0, white ? "rgba(255,255,255,0.95)" : "rgba(190,205,240,0.5)");
+  sh.addColorStop(1, "rgba(255,255,255,0)");
+  b.fillStyle = sh; b.fillRect(0, 0, size, size);
+  const [spr, g] = mk();
+  g.lineWidth = size * 0.08; g.strokeStyle = white ? "#2a190b" : "#f6e2a2"; g.strokeText(ch, cx, cy); // viền ngoài tương phản
+  g.drawImage(body, 0, 0);
+  g.lineWidth = size * 0.02; g.strokeStyle = white ? "#7a5a2c" : "#e0b84e"; g.strokeText(ch, cx, cy);   // viền mảnh: nâu (trắng) / vàng (đen)
+  return (spriteCache[key] = spr);
+}
 
 function squareToGrid(sq) {
   const f = "abcdefgh".indexOf(sq[0]);
@@ -561,6 +615,12 @@ function drawBoardCanvas() {
   const lastMove = game.history({verbose: true}).slice(-1)[0];
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const nowT = performance.now();
+  const mvKey = lastMove ? game.history().length + lastMove.from + lastMove.to : "";
+  if (mvKey !== lastGlowKey) { lastGlowKey = mvKey; moveGlowStart = nowT; }
+  const gAge = nowT - moveGlowStart, gK = Math.max(0, 1 - gAge / 2200), gPulse = 0.5 + 0.5 * Math.sin(gAge / 120);
+  const rvm = (reviewMode && reviewPly > 0 && reviewData) ? reviewData.moves[reviewPly - 1] : null;
+  if (gK > 0 && lastMove && !glowRaf) glowRaf = requestAnimationFrame(() => { glowRaf = null; drawBoardCanvas(); });
 
   for (let row = 0; row < 8; row++) {
     for (let col = 0; col < 8; col++) {
@@ -576,8 +636,20 @@ function drawBoardCanvas() {
       ctx.fillRect(x, y, sqSize, sqSize);
 
       if (lastMove && (lastMove.from === sq || lastMove.to === sq)) {
-        ctx.fillStyle = "rgba(232, 206, 108, 0.45)";
+        const isTo = lastMove.to === sq;
+        ctx.fillStyle = isTo ? "rgba(255, 210, 70, 0.55)" : "rgba(255, 210, 70, 0.34)";
         ctx.fillRect(x, y, sqSize, sqSize);
+        if (gK > 0) {
+          const gg = ctx.createRadialGradient(x + sqSize / 2, y + sqSize / 2, sqSize * 0.05, x + sqSize / 2, y + sqSize / 2, sqSize * 0.75);
+          gg.addColorStop(0, `rgba(255, 244, 160, ${(0.5 + 0.4 * gPulse) * gK})`);
+          gg.addColorStop(1, "rgba(255, 220, 90, 0)");
+          ctx.fillStyle = gg;
+          ctx.fillRect(x, y, sqSize, sqSize);
+        }
+        ctx.strokeStyle = isTo ? `rgba(255, 196, 40, ${0.75 + 0.25 * gPulse * gK})` : "rgba(255, 196, 40, 0.45)";
+        ctx.lineWidth = Math.max(2, sqSize * (isTo ? 0.055 : 0.035));
+        const lw = ctx.lineWidth / 2;
+        ctx.strokeRect(x + lw, y + lw, sqSize - 2 * lw, sqSize - 2 * lw);
       }
 
       if (selected === sq) {
@@ -609,27 +681,23 @@ function drawBoardCanvas() {
 
       if (piece) {
         ctx.save();
-        const white = piece.color === "w", ch = glyph.b[piece.type] + "\uFE0E";
-        const cx = x + sqSize / 2, cy = y + sqSize * 0.54;
-        ctx.font = `${Math.floor(sqSize * 0.8)}px "Noto Sans Symbols 2","Segoe UI Symbol","Apple Symbols","DejaVu Sans",serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.lineJoin = "round";
-        const pg = ctx.createLinearGradient(0, cy - sqSize * 0.4, 0, cy + sqSize * 0.4);
-        if (white) { pg.addColorStop(0, "#ffffff"); pg.addColorStop(1, "#d6c8a8"); }
-        else { pg.addColorStop(0, "#5a606c"); pg.addColorStop(1, "#0c0e12"); }
-        ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = sqSize * 0.1;
-        ctx.shadowOffsetY = sqSize * 0.04;
-        ctx.fillStyle = pg;
-        ctx.fillText(ch, cx, cy);
-        ctx.shadowColor = "transparent";
-        ctx.lineWidth = Math.max(1.2, sqSize * 0.03);
-        ctx.strokeStyle = white ? "#3b2b1a" : "#e8d7a6";
-        ctx.strokeText(ch, cx, cy);
+        ctx.shadowColor = "rgba(0,0,0,0.45)";
+        ctx.shadowBlur = sqSize * 0.08;
+        ctx.shadowOffsetY = sqSize * 0.035;
+        ctx.drawImage(pieceSprite(piece.color, piece.type, Math.round(sqSize)), x, y, sqSize, sqSize);
         ctx.restore();
       }
 
+      if (rvm && lastMove && lastMove.to === sq) {
+        const B = BADGES[rvm.k], bx = x + sqSize * 0.8, by = y + sqSize * 0.2, br = sqSize * 0.19;
+        ctx.save();
+        ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = sqSize * 0.06;
+        ctx.fillStyle = B.c; ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowColor = "transparent"; ctx.lineWidth = Math.max(1.5, sqSize * 0.03); ctx.strokeStyle = "#fff"; ctx.stroke();
+        ctx.fillStyle = "#fff"; ctx.font = `800 ${Math.floor(sqSize * 0.2)}px "DM Sans",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(B.sym, bx, by + sqSize * 0.01);
+        ctx.restore();
+      }
       if (legal.some(m => m.to === sq)) {
         ctx.save();
         if (piece) {
@@ -668,6 +736,7 @@ canvas.addEventListener("pointerdown", e => {
 window.addEventListener("resize", () => render());
 
 function startGame(){
+  stopReviewJob(); reviewMode = false; reviewFull = null; $("reviewBar").hidden = true; $("reviewModal").hidden = true; document.body.classList.remove("reviewing");
   isOnlineGame = false;
   if(roomUnsub) { roomUnsub(); roomUnsub = null; }
   game = new Chess();
@@ -698,7 +767,7 @@ function startGame(){
 }
 
 $("startBtn").onclick = startGame;
-$("backHome").onclick = () => { stopClock(); tab("home"); };
+$("backHome").onclick = () => { stopReviewJob(); exitReview(); $("reviewModal").hidden = true; stopClock(); tab("home"); };
 $("newBtn").onclick = startGame;
 
 function render(){
@@ -717,14 +786,15 @@ function render(){
   $("gameStatus").textContent = game.game_over()
     ? (game.in_checkmate() ? "Chiếu hết · "+(game.turn()==="w"?"Đen":"Trắng")+" thắng!" : game.in_draw() ? "Ván cờ hòa" : "Ván cờ kết thúc")
     : (engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":""));
-  const over = game.game_over(), topSide = human === "w" ? "b" : "w";
+  const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
   $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
-  $("undoBtn").disabled = hist.length===0 || isOnlineGame;
+  $("reviewBtn").hidden = !(game.game_over() && !reviewMode && hist.length > 0);
+  $("undoBtn").disabled = hist.length===0 || isOnlineGame || reviewMode;
 }
 
 async function squareClick(sq){
-  if(game.game_over() || engineBusy) return;
+  if(reviewMode || game.game_over() || engineBusy) return;
   if(game.turn() !== human) return;
   const p = game.get(sq);
   if(selected){
@@ -827,7 +897,7 @@ $("undoBtn").onclick=()=>{
 };
 $("flipBtn").onclick=()=>{ flipped=!flipped; render(); };
 $("hintBtn").onclick=()=>{
-  if(!engineReady || engineBusy) return;
+  if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "hint";
   engineBusy = true;
   $("analysisText").textContent = "Đang tính nước đi gợi ý...";
@@ -836,13 +906,136 @@ $("hintBtn").onclick=()=>{
 };
 $("analysisBtn").onclick=()=>{ tab("game"); };
 $("evalBtn").onclick=()=>{
-  if(!engineReady || engineBusy) return;
+  if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "eval";
   engineBusy = true;
   $("analysisText").textContent = "Celestial đang phân tích sâu vị trí hiện tại…";
   engine.postMessage("position fen " + game.fen());
   engine.postMessage("go depth 18");
 };
+
+// ============================================================================
+// ĐÁNH GIÁ NƯỚC ĐI (chỉ hiện sau khi ván kết thúc, ở chế độ "Xem lại trận")
+// ============================================================================
+const BADGES = {
+  brilliant:{sym:"!!",c:"#1bbfd0",name:"Thiên tài"}, great:{sym:"!",c:"#5b8bd9",name:"Tuyệt vời"},
+  best:{sym:"★",c:"#81b64c",name:"Tốt nhất"}, excellent:{sym:"✓",c:"#96bc4b",name:"Xuất sắc"},
+  good:{sym:"•",c:"#a3a98c",name:"Tốt"}, inacc:{sym:"?!",c:"#f0b429",name:"Không chính xác"},
+  mistake:{sym:"?",c:"#e58f2a",name:"Sai lầm"}, blunder:{sym:"??",c:"#ca3431",name:"Sai lầm nghiêm trọng"}
+};
+const winPct = cp => 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
+const PV = {p:1,n:3,b:3,r:5,q:9,k:0};
+
+function isSac(fenAfter, m){   // nước vừa đi có hy sinh quân (mất >= 2 điểm vật chất) không
+  if(m.piece === "k" || m.piece === "p") return false;
+  const g = new Chess(fenAfter);
+  const caps = g.moves({verbose:true}).filter(x => x.to === m.to && x.captured).sort((a, b) => PV[a.piece] - PV[b.piece]);
+  if(!caps.length) return false;
+  const q = caps[0]; g.move(q);
+  const recap = g.moves({verbose:true}).some(x => x.to === m.to && x.captured);
+  const net = (m.captured ? PV[m.captured] : 0) - (PV[m.piece] - (recap ? PV[q.piece] : 0));
+  return net <= -2;
+}
+
+function startReview(){
+  if(reviewJob || reviewMode) return;
+  if(!engineReady || !engine || engineBusy){ alert("Engine chưa sẵn sàng, thử lại sau giây lát."); return; }
+  const hist = game.history({verbose:true});
+  if(!hist.length) return;
+  const g = new Chess(), fens = [g.fen()];
+  hist.forEach(m => { g.move(m.san); fens.push(g.fen()); });
+  reviewJob = { fens, hist, i:0, res:[], cur:{} };
+  engineBusy = true;
+  $("reviewModal").hidden = false; $("rvSummary").hidden = true; $("rvStart").hidden = true; $("rvProgress").hidden = false;
+  engine.postMessage("ucinewgame");
+  engine.postMessage("setoption name Skill Level value 20");
+  engine.postMessage("setoption name MultiPV value 2");
+  reviewNext();
+}
+function reviewNext(){
+  const j = reviewJob;
+  while(j.i < j.fens.length){
+    const t = new Chess(j.fens[j.i]);
+    if(!t.game_over()) break;
+    j.res[j.i] = { s1: t.in_checkmate() ? -10000 : 0, s2: null, best: null }; j.i++;
+  }
+  $("rvFill").style.width = Math.round(j.i / j.fens.length * 100) + "%";
+  $("rvPtxt").textContent = `Đang phân tích ${j.i}/${j.fens.length} vị trí…`;
+  if(j.i >= j.fens.length) return finishReview();
+  j.cur = {};
+  engine.postMessage("position fen " + j.fens[j.i]);
+  engine.postMessage("go movetime 300");
+}
+function reviewLine(line){
+  const j = reviewJob;
+  if(line.startsWith("info ") && line.includes(" score ") && !/bound/.test(line)){
+    const pv = Number((line.match(/multipv (\d+)/) || [0, 1])[1]);
+    const mt = line.match(/score mate (-?\d+)/), cp = line.match(/score cp (-?\d+)/);
+    if(mt){ const v = Number(mt[1]); j.cur[pv] = v > 0 ? 10000 - v : -10000 - v; }
+    else if(cp) j.cur[pv] = Number(cp[1]);
+  } else if(line.startsWith("bestmove")){
+    const b = line.split(" ")[1];
+    j.res[j.i] = { s1: j.cur[1] ?? 0, s2: j.cur[2] ?? null, best: (b && b !== "(none)") ? b : null };
+    j.i++; reviewNext();
+  }
+}
+function stopReviewJob(){
+  if(!reviewJob) return;
+  reviewJob = null; engineBusy = false; swallowBest = true;
+  if(engine){ engine.postMessage("stop"); engine.postMessage("setoption name MultiPV value 1"); }
+}
+function finishReview(){
+  const j = reviewJob; reviewJob = null; engineBusy = false;
+  engine.postMessage("setoption name MultiPV value 1");
+  const evals = j.res.map((r, i) => j.fens[i].split(" ")[1] === "w" ? r.s1 : -r.s1);
+  const moves = j.hist.map((m, idx) => {
+    const a = j.res[idx], b = j.res[idx + 1];
+    const wB = winPct(a.s1), wA = winPct(-b.s1), loss = Math.max(0, wB - wA);
+    const uci = m.from + m.to + (m.promotion || "");
+    let k = (loss <= 0.5 || uci === a.best) ? "best" : loss <= 2 ? "excellent" : loss <= 5 ? "good" : loss <= 10 ? "inacc" : loss <= 20 ? "mistake" : "blunder";
+    if((k === "best" || k === "excellent") && wB < 90 && wA >= 45 && isSac(j.fens[idx + 1], m)) k = "brilliant";
+    else if(k === "best" && a.s2 != null && wB - winPct(a.s2) >= 15) k = "great";
+    let bestSan = null;
+    if(a.best && uci !== a.best){ try { const r = new Chess(j.fens[idx]).move({from:a.best.slice(0,2), to:a.best.slice(2,4), promotion:a.best[4] || "q"}); bestSan = r ? r.san : null; } catch(e){} }
+    return { side:m.color, san:m.san, k, bestSan, acc:Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * loss) - 3.1669)) };
+  });
+  reviewData = { moves, evals, hist:j.hist };
+  const cnt = {w:{}, b:{}}, acc = {w:[], b:[]};
+  moves.forEach(m => { cnt[m.side][m.k] = (cnt[m.side][m.k] || 0) + 1; acc[m.side].push(m.acc); });
+  const avg = a => a.length ? (a.reduce((x, y) => x + y, 0) / a.length).toFixed(1) : "–";
+  let h = `<div class="rv-row rv-head"><span></span><b>Trắng</b><b>Đen</b></div><div class="rv-row"><span>Độ chính xác</span><b>${avg(acc.w)}%</b><b>${avg(acc.b)}%</b></div>`;
+  Object.keys(BADGES).forEach(k => { h += `<div class="rv-row"><span><i class="rv-dot" style="background:${BADGES[k].c}">${BADGES[k].sym}</i>${BADGES[k].name}</span><b>${cnt.w[k] || 0}</b><b>${cnt.b[k] || 0}</b></div>`; });
+  $("rvSummary").innerHTML = h;
+  $("rvProgress").hidden = true; $("rvSummary").hidden = false; $("rvStart").hidden = false;
+}
+function enterReview(){ reviewFull = game; reviewMode = true; $("reviewBar").hidden = false; document.body.classList.add("reviewing"); gotoPly(0); }
+function exitReview(){
+  if(!reviewMode) return;
+  reviewMode = false; game = reviewFull; reviewFull = null; selected = null;
+  $("reviewBar").hidden = true; document.body.classList.remove("reviewing"); render();
+}
+function gotoPly(k){
+  const d = reviewData, n = d.hist.length;
+  reviewPly = Math.max(0, Math.min(n, k));
+  game = new Chess();
+  for(let i = 0; i < reviewPly; i++) game.move(d.hist[i].san);
+  selected = null; hintArrow = null; render();
+  const m = reviewPly > 0 ? d.moves[reviewPly - 1] : null, B = m && BADGES[m.k], ev = d.evals[reviewPly];
+  $("rvBadge").hidden = !m;
+  if(m){ $("rvBadge").textContent = B.sym; $("rvBadge").style.background = B.c; $("rvMove").textContent = `${Math.ceil(reviewPly / 2)}${reviewPly % 2 ? "." : "…"} ${m.san}`; $("rvName").textContent = B.name; $("rvName").style.color = B.c; }
+  else { $("rvMove").textContent = "Vị trí xuất phát"; $("rvName").textContent = ""; }
+  let sub = `Đánh giá: ${Math.abs(ev) >= 9000 ? "Chiếu hết" : (ev > 0 ? "+" : "") + (ev / 100).toFixed(2)} · ${reviewPly}/${n}`;
+  if(m && m.bestSan) sub += ` · Nước tốt hơn: ${m.bestSan}`;
+  $("rvSub").textContent = sub;
+}
+$("reviewBtn").onclick = startReview;
+$("rvClose").onclick = () => { stopReviewJob(); $("reviewModal").hidden = true; };
+$("rvStart").onclick = () => { $("reviewModal").hidden = true; enterReview(); };
+$("rvExit").onclick = exitReview;
+$("rvFirst").onclick = () => gotoPly(0);
+$("rvPrev").onclick = () => gotoPly(reviewPly - 1);
+$("rvNext").onclick = () => gotoPly(reviewPly + 1);
+$("rvLast").onclick = () => gotoPly(reviewData.hist.length);
 
 function startClock(){
   stopClock(); updateClock();
