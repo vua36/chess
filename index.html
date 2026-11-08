@@ -763,8 +763,10 @@ function playSound(type = "move") {
 let animating = null; // {from, to, piece, start, duration}
 const ANIM_DURATION = 220; // ms
 function startMoveAnimation(from, to, piece) {
-  animating = { from, to, piece, start: performance.now(), duration: ANIM_DURATION };
-  requestAnimationFrame(animateFrame);
+  // Disabled on mobile/Android to prevent green flashing
+  // animating = { from, to, piece, start: performance.now(), duration: ANIM_DURATION };
+  // requestAnimationFrame(animateFrame);
+  animating = null;
 }
 function animateFrame() {
   if (!animating) return;
@@ -1295,7 +1297,10 @@ function drawBoardCanvas() {
   const legal = selected ? game.moves({square: selected, verbose: true}) : [];
   const lastMove = game.history({verbose: true}).slice(-1)[0];
 
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
   const nowT = performance.now();
   const mvKey = lastMove ? game.history().length + lastMove.from + lastMove.to : "";
   if (mvKey !== lastGlowKey) { lastGlowKey = mvKey; moveGlowStart = nowT; }
@@ -1358,9 +1363,9 @@ function drawBoardCanvas() {
       const isAnimatingFrom = animating && animating.from === sq;
       if (piece && !isAnimatingFrom) {
         ctx.save();
-        ctx.shadowColor = "rgba(0,0,0,0.45)";
-        ctx.shadowBlur = sqSize * 0.08;
-        ctx.shadowOffsetY = sqSize * 0.035;
+        ctx.shadowColor = "rgba(0,0,0,0.25)";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
         ctx.drawImage(pieceSprite(piece.color, piece.type, Math.round(sqSize)), x, y, sqSize, sqSize);
         ctx.restore();
       }
@@ -1398,24 +1403,8 @@ function drawBoardCanvas() {
     drawArrow(hintArrow.from, hintArrow.to);
   }
 
-  // Draw animating piece on top
-  if (animating) {
-    const p1 = squareToGrid(animating.from);
-    const p2 = squareToGrid(animating.to);
-    const t = Math.min(1, (performance.now() - animating.start) / animating.duration);
-    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // easeInOut
-    const col = p1.col + (p2.col - p1.col) * ease;
-    const row = p1.row + (p2.row - p1.row) * ease;
-    const size = canvas.width / 8;
-    const x = col * size;
-    const y = row * size;
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.5)";
-    ctx.shadowBlur = size * 0.1;
-    ctx.shadowOffsetY = size * 0.04;
-    ctx.drawImage(pieceSprite(animating.piece.color, animating.piece.type, Math.round(size)), x, y, size, size);
-    ctx.restore();
-  }
+  // Animation drawing disabled to prevent green flash on Android
+  // (piece moves instantly instead)
 }
 
 canvas.addEventListener("pointerdown", e => {
