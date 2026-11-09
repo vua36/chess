@@ -1766,20 +1766,21 @@ $("hintBtn").onclick=()=>{
   if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "hint";
   engineBusy = true;
-  $("analysisText").textContent = "Đang tính nước đi gợi ý mạnh (depth 24)...";
+  $("analysisText").textContent = "Đang tính gợi ý mạnh (depth 28, tối đa 4 giây)...";
   engine.postMessage("setoption name Skill Level value 20");
+  engine.postMessage("setoption name MultiPV value 1");
   engine.postMessage("position fen " + game.fen());
-  engine.postMessage("go depth 24");
+  engine.postMessage("go depth 28 movetime 4000");
 };
 $("evalBtn").onclick=()=>{
   if(!isAdminUser()) return;
   if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "eval";
   engineBusy = true;
-  $("analysisText").textContent = "Celestial đang phân tích rất sâu (depth 26)...";
+  $("analysisText").textContent = "Celestial đang phân tích sâu (depth 30, tối đa 5 giây)...";
   engine.postMessage("setoption name Skill Level value 20");
   engine.postMessage("position fen " + game.fen());
-  engine.postMessage("go depth 26");
+  engine.postMessage("go depth 30 movetime 5000");
 };
 
 // ============================================================================
