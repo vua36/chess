@@ -409,7 +409,7 @@ body.reviewing{padding-bottom:150px}
             <button id="newBtn">Ván mới</button>
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
           </div>
-          <!-- CHỈ HIỆN VỚI QUẢN TRỊ VIÊN duong158209@gmail.com -->
+          <!-- CHỈ HIỆN VỚI QUẢN TRỊ VIÊN duong158209@gmail.com / baohieudeptrai.2009@gmail.com -->
           <div id="adminControlsBox" class="admin-box" hidden>
             <div class="admin-box-title">🛡️ Đặc quyền Quản trị</div>
             <div class="two">
@@ -516,13 +516,13 @@ body.reviewing{padding-bottom:150px}
   </div>
 </section>
 
-<!-- TRANG QUẢN TRỊ (CHỈ DÀNH CHO duong158209@gmail.com) -->
+<!-- TRANG QUẢN TRỊ (CHỈ DÀNH CHO duong158209@gmail.com / baohieudeptrai.2009@gmail.com) -->
 <section id="admin" class="section">
   <div class="panel" style="margin-bottom:22px">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
       <div>
         <div class="eyebrow">Quản trị hệ thống tối cao</div>
-        <h2 style="margin:4px 0 0">🛡️ Trung Tâm Quản Trị (duong158209@gmail.com)</h2>
+        <h2 style="margin:4px 0 0">🛡️ Trung Tâm Quản Trị (duong158209@gmail.com / baohieudeptrai.2009@gmail.com)</h2>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <span class="tag ready" id="adminStatsUsers">0 Tài khoản</span>
@@ -630,7 +630,7 @@ import {getAnalytics,isSupported as analyticsSupported} from "https://www.gstati
 // ============================================================================
 // 1. CẤU HÌNH FIREBASE & QUẢN TRỊ VIÊN
 // ============================================================================
-const ADMIN_EMAIL = "duong158209@gmail.com";
+const ADMIN_EMAILS = ["duong158209@gmail.com / baohieudeptrai.2009@gmail.com", "baohieudeptrai.2009@gmail.com"];
 
 const firebaseConfig = {
   apiKey: "AIzaSyDHHYeQu-m99th0y26A7CoPyL6_cpOZ6nQ",
@@ -648,7 +648,9 @@ let allUsersCache = {}, allMatchesCache = [], adminFilterUid = null;
 const $=id=>document.getElementById(id)||document.createElement("span");
 
 function isAdminUser(u = user) {
-  return Boolean(u && u.email && u.email.toLowerCase().trim() === ADMIN_EMAIL);
+  if(!u || !u.email) return false;
+  const em = u.email.toLowerCase().trim();
+  return ADMIN_EMAILS.some(a => a.toLowerCase() === em);
 }
 
 try {
@@ -769,15 +771,8 @@ function startMoveAnimation(from, to, piece) {
   animating = null;
 }
 function animateFrame() {
-  if (!animating) return;
-  drawBoardCanvas();
-  const elapsed = performance.now() - animating.start;
-  if (elapsed < animating.duration) {
-    requestAnimationFrame(animateFrame);
-  } else {
-    animating = null;
-    render();
-  }
+  // Disabled completely to prevent green flash on Android
+  animating = null;
 }
 
 let positionHistory = new Map();
@@ -889,6 +884,8 @@ async function initEngine(forceCdn){
             $("analysisText").textContent = `✨ Celestial gợi ý nước đi: ${hintArrow.from} → ${hintArrow.to}`;
           }
           engineMode = "play";
+          const cfg = LEVELS[mode] || LEVELS.easy;
+          engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
           render();
           return;
         }
@@ -898,6 +895,8 @@ async function initEngine(forceCdn){
             $("analysisText").textContent += ` | Khuyên đi: ${uci}`;
           }
           engineMode = "play";
+          const cfg = LEVELS[mode] || LEVELS.easy;
+          engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
           render();
           return;
         }
@@ -982,11 +981,26 @@ $("closeModalBtn").onclick = () => $("authModal").classList.remove("open");
 
 async function handleSignIn(email, pass, msgEl) {
   if(!fbReady) return alert("Chưa kết nối Firebase!");
+  if(!email || !pass) {
+    const m = "Vui lòng nhập email và mật khẩu.";
+    if(msgEl) { msgEl.style.display="flex"; msgEl.textContent = m; } else alert(m);
+    return;
+  }
   try {
     await signInWithEmailAndPassword(auth, email.trim(), pass);
   } catch(e) {
-    if(msgEl) { msgEl.style.display="flex"; msgEl.textContent = "Lỗi: " + e.message; }
-    else alert(e.message);
+    let m = "Đăng nhập thất bại.";
+    if(e.code === "auth/invalid-credential" || e.code === "auth/wrong-password" || e.code === "auth/user-not-found") {
+      m = "Email hoặc mật khẩu không đúng. Nếu chưa có tài khoản, hãy nhấn Đăng ký.";
+    } else if(e.code === "auth/invalid-email") {
+      m = "Email không hợp lệ.";
+    } else if(e.code === "auth/too-many-requests") {
+      m = "Thử quá nhiều lần. Vui lòng đợi một lúc rồi thử lại.";
+    } else {
+      m = "Lỗi: " + (e.message || e.code || "Không xác định");
+    }
+    if(msgEl) { msgEl.style.display="flex"; msgEl.textContent = m; }
+    else alert(m);
   }
 }
 
@@ -1009,8 +1023,18 @@ async function handleSignUp(name, email, pass, msgEl) {
     });
     renderUser();
   } catch(e) {
-    if(msgEl) { msgEl.style.display="flex"; msgEl.textContent = "Lỗi: " + e.message; }
-    else alert(e.message);
+    let m = "Đăng ký thất bại.";
+    if(e.code === "auth/email-already-in-use") {
+      m = "Email này đã được đăng ký. Hãy dùng Đăng nhập.";
+    } else if(e.code === "auth/weak-password") {
+      m = "Mật khẩu quá yếu (tối thiểu 6 ký tự).";
+    } else if(e.code === "auth/invalid-email") {
+      m = "Email không hợp lệ.";
+    } else {
+      m = "Lỗi: " + (e.message || e.code || "Không xác định");
+    }
+    if(msgEl) { msgEl.style.display="flex"; msgEl.textContent = m; }
+    else alert(m);
   }
 }
 
@@ -1231,11 +1255,9 @@ function pieceSprite(color, type, size){
   if (white) { gr.addColorStop(0, "#fffdf4"); gr.addColorStop(0.55, "#f1e3c0"); gr.addColorStop(1, "#c9b383"); }
   else { gr.addColorStop(0, "#5c6579"); gr.addColorStop(0.5, "#262b36"); gr.addColorStop(1, "#080a0e"); }
   b.fillStyle = gr; b.fillText(ch, cx, cy);
-  b.globalCompositeOperation = "source-atop";
-  const sh = b.createRadialGradient(size * 0.36, size * 0.3, size * 0.02, size * 0.36, size * 0.3, size * 0.46);
-  sh.addColorStop(0, white ? "rgba(255,255,255,0.95)" : "rgba(190,205,240,0.5)");
-  sh.addColorStop(1, "rgba(255,255,255,0)");
-  b.fillStyle = sh; b.fillRect(0, 0, size, size);
+  // Removed source-atop highlight (caused green flash on Android)
+  // b.globalCompositeOperation = "source-atop";
+  // ... highlight removed
   const [spr, g] = mk();
   g.lineWidth = size * 0.08; g.strokeStyle = white ? "#2a190b" : "#f6e2a2"; g.strokeText(ch, cx, cy);
   g.drawImage(body, 0, 0);
@@ -1297,10 +1319,10 @@ function drawBoardCanvas() {
   const legal = selected ? game.moves({square: selected, verbose: true}) : [];
   const lastMove = game.history({verbose: true}).slice(-1)[0];
 
-  ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.globalAlpha = 1;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.restore();
   const nowT = performance.now();
   const mvKey = lastMove ? game.history().length + lastMove.from + lastMove.to : "";
   if (mvKey !== lastGlowKey) { lastGlowKey = mvKey; moveGlowStart = nowT; }
@@ -1524,6 +1546,8 @@ async function squareClick(sq){
           movesCount: game.history().length,
           lastMove: moveRes.san,
           turn: game.turn(),
+          remainingW: remaining.w,
+          remainingB: remaining.b,
           updatedAt: serverTimestamp()
         });
       }
@@ -1742,18 +1766,20 @@ $("hintBtn").onclick=()=>{
   if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "hint";
   engineBusy = true;
-  $("analysisText").textContent = "Đang tính nước đi gợi ý cho Admin...";
+  $("analysisText").textContent = "Đang tính nước đi gợi ý mạnh (depth 24)...";
+  engine.postMessage("setoption name Skill Level value 20");
   engine.postMessage("position fen " + game.fen());
-  engine.postMessage("go depth 15");
+  engine.postMessage("go depth 24");
 };
 $("evalBtn").onclick=()=>{
   if(!isAdminUser()) return;
   if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "eval";
   engineBusy = true;
-  $("analysisText").textContent = "Celestial đang phân tích sâu vị trí hiện tại…";
+  $("analysisText").textContent = "Celestial đang phân tích rất sâu (depth 26)...";
+  engine.postMessage("setoption name Skill Level value 20");
   engine.postMessage("position fen " + game.fen());
-  engine.postMessage("go depth 18");
+  engine.postMessage("go depth 26");
 };
 
 // ============================================================================
@@ -1885,11 +1911,8 @@ function startClock(){
   stopClock(); updateClock();
   if(!clockSeconds) return;
   clockTimer=setInterval(()=>{
-    // Xác định đúng bên đang đi
-    let side = game.turn();
-    if(isOnlineGame && onlineRoomData && onlineRoomData.turn) {
-      side = onlineRoomData.turn;
-    }
+    if(game.game_over()) { stopClock(); return; }
+    const side = game.turn(); // luôn dùng lượt thật từ vị trí hiện tại
     if(remaining[side] > 0) remaining[side]--;
     updateClock();
     if(remaining[side] <= 0){
@@ -2147,6 +2170,11 @@ function subscribeRoom(id, myColor) {
       $("resignBtn").hidden = true;
       return;
     }
+
+    // Đồng bộ thời gian từ phòng (nếu có)
+    if(typeof data.remainingW === "number") remaining.w = data.remainingW;
+    if(typeof data.remainingB === "number") remaining.b = data.remainingB;
+    updateClock();
 
     if(data.pgn) {
       game.load_pgn(data.pgn);
