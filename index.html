@@ -274,16 +274,20 @@ footer{text-align:center;color:#5a6a7a;font-size:12px;margin-top:28px}
 body.reviewing{padding-bottom:150px}
 
 .rv-modal[hidden]{display:none}
-.cap{display:flex;align-items:center;flex-wrap:wrap;min-height:28px;padding:0 8px;margin:-2px 0 4px;font-size:21px;line-height:1.2}
-.cap i{font-style:normal;margin-right:-7px}
-.cap i.cw{color:#f3ecdc;text-shadow:0 1px 2px #000a}
-.cap i.cb{color:#6f8299;text-shadow:0 0 1px #fffa,0 1px 2px #000a}
-.cap b{margin-left:14px;font-size:12px;color:var(--green);font-weight:700}
+.cap{display:flex;align-items:center;gap:8px;min-height:44px;padding:3px 12px;margin:4px 0;background:linear-gradient(160deg,#101a28,#0b131e);border:1px solid #2a3d5288;border-radius:12px}
+.cg{display:inline-flex;align-items:center}
+.cg img{display:block;margin-right:-12px;filter:drop-shadow(0 1px 1px #0009)}
+.cg img:last-child{margin-right:0}
+.cap-empty{font-size:12px;color:#5f7186}
+.cap-adv{margin-left:auto;padding:2px 10px;border-radius:12px;background:#1b433266;border:1px solid #2d6a4f;color:var(--green);font-size:13px;font-weight:700}
+.eval-row{display:flex;align-items:center;gap:10px;margin:8px 0 0}
+.eval-row button{flex:none;min-height:44px;padding:10px 16px;white-space:nowrap}
+.eval-row .notice{flex:1;min-width:0}
 .rv-card.hv-card{max-width:780px;max-height:94vh;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:14px;align-items:start}
 .hv-board{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1/1;border:4px solid #3a2a1c;border-radius:10px;overflow:hidden}
 .hv-sq{display:grid;place-items:center;font-size:clamp(22px,6.2vw,44px);line-height:1;user-select:none}
-.hv-sq.l{background:#d9c39a}.hv-sq.d{background:#8a6a45}.hv-sq.hl{box-shadow:inset 0 0 0 100px #f0d85a77}
-.hv-sq .pw{color:#fff;text-shadow:0 0 2px #000,0 0 3px #000}.hv-sq .pb{color:#1b1511}
+.hv-sq.l{background:#f1e2bd}.hv-sq.d{background:#9b6e46}.hv-sq.hl{box-shadow:inset 0 0 0 100px #f0d85a77}
+.hv-sq img{width:92%;height:92%;display:block}
 .move-list.hv-moves{height:auto;max-height:360px}
 .hv-moves a{cursor:pointer;padding:1px 6px;border-radius:6px}
 .hv-moves a:hover{background:#ffffff12}.hv-moves a.on{background:#e0c07a33;color:var(--gold2);font-weight:700}
@@ -409,6 +413,11 @@ body.reviewing{padding-bottom:150px}
         <div class="board-shell">
           <canvas id="boardCanvas" width="640" height="640" aria-label="Bàn cờ vua Canvas"></canvas>
         </div>
+        <!-- CHỈ HIỆN VỚI QUẢN TRỊ VIÊN -->
+        <div id="evalRow" class="eval-row" hidden>
+          <button id="evalBtn">🔍 Đánh giá</button>
+          <span class="notice" id="analysisText">Sẵn sàng phân tích cho Admin.</span>
+        </div>
         <div class="playerbar"><strong id="bottomName">Bạn</strong><span id="bottomClock">∞</span></div>
         <div class="cap" id="bottomCap"></div>
         <button id="reviewBtn" class="primary" hidden style="width:100%;margin-top:4px">📊 Xem lại trận</button>
@@ -426,15 +435,6 @@ body.reviewing{padding-bottom:150px}
             <button id="fullscreenBtn">⛶ Toàn màn hình</button>
             <button id="newBtn">Ván mới</button>
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
-          </div>
-          <!-- CHỈ HIỆN VỚI QUẢN TRỊ VIÊN duong158209@gmail.com & baohieudeptrai.2009@gmail.com -->
-          <div id="adminControlsBox" class="admin-box" hidden>
-            <div class="admin-box-title">🛡️ Đặc quyền Quản trị</div>
-            <div class="two">
-              <button id="hintBtn">✨ Gợi ý</button>
-              <button id="evalBtn">🔍 Đánh giá</button>
-            </div>
-            <p class="notice" id="analysisText" style="margin:8px 0 0">Sẵn sàng phân tích cho Admin.</p>
           </div>
         </div>
       </div>
@@ -925,17 +925,6 @@ async function initEngine(forceCdn){
         engineBusy = false;
         if(!uci || uci === "(none)") return;
 
-        if(engineMode === "hint") {
-          if(isAdminUser()) {
-            hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
-            $("analysisText").textContent = `✨ Celestial gợi ý nước đi: ${hintArrow.from} → ${hintArrow.to}`;
-          }
-          engineMode = "play";
-          const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
-          engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
-          render();
-          return;
-        }
         if(engineMode === "eval") {
           if(isAdminUser()) {
             hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
@@ -1015,7 +1004,7 @@ function renderUser(){
 
   $("adminBadge").hidden = !admin;
   $("adminTabBtn").hidden = !admin;
-  $("adminControlsBox").hidden = !admin;
+  $("evalRow").hidden = !admin;
   if(!admin) {
     hintArrow = null;
     if(document.querySelector("#admin.section.active")) tab("home");
@@ -1904,18 +1893,7 @@ $("resignBtn").onclick = async () => {
   }
 };
 
-// CHỈ ADMIN MỚI GỌI ĐƯỢC GỢI Ý & ĐÁNH GIÁ
-$("hintBtn").onclick=()=>{
-  if(!isAdminUser()) return;
-  if(!engineReady || engineBusy || reviewMode) return;
-  engineMode = "hint";
-  engineBusy = true;
-  $("analysisText").textContent = "Đang tính gợi ý mạnh (depth 28, tối đa 4 giây)...";
-  engine.postMessage("setoption name Skill Level value 20");
-  engine.postMessage("setoption name MultiPV value 1");
-  engine.postMessage("position fen " + game.fen());
-  engine.postMessage("go depth 28 movetime 4000");
-};
+// CHỈ ADMIN MỚI GỌI ĐƯỢC ĐÁNH GIÁ
 $("evalBtn").onclick=()=>{
   if(!isAdminUser()) return;
   if(!engineReady || engineBusy || reviewMode) return;
@@ -2435,16 +2413,23 @@ window.addEventListener("pagehide", saveGame);
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") saveGame(); });
 
 // --- Quân đã ăn: hiện dưới tên mỗi bên, kèm chênh lệch điểm ---
+const capImgCache = {};
+function pieceImg(color, type, px){
+  const key = color + type;
+  if(!capImgCache[key]){ try{ capImgCache[key] = pieceSprite(color, type, 96).toDataURL(); }catch(e){ return ""; } }
+  return `<img src="${capImgCache[key]}" width="${px}" height="${px}" alt="" draggable="false">`;
+}
 function capHTML(verboseHist, color){
   const cnt = {}; let mine = 0, theirs = 0;
   verboseHist.forEach(m => {
     if(!m.captured) return;
     if(m.color === color){ cnt[m.captured] = (cnt[m.captured] || 0) + 1; mine += CAPV[m.captured]; } else theirs += CAPV[m.captured];
   });
-  const cls = color === "w" ? "cb" : "cw";
+  const victim = color === "w" ? "b" : "w";
   let h = "";
-  ["q","r","b","n","p"].forEach(t => { for(let i = 0; i < (cnt[t] || 0); i++) h += `<i class="${cls}">${glyph.b[t]}</i>`; });
-  return h + (mine > theirs ? `<b>+${mine - theirs}</b>` : "");
+  ["q","r","b","n","p"].forEach(t => { if(cnt[t]) h += `<span class="cg">${pieceImg(victim, t, 32).repeat(cnt[t])}</span>`; });
+  if(!h) h = '<span class="cap-empty">Chưa ăn quân nào</span>';
+  return h + (mine > theirs ? `<b class="cap-adv">+${mine - theirs}</b>` : "");
 }
 function renderCaptured(){
   const vh = game.history({verbose:true});
@@ -2490,7 +2475,7 @@ function drawReplay(){
   for(let r = 0; r < 8; r++) for(let c = 0; c < 8; c++){
     const rr = flip ? 7 - r : r, cc = flip ? 7 - c : c, p = bd[rr][cc], name = "abcdefgh"[cc] + (8 - rr);
     const hl = last && (last.from === name || last.to === name) ? " hl" : "";
-    sq += `<div class="hv-sq ${(rr + cc) % 2 ? "d" : "l"}${hl}">${p ? `<span class="${p.color === "w" ? "pw" : "pb"}">${glyph.b[p.type]}</span>` : ""}</div>`;
+    sq += `<div class="hv-sq ${(rr + cc) % 2 ? "d" : "l"}${hl}">${p ? pieceImg(p.color, p.type, 64) : ""}</div>`;
   }
   $("hvBoard").innerHTML = sq;
   $("hvCapTop").innerHTML = capHTML(vh, h.human === "w" ? "b" : "w");
