@@ -835,15 +835,15 @@ let hintArrow=null;
 
 const CELESTIAL_CDN = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
 const DIFFICULTY = {
-  // Bot mạnh hơn: skill cao hơn + nghĩ lâu hơn. Mọi nước đi bị chặn tối đa MAX_THINK_MS (4 giây).
+  // Bot mạnh hơn: skill cao hơn + nghĩ lâu hơn. Bot thường bị chặn tối đa 4 giây/nước, Địa ngục tối đa 7 giây/nước.
   easy:   { skill: 10, depth: 14, movetime: 400  },
   medium: { skill: 15, depth: 18, movetime: 1000 },
   hard:   { skill: 19, depth: 24, movetime: 2200 },
-  hell:   { skill: 20, depth: 0,  movetime: 3800 }
+  hell:   { skill: 20, depth: 0,  movetime: 6800 }
 };
-const MAX_THINK_MS = 4000;
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 7000; // bot thường tối đa 4s, Địa ngục tối đa 7s
 
-let engineKind = "sf10", botWatch = null, earlyStop = null;
+let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 
 function armBotWatch(ms){
@@ -902,6 +902,14 @@ async function initEngine(forceCdn){
         $("engineBadge").classList.add("ready");
       }
       if(earlyStop && engineMode === "play" && line.startsWith("info ")) trackEarlyStop(line);
+      if(engineMode === "play" && engineBusy && line.startsWith("info ")){
+        const dm = line.match(/ depth (\d+)/);
+        if(dm && Number(dm[1]) > shownDepth && !game.game_over()){
+          shownDepth = Number(dm[1]);
+          $("gameStatus").textContent = `⏳ Celestial đang tính… nhìn trước ${shownDepth} nước`;
+        }
+        if(mpv && line.includes(" score ") && !/bound/.test(line)) trackMultiPv(line);
+      }
       if(line.startsWith("info ") && line.includes(" score ") && isAdminUser() && engineMode === "eval") {
         const mateMatch = line.match(/score mate (-?\d+)/);
         const cpMatch = line.match(/score cp (-?\d+)/);
@@ -919,7 +927,7 @@ async function initEngine(forceCdn){
         }
       }
       if(line.startsWith("bestmove")) {
-        const uci = line.split(" ")[1];
+        let uci = line.split(" ")[1];
         clearTimeout(botWatch);
         earlyStop = null;
         engineBusy = false;
@@ -937,25 +945,8 @@ async function initEngine(forceCdn){
           return;
         }
 
-        const moveObj = { from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" };
-        try {
-          const movingPiece = game.get(moveObj.from);
-          game.move(moveObj);
-          if (checkCustomRepetition()) {
-            checkGameOver(null, "Hoà cờ (Lặp lại 3 lần)");
-            return;
-          }
-          hintArrow = null;
-          const isCapture = !!game.history({verbose:true}).slice(-1)[0]?.captured;
-          const isCheck = game.in_check();
-          playSound(isCapture ? "capture" : (isCheck ? "check" : "move"));
-          if (movingPiece) startMoveAnimation(moveObj.from, moveObj.to, movingPiece);
-          // startMoveAnimation is intentionally disabled on mobile; render must still run.
-          render();
-          checkGameOver();
-        } catch {
-          fallbackMove();
-        }
+        uci = pickVariety(uci);
+        applyBotUci(uci);
       }
     };
     engine.postMessage("uci");
@@ -1615,14 +1606,15 @@ async function squareClick(sq){
 // Nếu nước tốt nhất không đổi qua 3 độ sâu liên tiếp và điểm gần như không dao động,
 // việc nghĩ thêm hiếm khi đổi kết quả → dừng để đỡ chờ. Nước khó (nước đi/điểm còn đổi) vẫn dùng đủ trần.
 // Hàm này giống hệt bản trong arena.html.
+// (Bản mạnh hơn: nghĩ tối thiểu nửa ngân sách, sâu >=20 nước (10 nước mỗi bên), nước đi giữ nguyên 4 độ sâu liên tiếp, điểm dao động <=15.)
 function shouldStopEarly(hist, elapsedMs, budgetMs){
-  if(elapsedMs < Math.max(200, budgetMs * 0.25)) return false;
-  if(hist.length < 3) return false;
-  const last = hist.slice(-3);
-  if(last[last.length - 1].d < 8) return false;
+  if(elapsedMs < Math.max(400, budgetMs * 0.5)) return false;
+  if(hist.length < 4) return false;
+  const last = hist.slice(-4);
+  if(last[last.length - 1].d < 20) return false;
   if(!last.every(x => x.mv === last[0].mv)) return false;
   const cps = last.map(x => x.cp);
-  return Math.max(...cps) - Math.min(...cps) <= 25;
+  return Math.max(...cps) - Math.min(...cps) <= 15;
 }
 function trackEarlyStop(line){
   const es = earlyStop;
@@ -1665,7 +1657,7 @@ function botPositionCmd(){
   return "position fen " + game.fen();
 }
 
-function getNonRepeatingBotMoves(){
+function getNonRepeatingBotMoves(maxSeen = 1){
   const legal = game.moves({verbose:true});
   const seen = positionHistory;
   const safe = [];
@@ -1674,30 +1666,139 @@ function getNonRepeatingBotMoves(){
       const probe = new Chess(game.fen());
       probe.move({from:m.from, to:m.to, promotion:m.promotion || "q"});
       const key = probe.fen().split(" ").slice(0,4).join(" ");
-      if(!seen.has(key)) safe.push(m);
+      if((seen.get(key) || 0) < maxSeen) safe.push(m);
     }catch(e){}
   }
   // Never make the engine think forever when every legal move revisits a position.
   return (safe.length ? safe : legal).map(m => m.from + m.to + (m.promotion || ""));
 }
 
+// --- Sách khai cuộc: nhiều biến thể (UCI). Chỉ dùng khi lịch sử ván khớp đầu dòng; nước nào không hợp lệ sẽ tự bị bỏ qua.
+const OPENING_BOOK = [
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 g8f6 e1g1 f6e4 d2d4 e4d6",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3 g8f6 d2d3 d7d6",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4 e5d4 e1g1 f6e4",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 g8f6 b1c3 f8b4",
+  "e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8b4 e1g1 e8g8",
+  "e2e4 e7e5 g1f3 g8f6 f3e5 d7d6 e5f3 f6e4 d2d4 d6d5",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6",
+  "e2e4 c7c5 g1f3 b8c6 d2d4 c5d4 f3d4 g8f6 b1c3 e7e5",
+  "e2e4 c7c5 g1f3 e7e6 d2d4 c5d4 f3d4 a7a6 f1d3 g8f6",
+  "e2e4 c7c5 b1c3 b8c6 g2g3 g7g6 f1g2 f8g7 d2d3 d7d6",
+  "e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 f8e7 e4e5 f6d7",
+  "e2e4 e7e6 d2d4 d7d5 b1d2 g8f6 e4e5 f6d7 f1d3 c7c5",
+  "e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4 c8f5 e4g3 f5g6",
+  "e2e4 d7d5 e4d5 d8d5 b1c3 d5a5 d2d4 g8f6 g1f3 c7c6",
+  "e2e4 g7g6 d2d4 f8g7 b1c3 d7d6 g1f3 g8f6 f1e2 e8g8",
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 c1g5 f8e7 e2e3 e8g8",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3 d5c4 a2a4 c8f5",
+  "d2d4 d7d5 g1f3 g8f6 c1f4 e7e6 e2e3 f8d6 f4g3 e8g8",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 e2e3 e8g8 f1d3 d7d5",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 b7b6 g2g3 c8a6 b2b3 f8b4",
+  "d2d4 g8f6 c2c4 e7e6 g2g3 d7d5 f1g2 f8e7 g1f3 e8g8",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3 e8g8",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 c4d5 f6d5 e2e4 d5c3",
+  "d2d4 g8f6 c2c4 c7c5 d4d5 e7e6 b1c3 e6d5 c4d5 d7d6",
+  "d2d4 f7f5 g2g3 g8f6 f1g2 e7e6 g1f3 f8e7 e1g1 e8g8",
+  "c2c4 e7e5 b1c3 g8f6 g1f3 b8c6 g2g3 d7d5 c4d5 f6d5",
+  "c2c4 c7c5 g1f3 g8f6 b1c3 b8c6 g2g3 g7g6 f1g2 f8g7",
+  "c2c4 g8f6 b1c3 e7e6 g1f3 d7d5 d2d4 f8e7 c1f4 e8g8",
+  "g1f3 d7d5 g2g3 g8f6 f1g2 e7e6 e1g1 f8e7 d2d4 e8g8",
+  "g1f3 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 d2d4 e8g8",
+  "g1f3 d7d5 d2d4 g8f6 c2c4 e7e6 b1c3 f8e7 c1g5 e8g8"
+];
+const uciOf = m => m.from + m.to + (m.promotion || "");
+function bookMove(){
+  const hist = game.history({verbose:true}).map(uciOf), ply = hist.length;
+  if(ply >= 12) return null;
+  const legal = new Set(game.moves({verbose:true}).map(uciOf)), cands = [];
+  for(const ln of OPENING_BOOK){
+    const mv = ln.split(" ");
+    if(mv.length <= ply) continue;
+    let ok = true;
+    for(let i = 0; i < ply; i++) if(mv[i] !== hist[i]){ ok = false; break; }
+    if(ok && legal.has(mv[ply])) cands.push(mv[ply]);
+  }
+  return cands.length ? cands[Math.floor(Math.random() * cands.length)] : null;
+}
+
+// --- Hết sách: Địa ngục/Cao thủ xét 4 nước tốt nhất trong ~16 bán nước đầu, chọn ngẫu nhiên giữa các nước gần ngang điểm
+function wantVariety(){ return (mode === "hell" || mode === "hard") && game.history().length < 16 && game.moves().length > 1; }
+function trackMultiPv(line){
+  const dm = line.match(/ depth (\d+)/), km = line.match(/ multipv (\d+)/), sm = line.match(/score (cp|mate) (-?\d+)/), pm = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+  if(!dm || !sm || !pm) return;
+  const d = Number(dm[1]), k = km ? Number(km[1]) : 1, v = Number(sm[2]);
+  if(d > mpv.d){ mpv.d = d; mpv.lines = {}; }
+  if(d < mpv.d) return;
+  mpv.lines[k] = { mv: pm[1], cp: sm[1] === "mate" ? (v > 0 ? 1 : -1) * (100000 - Math.abs(v)) : v };
+}
+function pickVariety(uci){
+  const m = mpv; mpv = null;
+  if(!m) return uci;
+  engine.postMessage("setoption name MultiPV value 1");
+  const L = Object.values(m.lines);
+  if(L.length < 2) return uci;
+  const best = Math.max(...L.map(x => x.cp));
+  if(Math.abs(best) > 150) return uci;
+  const pool = L.filter(x => x.cp >= best - m.tol);
+  return pool.length > 1 ? pool[Math.floor(Math.random() * pool.length)].mv : uci;
+}
+
+function applyBotUci(uci){
+  const moveObj = { from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" };
+  try {
+    const movingPiece = game.get(moveObj.from);
+    game.move(moveObj);
+    if (checkCustomRepetition()) {
+      checkGameOver(null, "Hoà cờ (Lặp lại 3 lần)");
+      return;
+    }
+    hintArrow = null;
+    const isCapture = !!game.history({verbose:true}).slice(-1)[0]?.captured;
+    const isCheck = game.in_check();
+    playSound(isCapture ? "capture" : (isCheck ? "check" : "move"));
+    if (movingPiece) startMoveAnimation(moveObj.from, moveObj.to, movingPiece);
+    // startMoveAnimation is intentionally disabled on mobile; render must still run.
+    render();
+    checkGameOver();
+  } catch {
+    fallbackMove();
+  }
+}
+
 function botMove(){
   if(isOnlineGame || game.game_over() || game.turn()===human || engineBusy) return;
+  const bk = bookMove();
+  if(bk){
+    engineBusy = true; render();
+    const fen0 = game.fen();
+    setTimeout(() => {
+      engineBusy = false;
+      if(game.fen() === fen0 && !reviewMode && !game.game_over() && game.turn() !== human) applyBotUci(bk);
+      else { render(); if(!isOnlineGame && !game.game_over() && game.turn() !== human) setTimeout(botMove, 0); }
+    }, 300 + Math.random() * 500);
+    return;
+  }
   if(engineReady && engine){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     const hell = mode === "hell";
     const leftMs = clockSeconds ? remaining[game.turn()] * 1000 : null;
-    const think = Math.min(MAX_THINK_MS, hell
+    const think = Math.min(hell ? HELL_MAX_THINK_MS : MAX_THINK_MS, hell
       ? hellThinkMs(cfg.movetime, leftMs)
       : (leftMs != null ? Math.min(cfg.movetime, Math.max(250, leftMs / 30 - 200)) : cfg.movetime));
     engineBusy = true;
     engineMode = "play";
     render();
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
+    const variety = wantVariety();
+    engine.postMessage(`setoption name MultiPV value ${variety ? 4 : 1}`);
+    mpv = variety ? { d: 0, lines: {}, tol: hell ? 20 : 30 } : null;
+    shownDepth = 0;
     // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
     engine.postMessage(botPositionCmd());
     earlyStop = hell ? { t0: performance.now(), budget: think, hist: [], lastDepth: 0, sent: false } : null;
-    const avoidMoves = getNonRepeatingBotMoves();
+    const avoidMoves = getNonRepeatingBotMoves(hell ? 2 : 1);
     const searchPrefix = avoidMoves.length ? `searchmoves ${avoidMoves.join(" ")}` : "";
     const goCmd = hell
       ? `go ${searchPrefix} movetime ${think}`.replace(/\s+/g," ").trim()
@@ -1899,6 +2000,7 @@ $("evalBtn").onclick=()=>{
   if(!engineReady || engineBusy || reviewMode) return;
   engineMode = "eval";
   engineBusy = true;
+  engine.postMessage("setoption name MultiPV value 1");
   $("analysisText").textContent = "Celestial đang phân tích sâu (depth 30, tối đa 5 giây)...";
   engine.postMessage("setoption name Skill Level value 20");
   engine.postMessage("position fen " + game.fen());
