@@ -347,9 +347,52 @@ body.reviewing{padding-bottom:150px}
   font-size: 14px;
   cursor: pointer;
 }
+
+/* === GIAO DIỆN NEON ARENA === */
+:root{
+ --bg:#080b16;--panel:#11182aee;--panel2:#18223a;--line:#344363;
+ --gold:#f5c96b;--gold2:#ffe6a5;--muted:#a4b0c8;--text:#f5f7ff;
+ --green:#62e6b0;--red:#ff647c;--accent:#9b8cff;
+}
+body{
+ background:radial-gradient(ellipse 80% 55% at 50% -15%,#42316f 0%,#151b35 42%,#080b16 100%) fixed;
+ font-family:Inter,'DM Sans',system-ui,sans-serif;
+}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.17;background-image:linear-gradient(#8293c51a 1px,transparent 1px),linear-gradient(90deg,#8293c51a 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,#000,transparent 85%)}
+.panel,.sidebox>div{background:linear-gradient(145deg,#19233bea,#0e1425f2);border:1px solid #56658a66;border-radius:22px;box-shadow:0 18px 55px #0007,inset 0 1px #ffffff0c;backdrop-filter:blur(16px)}
+h1,h2,h3{letter-spacing:-.035em}
+button{border-radius:13px!important;border:1px solid #65749a88!important;background:linear-gradient(145deg,#273451,#18233a)!important;color:#f6f7ff!important;transition:transform .18s,border-color .18s,filter .18s,box-shadow .18s!important;box-shadow:0 5px 14px #0003}
+button:hover{transform:translateY(-2px);border-color:#a99cff!important;filter:brightness(1.13);box-shadow:0 9px 22px #0005}
+button.primary{background:linear-gradient(115deg,#a18aff,#6c5bd4)!important;border-color:#c3b6ff!important;color:white!important;font-weight:800}
+button.danger{background:linear-gradient(115deg,#a93651,#661f3a)!important;border-color:#ff7189!important}
+.tabs button.active{background:linear-gradient(120deg,#8c7ae8,#5546a9)!important;border-color:#c0b5ff!important}
+.mode{border:1px solid #536384!important;background:linear-gradient(145deg,#1b2742,#121a2e)!important;border-radius:18px!important;padding:17px!important}
+.mode.selected{border-color:#b8a9ff!important;box-shadow:0 0 0 2px #a18aff55,0 12px 28px #8271ff26!important;background:linear-gradient(145deg,#302b58,#17213a)!important}
+.mode[data-mode="hell"]{border-color:#873c53!important}
+.mode[data-mode="hell"].selected{border-color:#ff536d!important;background:linear-gradient(145deg,#5a2038,#241729)!important;box-shadow:0 0 0 2px #ff536d77,0 0 38px #ff294b44!important}
+input,select{background:#0d1426;border-color:#465577;border-radius:13px}
+.status{background:linear-gradient(120deg,#242d4c,#151d32);border-color:#596a91;border-radius:14px;color:#e7e4ff}
+.playerbar{background:linear-gradient(110deg,#252d4b,#131c31);border:1px solid #5a6688;border-radius:13px;padding:11px 14px}
+.board-shell{border:7px solid #25223c;border-radius:19px;box-shadow:0 0 0 1px #9c8cff,0 22px 60px #000b}
+body.hell .board-shell{border-color:#61243a;box-shadow:0 0 0 2px #ff647c,0 0 55px #ff315566,0 22px 60px #000b}
+.move-list{background:#0a1020;border-color:#394767;border-radius:14px}
+.notice{color:#b0bbd2}
+#hellFlash{
+ position:fixed;z-index:9999;left:50%;top:18%;transform:translate(-50%,-12px) scale(.92);
+ padding:22px 42px;border:2px solid #ff536d;border-radius:18px;
+ background:linear-gradient(135deg,#3c1024f5,#170e20f5);
+ color:#fff;font-size:clamp(25px,6vw,46px);font-weight:1000;letter-spacing:.12em;
+ text-shadow:0 0 18px #ff254d;box-shadow:0 0 0 5px #ff536d22,0 0 55px #ff174d88;
+ opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+}
+#hellFlash.show{opacity:1;transform:translate(-50%,0) scale(1);animation:hellGlow 1s ease-in-out infinite alternate}
+@keyframes hellGlow{to{box-shadow:0 0 0 8px #ff536d22,0 0 75px #ff174dcc}}
+@media(max-width:760px){.game-wrap{grid-template-columns:1fr}.sidebox{display:grid;grid-template-columns:1fr}.panel{border-radius:17px}.mode{padding:13px!important}}
+
 </style>
 </head>
 <body>
+<div id="hellFlash" aria-live="polite">ĐỊA NGỤC</div>
 <header>
   <div class="brand"><div class="brand-mark">♞</div>CHESS <em>ULTIMATE</em></div>
   <div class="header-right">
@@ -435,6 +478,7 @@ body.reviewing{padding-bottom:150px}
             <button id="fullscreenBtn">⛶ Toàn màn hình</button>
             <button id="newBtn">Ván mới</button>
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
+            <button id="botResignBtn" class="danger" hidden>⚑ Ép bot đầu hàng</button>
           </div>
         </div>
       </div>
@@ -837,11 +881,11 @@ const CELESTIAL_CDN = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.
 const DIFFICULTY = {
   // Bot mạnh hơn: skill cao hơn + nghĩ lâu hơn. Bot thường bị chặn tối đa 4 giây/nước, Địa ngục tối đa 7 giây/nước.
   easy:   { skill: 10, depth: 14, movetime: 400  },
-  medium: { skill: 15, depth: 18, movetime: 1000 },
+  medium: { skill: 11, depth: 14, movetime: 550 },
   hard:   { skill: 19, depth: 24, movetime: 2200 },
-  hell:   { skill: 20, depth: 0,  movetime: 6800 }
+  hell:   { skill: 20, depth: 0,  movetime: 11500 }
 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 7000; // bot thường tối đa 4s, Địa ngục tối đa 7s
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 12000; // bot thường tối đa 4s, Địa ngục tối đa 7s
 
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
@@ -974,6 +1018,14 @@ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>tab(b.dataset.t
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
   mode=b.dataset.mode;
   document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===b));
+  if(mode === "hell"){
+    const flash = $("hellFlash");
+    flash.classList.remove("show");
+    void flash.offsetWidth;
+    flash.classList.add("show");
+    clearTimeout(window.hellFlashTimer);
+    window.hellFlashTimer = setTimeout(()=>flash.classList.remove("show"),5000);
+  }
 });
 
 function renderUser(){
@@ -1484,6 +1536,7 @@ function startGame(){
   isOnlineGame = false;
   onlineRoomData = null;
   $("resignBtn").hidden = true;
+  $("botResignBtn").hidden = true;
   matchRecorded = false;
   if(roomUnsub) { roomUnsub(); roomUnsub = null; }
   game = new Chess();
@@ -1498,6 +1551,8 @@ function startGame(){
   remaining = { w: clockSeconds, b: clockSeconds };
 
   $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
+  $("resignBtn").hidden = false;
+  $("botResignBtn").hidden = false;
   $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
   document.body.classList.toggle("hell", mode === "hell");
@@ -1746,6 +1801,7 @@ function pickVariety(uci){
 }
 
 function applyBotUci(uci){
+  if(matchRecorded || game.game_over()) return;
   const moveObj = { from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" };
   try {
     const movingPiece = game.get(moveObj.from);
@@ -1839,6 +1895,8 @@ async function checkGameOver(timeoutWinnerColor = null, forceReason = null) {
   if(!game.game_over() && !timeoutWinnerColor && !forceReason) return false;
   if(matchRecorded) return true;
   matchRecorded = true;
+  $("resignBtn").hidden = true;
+  $("botResignBtn").hidden = true;
   stopClock();
   playSound("end");
 
@@ -1938,6 +1996,29 @@ async function checkGameOver(timeoutWinnerColor = null, forceReason = null) {
   }
   return true;
 }
+
+// Đầu hàng trong chế độ đấu bot hoặc ép bot nhận thua.
+$("resignBtn").onclick = async () => {
+  if(isOnlineGame || game.game_over() || matchRecorded) return;
+  if(!confirm("Bạn muốn đầu hàng ván đấu này?")) return;
+  const botColor = human === "w" ? "b" : "w";
+  engineBusy = false;
+  if(engine) engine.postMessage("stop");
+  clearTimeout(botWatch);
+  await checkGameOver(botColor, "Bạn đầu hàng");
+  $("resignBtn").hidden = true;
+  $("botResignBtn").hidden = true;
+};
+$("botResignBtn").onclick = async () => {
+  if(isOnlineGame || game.game_over() || matchRecorded) return;
+  if(!confirm("Ép bot nhận thua và kết thúc ván đấu với chiến thắng cho bạn?")) return;
+  engineBusy = false;
+  if(engine) engine.postMessage("stop");
+  clearTimeout(botWatch);
+  await checkGameOver(human, "Bot đầu hàng");
+  $("resignBtn").hidden = true;
+  $("botResignBtn").hidden = true;
+};
 
 $("undoBtn").onclick=()=>{
   if(engineBusy || isOnlineGame) return;
@@ -2369,6 +2450,7 @@ function subscribeRoom(id, myColor) {
   isOnlineGame = true;
   matchRecorded = false;
   $("resignBtn").hidden = false;
+  $("botResignBtn").hidden = true;
   // Khởi động đồng hồ cho online (dùng thời gian đã chọn hoặc mặc định)
   if(!clockSeconds) clockSeconds = 600; // mặc định 10 phút nếu chưa chọn
   remaining = { w: clockSeconds, b: clockSeconds };
