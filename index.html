@@ -797,8 +797,8 @@ const DIFFICULTY = {
   medium: { skill: 7,  depth: 8,  movetime: 120  },
   hard:   { skill: 14, depth: 12, movetime: 280  },
   // Địa ngục: KHÔNG giới hạn độ sâu, chỉ giới hạn theo thời gian (xem hellThinkMs).
-  // Bản cũ: depth 18 / 600ms. 3000ms là TRẦN; nước dễ sẽ dừng sớm (xem shouldStopEarly).
-  hell:   { skill: 20, depth: 0,  movetime: 3000 }
+  // Bản cũ: depth 18 / 600ms. 1500ms là TRẦN (chỉnh số này để nhanh/chậm); nước dễ sẽ dừng sớm (xem shouldStopEarly).
+  hell:   { skill: 20, depth: 0,  movetime: 1500 }
 };
 
 let engineKind = "sf10", botWatch = null, earlyStop = null;
@@ -1570,17 +1570,17 @@ async function squareClick(sq){
 }
 
 // --- Bot Địa ngục: dừng sớm khi nước đi đã "chín" ---
-// Nếu nước tốt nhất không đổi qua 4 độ sâu liên tiếp và điểm gần như không dao động,
+// Nếu nước tốt nhất không đổi qua 3 độ sâu liên tiếp và điểm gần như không dao động,
 // việc nghĩ thêm hiếm khi đổi kết quả → dừng để đỡ chờ. Nước khó (nước đi/điểm còn đổi) vẫn dùng đủ trần.
 // Hàm này giống hệt bản trong arena.html.
 function shouldStopEarly(hist, elapsedMs, budgetMs){
-  if(elapsedMs < Math.max(300, budgetMs * 0.3)) return false;
-  if(hist.length < 4) return false;
-  const last = hist.slice(-4);
-  if(last[last.length - 1].d < 10) return false;
+  if(elapsedMs < Math.max(200, budgetMs * 0.25)) return false;
+  if(hist.length < 3) return false;
+  const last = hist.slice(-3);
+  if(last[last.length - 1].d < 8) return false;
   if(!last.every(x => x.mv === last[0].mv)) return false;
   const cps = last.map(x => x.cp);
-  return Math.max(...cps) - Math.min(...cps) <= 20;
+  return Math.max(...cps) - Math.min(...cps) <= 25;
 }
 function trackEarlyStop(line){
   const es = earlyStop;
