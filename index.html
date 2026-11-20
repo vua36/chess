@@ -855,7 +855,7 @@ async function initEngine(forceCdn){
       if(line === "uciok") engine.postMessage("isready");
       if(line === "readyok") {
         engineReady = true;
-        $("engineBadge").textContent = "⚡ Celestial Ready";
+        $("engineBadge").textContent = "⚡ Celestial Ready · " + (engineKind === "sf19" ? "SF19" : "SF10");
         $("engineBadge").classList.add("ready");
       }
       if(earlyStop && engineMode === "play" && line.startsWith("info ")) trackEarlyStop(line);
@@ -1481,8 +1481,6 @@ function startGame(){
     engine.postMessage("ucinewgame");
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     if(mode === "hell") {
-      // Bảng băm lớn hơn (mặc định chỉ 16MB) → tìm kiếm hiệu quả hơn khi nghĩ lâu
-      engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? 64 : 32}`);
       if(engineKind !== "sf19") engine.postMessage("setoption name Contempt value 24");
     }
   }
@@ -1639,7 +1637,7 @@ function botMove(){
     // Hell: chỉ giới hạn theo thời gian. Các mức khác giữ nguyên depth + movetime như cũ.
     earlyStop = hell ? { t0: performance.now(), budget: think, hist: [], lastDepth: 0, sent: false } : null;
     engine.postMessage(hell ? `go movetime ${think}` : `go depth ${cfg.depth} movetime ${cfg.movetime}`);
-    armBotWatch(Math.max(3000, think + (hell ? 3000 : 2000)));
+    armBotWatch(hell ? Math.max(2500, think + 1500) : Math.max(3000, cfg.movetime + 2000));
     return;
   }
   fallbackMove();
