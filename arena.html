@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arena · Địa ngục CŨ vs MỚI</title>
+<style>
+:root{--bg:#070c14;--panel:#121c2b;--line:#2a3d52;--gold:#e0c07a;--muted:#8b9cb0;--text:#f0f4f8;--green:#6bcf9a;--red:#ef8a8a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,sans-serif;padding:16px;max-width:900px;margin-inline:auto}
+h1{font-size:20px;margin:0 0 4px;color:var(--gold)}
+p.sub{color:var(--muted);margin:0 0 14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+input{width:100%;background:#0c1520;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:9px 10px;font:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#1a2636;color:var(--text);border-radius:10px;padding:10px 16px;font:inherit;font-weight:600}
+button.primary{background:linear-gradient(135deg,#f0d89a,#c99a4a);color:#1a140c;border:0}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.board-wrap{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+table.board{border-collapse:collapse;border:3px solid #3a2a1c}
+table.board td{width:38px;height:38px;text-align:center;font-size:28px;line-height:1;padding:0}
+td.l{background:#e8d5b0;color:#111}td.d{background:#b08a5a;color:#111}
+#status{flex:1;min-width:240px}
+#log{font:12px/1.5 ui-monospace,monospace;color:var(--muted);white-space:pre-wrap;max-height:220px;overflow:auto;background:#0a121c;border:1px solid var(--line);border-radius:10px;padding:10px}
+#summary{font-size:16px;font-weight:600}
+.win{color:var(--green)}.lose{color:var(--red)}
+table.res{width:100%;border-collapse:collapse;font-size:13px}
+table.res td,table.res th{border-bottom:1px solid #1a2a3a;padding:5px 6px;text-align:left}
+.note{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<h1>⚔️ Arena · Địa ngục CŨ vs MỚI</h1>
+<p class="sub">Hai engine chạy ngay trong trình duyệt, đánh luân phiên màu, mở đầu từ 10 thế cờ khác nhau (mỗi thế đánh cả hai màu).</p>
+
+<div class="panel">
+  <div class="grid">
+    <div><label>Số ván (chẵn)</label><input id="games" type="number" value="10" min="2" step="2"></div>
+    <div><label>CŨ · ms mỗi nước</label><input id="oldMs" type="number" value="600" min="50"></div>
+    <div><label>CŨ · depth tối đa</label><input id="oldDepth" type="number" value="18" min="1"></div>
+    <div><label>MỚI · ms gốc mỗi nước</label><input id="newMs" type="number" value="4000" min="50"></div>
+  </div>
+  <div class="row">
+    <button class="primary" id="startBtn">▶ Bắt đầu</button>
+    <button id="stopBtn" disabled>■ Dừng</button>
+  </div>
+  <p class="note" style="margin:10px 0 0">CŨ = đúng cấu hình bản gốc (Skill 20, depth 18, 600ms, chỉ nhận FEN). MỚI = cấu hình mới trong index.html (không trần depth, Hash lớn, nhận lịch sử nước đi, chia thời gian). Để tab này mở và đừng khoá màn hình khi chạy. Ước lượng: ~3 phút/ván với cấu hình mặc định.</p>
+</div>
+
+<div class="panel board-wrap">
+  <table class="board" id="board"></table>
+  <div id="status">
+    <div id="summary">Chưa chạy.</div>
+    <div id="engInfo" class="note"></div>
+    <div id="cur" class="note" style="margin-top:6px"></div>
+  </div>
+</div>
+
+<div class="panel"><table class="res" id="res"><thead><tr><th>#</th><th>Mở đầu</th><th>MỚI cầm</th><th>Kết quả (MỚI)</th><th>Nước</th><th>Lý do</th></tr></thead><tbody></tbody></table></div>
+<div class="panel"><div id="log"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const LOCAL_SF = "stockfish-19-lite-single.js";
+const CDN_SF = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
+
+const OPENINGS = [
+  ["Ruy Lopez",      "e4 e5 Nf3 Nc6 Bb5 a6"],
+  ["Sicilian",       "e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6"],
+  ["Queen's Gambit", "d4 d5 c4 e6 Nc3 Nf6"],
+  ["King's Indian",  "d4 Nf6 c4 g6 Nc3 Bg7 e4 d6"],
+  ["French",         "e4 e6 d4 d5 Nc3 Nf6"],
+  ["Caro-Kann",      "e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5"],
+  ["English",        "c4 e5 Nc3 Nf6 Nf3 Nc6"],
+  ["Queen's Indian", "d4 Nf6 Nf3 e6 c4 b6"],
+  ["Petrov",         "e4 e5 Nf3 Nf6 Nxe5 d6 Nf3 Nxe4"],
+  ["Réti",           "Nf3 d5 g3 Nf6 Bg2 e6"]
+].map(([name, san]) => ({ name, sans: san.split(" ") }));
+
+function log(t){ const l = $("log"); l.textContent += t + "\n"; l.scrollTop = l.scrollHeight; }
+
+// ---- Giống hệt hellThinkMs trong index.html (nhưng nhận ván cờ qua tham số) ----
+function hellThinkMs(g, baseMs, leftMs){
+  const ply = g.history().length;
+  let t = baseMs;
+  if(g.moves().length === 1) return 120;
+  if(ply < 10) t = Math.round(t * 0.5);
+  if(leftMs != null) t = Math.min(t, Math.max(250, leftMs / 30 - 200));
+  return Math.max(120, Math.round(t));
+}
+
+async function makeWorker(){
+  try {
+    const head = await fetch(LOCAL_SF, { method: "HEAD", cache: "no-store" });
+    if(head.ok && /javascript/.test(head.headers.get("content-type") || "")) return { w: new Worker(LOCAL_SF), kind: "sf19" };
+  } catch {}
+  const res = await fetch(CDN_SF);
+  const txt = await res.text();
+  return { w: new Worker(URL.createObjectURL(new Blob([txt], { type: "application/javascript" }))), kind: "sf10" };
+}
+
+class Eng {
+  constructor(label){ this.label = label; this.listeners = []; }
+  async init(){
+    const { w, kind } = await makeWorker();
+    this.w = w; this.kind = kind;
+    w.onmessage = e => { const line = String(e.data || "").trim(); this.listeners.slice().forEach(f => f(line)); };
+    await this.wait("uci", "uciok", 20000);
+    await this.wait("isready", "readyok", 20000);
+  }
+  send(c){ this.w.postMessage(c); }
+  wait(cmd, expect, ms){
+    return new Promise((res, rej) => {
+      let t = null;
+      const off = () => { clearTimeout(t); this.listeners = this.listeners.filter(x => x !== f); };
+      const f = l => { if(l.startsWith(expect)){ off(); res(); } };
+      t = setTimeout(() => { off(); rej(new Error(this.label + ": không nhận được " + expect)); }, ms);
+      this.listeners.push(f);
+      this.send(cmd);
+    });
+  }
+  async setup(opts){
+    for(const [k, v] of Object.entries(opts)) this.send(`setoption name ${k} value ${v}`);
+    await this.wait("isready", "readyok", 20000);
+  }
+  async newGame(){ this.send("ucinewgame"); await this.wait("isready", "readyok", 20000); }
+  // Trả {move, score, depth}; score tính theo bên đang đi (cp, mate quy ra ±~100000)
+  go(posCmd, goCmd, limitMs){
+    return new Promise((res, rej) => {
+      let score = null, depth = 0, t1 = null, t2 = null;
+      const off = () => { clearTimeout(t1); clearTimeout(t2); this.listeners = this.listeners.filter(x => x !== f); };
+      const f = l => {
+        if(l.startsWith("info ") && l.includes(" score ") && !l.includes("lowerbound") && !l.includes("upperbound")){
+          const m = l.match(/score (cp|mate) (-?\d+)/), d = l.match(/ depth (\d+)/);
+          if(m){ const v = Number(m[2]); score = m[1] === "mate" ? (v > 0 ? 1 : -1) * (100000 - Math.abs(v)) : v; }
+          if(d) depth = Number(d[1]);
+        }
+        if(l.startsWith("bestmove")){ off(); res({ move: l.split(" ")[1], score, depth }); }
+      };
+      t1 = setTimeout(() => {
+        this.send("stop");
+        t2 = setTimeout(() => { off(); rej(new Error(this.label + ": engine không trả nước đi")); }, 3000);
+      }, limitMs + 3000);
+      this.listeners.push(f);
+      this.send(posCmd);
+      this.send(goCmd);
+    });
+  }
+  terminate(){ try { this.w.terminate(); } catch {} }
+}
+
+// ---- Bảng cờ hiển thị ----
+const GLYPH = { w:{k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:"♙"}, b:{k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"} };
+function drawBoard(g){
+  const b = g.board(); let h = "";
+  for(let r = 0; r < 8; r++){
+    h += "<tr>";
+    for(let c = 0; c < 8; c++){
+      const p = b[r][c];
+      h += `<td class="${(r + c) % 2 ? "d" : "l"}">${p ? GLYPH[p.color][p.type] : ""}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("board").innerHTML = h;
+}
+
+// ---- Thống kê ----
+const eloOf = p => p <= 0 ? -Infinity : p >= 1 ? Infinity : -400 * Math.log10(1 / p - 1);
+const fmtElo = e => e === Infinity ? "+∞" : e === -Infinity ? "−∞" : (e >= 0 ? "+" : "") + Math.round(e);
+function stats(W, D, L){
+  const n = W + D + L; if(!n) return null;
+  const pw = W / n, pd = D / n, pl = L / n, mean = pw + pd / 2;
+  const v = (pw * (1 - mean) ** 2 + pd * (0.5 - mean) ** 2 + pl * mean ** 2) / n;
+  const se = Math.sqrt(v);
+  return { n, mean, elo: eloOf(mean), lo: eloOf(Math.max(0, mean - 1.96 * se)), hi: eloOf(Math.min(1, mean + 1.96 * se)) };
+}
+
+let stopFlag = false, running = false;
+let oldE = null, newE = null;
+
+async function playGame(idx, newIsWhite, opening, cfg){
+  const g = new Chess();
+  for(const san of opening.sans){ if(!g.move(san)) throw new Error("Thế mở đầu không hợp lệ: " + san); }
+  await Promise.all([oldE.newGame(), newE.newGame()]);
+  const recent = []; // điểm theo góc nhìn Trắng, mọi engine
+  let result = null, reason = "";   // result: 'new' | 'old' | 'draw'
+  const rec = (c) => (c === "w") === newIsWhite ? "new" : "old"; // màu -> ai
+
+  while(!stopFlag){
+    drawBoard(g);
+    if(g.in_checkmate()){ result = rec(g.turn() === "w" ? "b" : "w"); reason = "Chiếu hết"; break; }
+    if(g.game_over()){ result = "draw"; reason = g.in_stalemate() ? "Hết nước đi" : g.insufficient_material() ? "Thiếu quân" : g.in_threefold_repetition() ? "Lặp 3 lần" : "Luật 50 nước"; break; }
+    const ply = g.history().length;
+    if(ply >= cfg.maxPly){ result = "draw"; reason = "Quá " + cfg.maxPly + " nước"; break; }
+
+    const side = g.turn(), who = rec(side);
+    let out;
+    try {
+      if(who === "old"){
+        // Đúng như bản gốc: chỉ gửi FEN, depth + movetime cố định
+        out = await oldE.go("position fen " + g.fen(), `go depth ${cfg.oldDepth} movetime ${cfg.oldMs}`, cfg.oldMs);
+      } else {
+        const hv = g.history({ verbose: true }).map(m => m.from + m.to + (m.promotion || "")).join(" ");
+        const think = hellThinkMs(g, cfg.newMs, null);
+        out = await newE.go("position startpos" + (hv ? " moves " + hv : ""), `go movetime ${think}`, think);
+      }
+    } catch(e){ log("⚠ " + e.message); result = "draw"; reason = "Lỗi engine (huỷ ván)"; break; }
+
+    const uci = out.move || "";
+    const mv = g.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
+    if(!mv){ result = who === "new" ? "old" : "new"; reason = "Nước không hợp lệ (" + who + ": " + uci + ")"; break; }
+
+    $("cur").textContent = `Ván ${idx + 1} · nước ${g.history().length} · ${who === "new" ? "MỚI" : "CŨ"} đi ${mv.san} · d${out.depth} · ${out.score == null ? "?" : (out.score / 100).toFixed(2)}`;
+
+    if(out.score != null){
+      recent.push(side === "w" ? out.score : -out.score);
+      if(recent.length > 12) recent.shift();
+      const n = g.history().length;
+      const last4 = recent.slice(-4);
+      if(n >= 30 && last4.length === 4 && last4.every(s => s >= 1000)){ result = rec("w"); reason = "Xử thắng (+10 quân tốt, 4 nước liền)"; break; }
+      if(n >= 30 && last4.length === 4 && last4.every(s => s <= -1000)){ result = rec("b"); reason = "Xử thắng (+10 quân tốt, 4 nước liền)"; break; }
+      if(n >= 140 && recent.length >= 10 && recent.slice(-10).every(s => Math.abs(s) <= 20)){ result = "draw"; reason = "Xử hoà (cân bằng lâu)"; break; }
+    }
+  }
+  drawBoard(g);
+  return { result, reason, plies: g.history().length };
+}
+
+async function run(){
+  if(running) return;
+  running = true; stopFlag = false;
+  $("startBtn").disabled = true; $("stopBtn").disabled = false;
+  $("log").textContent = ""; $("res").querySelector("tbody").innerHTML = "";
+  const cfg = {
+    games: Math.max(2, Math.round(Number($("games").value) / 2) * 2),
+    oldMs: Number($("oldMs").value) || 600,
+    oldDepth: Number($("oldDepth").value) || 18,
+    newMs: Number($("newMs").value) || 4000,
+    maxPly: 300
+  };
+  let W = 0, D = 0, L = 0;
+  try {
+    $("summary").textContent = "Đang tải 2 engine…";
+    oldE = new Eng("CŨ"); newE = new Eng("MỚI");
+    await Promise.all([oldE.init(), newE.init()]);
+    $("engInfo").textContent = `Engine: CŨ = ${oldE.kind}, MỚI = ${newE.kind} (${newE.kind === "sf19" ? "Stockfish 19 lite local" : "Stockfish 10 CDN"})`;
+    const contempt = k => k === "sf19" ? {} : { Contempt: 24 };
+    await oldE.setup({ "Skill Level": 20, ...contempt(oldE.kind) });
+    await newE.setup({ "Skill Level": 20, Hash: newE.kind === "sf19" ? 64 : 32, ...contempt(newE.kind) });
+
+    for(let i = 0; i < cfg.games && !stopFlag; i++){
+      const opening = OPENINGS[Math.floor(i / 2) % OPENINGS.length];
+      const newIsWhite = i % 2 === 0;
+      const r = await playGame(i, newIsWhite, opening, cfg);
+      if(stopFlag && !r.result) break;
+      const resNew = r.result === "new" ? "1" : r.result === "old" ? "0" : "½";
+      if(r.result === "new") W++; else if(r.result === "old") L++; else D++;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${i + 1}</td><td>${opening.name}</td><td>${newIsWhite ? "Trắng" : "Đen"}</td><td class="${r.result === "new" ? "win" : r.result === "old" ? "lose" : ""}">${resNew}</td><td>${r.plies}</td><td>${r.reason}</td>`;
+      $("res").querySelector("tbody").append(tr);
+      const s = stats(W, D, L);
+      $("summary").innerHTML = `MỚI +${W} =${D} −${L} · điểm ${(W + D / 2)}/${s.n} (${(s.mean * 100).toFixed(0)}%) · Elo ≈ ${fmtElo(s.elo)} <span class="note">[95%: ${fmtElo(s.lo)} … ${fmtElo(s.hi)}]</span>`;
+      log(`Ván ${i + 1}: ${opening.name}, MỚI cầm ${newIsWhite ? "Trắng" : "Đen"} → ${resNew} (${r.reason}, ${r.plies} nước)`);
+    }
+    const s = stats(W, D, L);
+    if(s) log(`\nXong ${s.n} ván. Khoảng tin cậy còn rộng nếu ít ván; muốn kết luận chắc hơn thì chạy ≥ 20–30 ván.`);
+  } catch(e){
+    log("❌ " + e.message);
+    $("summary").textContent = "Lỗi: " + e.message;
+  } finally {
+    oldE && oldE.terminate(); newE && newE.terminate(); oldE = newE = null;
+    running = false; $("startBtn").disabled = false; $("stopBtn").disabled = true;
+  }
+}
+
+$("startBtn").onclick = run;
+$("stopBtn").onclick = () => { stopFlag = true; log("Đang dừng sau nước hiện tại…"); };
+</script>
+</body>
+</html>

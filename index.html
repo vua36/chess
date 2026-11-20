@@ -796,7 +796,9 @@ const DIFFICULTY = {
   easy:   { skill: 2,  depth: 4,  movetime: 40   },
   medium: { skill: 7,  depth: 8,  movetime: 120  },
   hard:   { skill: 14, depth: 12, movetime: 280  },
-  hell:   { skill: 20, depth: 18, movetime: 600  }
+  // Địa ngục: KHÔNG giới hạn độ sâu, chỉ giới hạn theo thời gian (xem hellThinkMs).
+  // Bản cũ: depth 18 / 600ms.
+  hell:   { skill: 20, depth: 0,  movetime: 4000 }
 };
 
 let engineKind = "sf10", botWatch = null;
@@ -884,7 +886,7 @@ async function initEngine(forceCdn){
             $("analysisText").textContent = `✨ Celestial gợi ý nước đi: ${hintArrow.from} → ${hintArrow.to}`;
           }
           engineMode = "play";
-          const cfg = LEVELS[mode] || LEVELS.easy;
+          const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
           engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
           render();
           return;
@@ -895,7 +897,7 @@ async function initEngine(forceCdn){
             $("analysisText").textContent += ` | Khuyên đi: ${uci}`;
           }
           engineMode = "play";
-          const cfg = LEVELS[mode] || LEVELS.easy;
+          const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
           engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
           render();
           return;
@@ -1475,7 +1477,11 @@ function startGame(){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     engine.postMessage("ucinewgame");
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
-    if(engineKind !== "sf19" && mode === "hell") engine.postMessage("setoption name Contempt value 24");
+    if(mode === "hell") {
+      // Bảng băm lớn hơn (mặc định chỉ 16MB) → tìm kiếm hiệu quả hơn khi nghĩ lâu
+      engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? 64 : 32}`);
+      if(engineKind !== "sf19") engine.postMessage("setoption name Contempt value 24");
+    }
   }
 
   tab("game");
@@ -1560,18 +1566,47 @@ async function squareClick(sq){
   render();
 }
 
+// --- Bot Địa ngục: phân bổ thời gian + gửi lịch sử nước đi ---
+// Thời gian nghĩ của bot Địa ngục (ms). Hàm này giống hệt bản trong arena.html.
+function hellThinkMs(baseMs, leftMs){
+  const ply = game.history().length;
+  let t = baseMs;
+  if(game.moves().length === 1) return 120;       // chỉ có 1 nước hợp lệ → khỏi nghĩ
+  if(ply < 10) t = Math.round(t * 0.5);           // khai cuộc: đi nhanh, dành giờ cho trung/tàn cuộc
+  if(leftMs != null) t = Math.min(t, Math.max(250, leftMs / 30 - 200)); // không để bot hết giờ
+  return Math.max(120, Math.round(t));
+}
+
+// Trước đây bot chỉ nhận FEN nên không biết lịch sử → không né/không tận dụng được lặp thế cờ.
+// Gửi "startpos moves ..." để engine nhận biết lặp lại. Có kiểm tra khớp FEN, sai thì quay về FEN.
+function botPositionCmd(){
+  try {
+    const hv = game.history({verbose:true});
+    const rp = new Chess();
+    for(const m of hv) rp.move({from:m.from, to:m.to, promotion:m.promotion});
+    if(rp.fen() === game.fen()){
+      return "position startpos" + (hv.length ? " moves " + hv.map(m => m.from + m.to + (m.promotion || "")).join(" ") : "");
+    }
+  } catch(e) {}
+  return "position fen " + game.fen();
+}
+
 function botMove(){
   if(isOnlineGame || game.game_over() || game.turn()===human) return;
   if(engineReady && engine){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
+    const hell = mode === "hell";
+    const think = hell
+      ? hellThinkMs(cfg.movetime, clockSeconds ? remaining[game.turn()] * 1000 : null)
+      : cfg.movetime;
     engineBusy = true;
     engineMode = "play";
     render();
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
-    engine.postMessage("position fen " + game.fen());
-    // Luôn giới hạn thời gian để bot đi nhanh
-    engine.postMessage(`go depth ${cfg.depth} movetime ${cfg.movetime}`);
-    armBotWatch(Math.max(3000, cfg.movetime + 2000));
+    engine.postMessage(hell ? botPositionCmd() : "position fen " + game.fen());
+    // Hell: chỉ giới hạn theo thời gian. Các mức khác giữ nguyên depth + movetime như cũ.
+    engine.postMessage(hell ? `go movetime ${think}` : `go depth ${cfg.depth} movetime ${cfg.movetime}`);
+    armBotWatch(Math.max(3000, think + (hell ? 3000 : 2000)));
     return;
   }
   fallbackMove();
