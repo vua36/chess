@@ -389,6 +389,33 @@ body.hell .board-shell{border-color:#61243a;box-shadow:0 0 0 2px #ff647c,0 0 55p
 @keyframes hellGlow{to{box-shadow:0 0 0 8px #ff536d22,0 0 75px #ff174dcc}}
 @media(max-width:760px){.game-wrap{grid-template-columns:1fr}.sidebox{display:grid;grid-template-columns:1fr}.panel{border-radius:17px}.mode{padding:13px!important}}
 
+
+/* ===== CHESS CLUB / COMPLETE LAYOUT REDESIGN ===== */
+:root{--bg:#f3f5f8;--panel:#fff;--panel2:#f7f8fb;--line:#e6e9ef;--gold:#b98b4b;--gold2:#8e6732;--muted:#7b8494;--text:#202633;--green:#278b68;--red:#d94c5c;--accent:#25364d}
+body{background:#f3f5f8;color:#202633;font-family:Inter,'DM Sans',system-ui,sans-serif;min-height:100vh}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 88% 4%,#e5eaf2 0,transparent 26%),linear-gradient(135deg,#f7f8fa,#eef1f5)}
+header{height:76px;background:#fff;border:0;border-bottom:1px solid #e8ebf0;box-shadow:0 5px 22px #26364a08;padding:0 max(20px,calc((100vw - 1440px)/2));color:#202633}
+.brand{font:800 18px/1 'DM Sans',sans-serif;letter-spacing:1.8px;color:#202b3b;gap:11px}.brand em{color:#bd8e4b}.brand-mark{width:42px;height:42px;border-radius:13px;background:#26364b;color:#f4d6a2;box-shadow:none;font-size:25px}
+.header-right{gap:10px}.user-pill{background:#f5f6f8;border:1px solid #e9ecf1;color:#5e6878;padding:8px 14px}.admin-badge{border-radius:7px}
+button{border-radius:10px;border-color:#e2e6ed;background:#fff;color:#394354;box-shadow:none;font-weight:650}button:hover{background:#f6f7fa;border-color:#c9a66b;box-shadow:0 5px 14px #1c2c420d;transform:translateY(-1px)}button.primary{background:#26364b;color:#fff;box-shadow:0 7px 18px #26364b24}button.primary:hover{background:#344a65;filter:none}button.danger{background:#fff4f4;color:#c43c4b;border-color:#f2d6da}
+main{max-width:1440px;padding:30px 24px 65px}
+.hero{margin:0 0 26px;padding:26px 30px;border-radius:20px;background:#26364b;color:#fff;align-items:center;position:relative;overflow:hidden;min-height:170px;box-shadow:0 15px 38px #25364b20}
+.hero:after{content:"♞";position:absolute;right:24%;top:-72px;font-size:260px;line-height:1;color:#ffffff09;transform:rotate(-12deg);pointer-events:none}
+.hero-copy{position:relative;z-index:1}.hero .eyebrow{color:#d7b77e;letter-spacing:2px;font-size:10px;font-weight:800}.live-dot,.engine-pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:#6bd1a4;margin-right:8px;box-shadow:0 0 0 4px #6bd1a422}
+.hero h1{font:750 clamp(27px,3vw,38px)/1.1 'DM Sans',sans-serif;margin:11px 0 8px;letter-spacing:-1.2px}.hero h1 span{color:#e6c58d}.hero p{color:#c3ccda;font-size:13px;max-width:560px}.hero-meta{display:flex;align-items:center;gap:28px;z-index:1}.engine-state{display:flex;align-items:center;gap:10px;padding:11px 15px;border:1px solid #ffffff22;border-radius:12px;background:#ffffff0b}.engine-state small{display:block;color:#9eabbc;font-size:9px;letter-spacing:1.4px;font-weight:800}.engine-state strong{font-size:12px;color:#fff}.hero-stamp{display:flex;align-items:center;gap:9px;font-size:32px;color:#e2c28e}.hero-stamp span{font-size:8px;line-height:1.6;letter-spacing:1px;color:#aeb9c8}.hero-stamp b{color:#e2c28e}
+.app-shell{display:grid;grid-template-columns:218px minmax(0,1fr);gap:24px;align-items:start}.tabs{margin:0;position:sticky;top:94px;display:flex;flex-direction:column;gap:6px;padding:13px 10px;background:#fff;border:1px solid #e9ecf1;border-radius:17px;min-height:calc(100vh - 130px);box-shadow:0 8px 26px #26364a06}.tabs button{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:12px 13px;border:0;background:transparent;border-radius:10px;color:#697486;font-size:13px}.tabs button:hover{background:#f4f6f9;color:#27364b;box-shadow:none;transform:none}.tabs button.active{background:#26364b!important;color:#fff!important;border:0!important;box-shadow:0 7px 16px #26364b20;font-weight:750}.nav-icon{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;background:#f0f2f6;color:#657187;font-size:17px;flex:none}.tabs button.active .nav-icon{background:#ffffff20;color:#f1d6a5}.sidebar-foot{margin-top:auto;padding:15px 9px 7px;border-top:1px solid #edf0f4;display:flex;align-items:center;gap:10px;color:#98a1af;font-size:8px;letter-spacing:1px;line-height:1.7}.sidebar-foot b{color:#536176}.sidebar-mark{width:31px;height:31px;display:grid;place-items:center;background:#f2eee7;color:#a57a40;border-radius:9px;font-size:18px}
+.workspace{min-width:0}.section{animation:sectionIn .28s ease}.section.active{display:block}@keyframes sectionIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.layout{grid-template-columns:minmax(0,1fr);justify-content:stretch;gap:18px}.layout-wide{gap:18px}.panel{background:#fff;border:1px solid #e8ebf0;border-radius:17px;padding:23px;box-shadow:0 8px 28px #26364a07}.panel h2{color:#273449;font-size:17px;letter-spacing:-.3px}.notice{color:#8992a0;font-size:12px}.tag{border-radius:8px;background:#f3f5f8;color:#667286;border:1px solid #e8ebf0}.tag.ready{background:#edf8f3;color:#25825f;border-color:#d8eee4}
+#home .layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;align-items:start;gap:18px}#home .layout>.panel{min-width:0}#home .layout>.panel>h2{margin:0 0 18px;font-size:18px}
+.mode-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.mode{position:relative;min-height:116px;padding:16px!important;text-align:left!important;display:grid;grid-template-columns:38px 1fr;grid-template-rows:auto auto;column-gap:11px;align-content:center;background:#f9fafc!important;border:1px solid #e9edf2!important;border-radius:13px!important;color:#283447!important;box-shadow:none!important}.mode .ico{grid-row:1/3;width:36px;height:36px;display:grid;place-items:center;background:#edf1f6;border-radius:11px;font-size:20px;color:#51617a}.mode strong{font-size:14px;align-self:end}.mode small{font-size:10px;color:#8992a0;line-height:1.45;margin-top:4px}.mode:hover{background:#f4f6f9!important;border-color:#c6a36e!important;transform:translateY(-2px)}.mode.selected{background:#f3f6fa!important;border:1.5px solid #526985!important;box-shadow:0 0 0 3px #52698512!important}.mode[data-mode=hell]{background:#fff8f8!important;border-color:#f0d9dd!important}.mode[data-mode=hell] .ico{background:#fae8eb;color:#d64a5a}.mode[data-mode=hell].selected{background:#fff1f3!important;border-color:#d94c5c!important;box-shadow:0 0 0 3px #d94c5c16!important}.two{gap:12px}.field label{font-size:11px;color:#707b8c;font-weight:750;letter-spacing:.25px}.field input,.field select,input,select{background:#fbfcfd;border:1px solid #e3e7ed;border-radius:9px;color:#2c3748;padding:11px 12px}.field input:focus,.field select:focus,input:focus,select:focus{outline:2px solid #c9a66b33;border-color:#c9a66b}.actions{gap:8px}.actions button{min-height:39px}.actions .primary{padding-left:19px;padding-right:19px}
+.home-aside{display:flex;flex-direction:column;gap:13px}.welcome-card{position:relative;overflow:hidden;min-height:220px;padding:21px;border-radius:16px;background:#e9eef4;color:#28364a}.welcome-card:after{content:"♘";position:absolute;right:-6px;bottom:-38px;font-size:155px;color:#26364b0d;transform:rotate(-10deg)}.welcome-orbit{position:absolute;right:17px;top:16px;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#a57b44;font-size:20px}.welcome-card .eyebrow{font-size:9px;letter-spacing:1.6px;color:#8a744f;font-weight:800}.welcome-card h3{font-size:25px;line-height:1.05;letter-spacing:-.8px;margin:15px 0 8px}.welcome-card p{font-size:11px;color:#778397;max-width:170px;line-height:1.6}.welcome-line{display:flex;align-items:center;gap:9px;margin-top:19px;color:#8b7656;font-size:8px;letter-spacing:1px;font-weight:800}.welcome-line i{width:35px;height:1px;background:#c5ad89}.mini-card,.quick-card{background:#fff;border:1px solid #e8ebf0;border-radius:14px;padding:15px 16px;box-shadow:0 8px 24px #26364a06}.mini-head{display:flex;align-items:center;gap:8px;font-size:12px;color:#354258}.mini-head>span{font-size:17px;color:#b18a52}.mini-head em{margin-left:auto;font-style:normal;font-size:9px;color:#9aa2ae}.mini-levels{display:flex;gap:5px;margin:13px 0 8px}.mini-levels i{height:5px;border-radius:8px;background:#dfe5ed;flex:1}.mini-levels i:nth-child(1){background:#9ac9b6}.mini-levels i:nth-child(2){background:#a6b8ce}.mini-levels i:nth-child(3){background:#d4b77f}.mini-levels i.hot{background:#d95b68}.mini-card small{font-size:10px;color:#9099a7}.quick-card{padding-bottom:9px}.quick-card .mini-head{justify-content:space-between;margin-bottom:8px}.quick-card .mini-head span{color:#a5adba}.quick-card button{width:100%;display:flex;justify-content:space-between;border:0;border-top:1px solid #f0f2f5;border-radius:0;background:transparent;padding:11px 2px;font-size:11px;color:#687487}.quick-card button:hover{transform:none;box-shadow:none;color:#a27b43;background:#fafbfc}
+#game>.panel{padding:20px}.game-wrap{gap:22px}.board-col{max-width:680px}.board-shell{border:8px solid #e8edf3;border-radius:13px;box-shadow:0 0 0 1px #d8dee7,0 14px 35px #26364a18}.playerbar{background:#f4f6f9;border:1px solid #e9edf2;color:#3c485b;border-radius:9px;padding:10px 13px}.playerbar span{color:#53647a;font-variant-numeric:tabular-nums}.sidebox{gap:13px}.sidebox>div:first-child{background:#fbfcfd!important;border-color:#e7ebf0!important}.status{background:#f5f7fa;border:1px solid #e8ecf1;border-radius:11px;color:#4c596d}.move-list{background:#fff;border-color:#edf0f4;color:#5a6678}.sidebox .panel{padding:16px!important}.sidebox .actions{display:grid;grid-template-columns:1fr 1fr}.sidebox .actions button{font-size:11px;padding:9px 8px}.sidebox .actions #resignBtn,.sidebox .actions #botResignBtn{grid-column:span 2}
+.data-table th{background:#f5f7fa;color:#526078}.data-table th,.data-table td{border-bottom:1px solid #edf0f3}.data-table tr:hover td{background:#f8fafc}.friend-list{border-color:#edf0f3}.modal{background:#fff;color:#263449;border:1px solid #e8ebf0;box-shadow:0 25px 80px #17253a30}.modal-backdrop{background:#18253877;backdrop-filter:blur(6px)}.rv-card{background:#fff;color:#263449}.rv-modal{background:#1d293b99;backdrop-filter:blur(5px)}footer{color:#a1a9b5;font-size:9px;letter-spacing:1.3px;margin-top:36px}footer span{color:#c19a62}
+#hellFlash{background:linear-gradient(135deg,#fff0f2,#fff);color:#bd293d;text-shadow:none;box-shadow:0 0 0 5px #ff536d18,0 15px 50px #9b213a33}
+@media(max-width:1050px){.app-shell{grid-template-columns:185px minmax(0,1fr);gap:15px}#home .layout{grid-template-columns:minmax(0,1fr) 245px}.hero-meta{gap:12px}.hero-stamp{display:none}}
+@media(max-width:760px){main{padding:16px 12px 40px}header{height:64px;padding:0 13px}.brand{font-size:15px}.brand-mark{width:36px;height:36px}.header-right{gap:6px}.user-pill{display:none}.hero{padding:21px 19px;min-height:0;margin-bottom:15px;border-radius:15px}.hero h1{font-size:28px}.hero p{font-size:11px;max-width:90%}.hero-meta{margin-top:15px}.engine-state{padding:8px 10px}.app-shell{display:flex;flex-direction:column;gap:13px}.tabs{position:sticky;top:0;z-index:20;min-height:0;width:100%;padding:7px;display:flex;flex-direction:row;overflow-x:auto;gap:4px;border-radius:12px;box-shadow:0 6px 18px #26364a10}.tabs button{width:auto;white-space:nowrap;padding:8px 10px;font-size:11px;gap:6px}.nav-icon{width:21px;height:21px;font-size:14px}.sidebar-foot{display:none}.workspace{width:100%}#home .layout{grid-template-columns:1fr}.home-aside{display:grid;grid-template-columns:1fr 1fr}.welcome-card{grid-column:span 2;min-height:165px}.quick-card{grid-column:span 2}.layout-wide{grid-template-columns:1fr}.panel{padding:16px;border-radius:14px}.mode-grid{gap:8px}.mode{min-height:105px;padding:11px!important;grid-template-columns:30px 1fr;column-gap:8px}.mode .ico{width:29px;height:29px;font-size:17px}.mode strong{font-size:12px}.mode small{font-size:9px}.two{grid-template-columns:1fr 1fr}.game-wrap{grid-template-columns:1fr}.sidebox{display:grid;grid-template-columns:1fr}.sidebox .actions{grid-template-columns:1fr 1fr}.hero:after{right:0;font-size:180px}.board-shell{border-width:5px}.table-wrap{overflow-x:auto}}
+@media(max-width:390px){.home-aside{grid-template-columns:1fr}.welcome-card,.quick-card{grid-column:auto}.mode-grid{grid-template-columns:1fr}.mode{min-height:82px}.hero h1{font-size:25px}}
+
 </style>
 </head>
 <body>
@@ -404,23 +431,28 @@ body.hell .board-shell{border-color:#61243a;box-shadow:0 0 0 2px #ff647c,0 0 55p
 
 <main>
 <div class="hero">
-  <div>
-    <div class="eyebrow">Think deeper · Play smarter</div>
-    <h1>Chiến trường trí tuệ.</h1>
-    <p>Thử thách bản thân trên bàn cờ HTML5 Canvas mượt mà, chinh phục Celestial Địa Ngục, mời bạn bè so tài trực tiếp và đua Top Bảng Xếp Hạng Elo.</p>
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="live-dot"></span> CHESS CLUB / YOUR ARENA</div>
+    <h1>Mỗi nước đi <span>đều có ý nghĩa.</span></h1>
+    <p>Chọn đối thủ, vào trận và nâng Elo. Tất cả công cụ của kỳ thủ được sắp xếp trong một không gian gọn gàng.</p>
   </div>
-  <span class="tag" id="engineBadge">⏳ Đang tải Celestial...</span>
+  <div class="hero-meta">
+    <div class="engine-state"><span class="engine-pulse"></span><div><small>ENGINE STATUS</small><strong id="engineBadge">⏳ Đang tải Celestial...</strong></div></div>
+    <div class="hero-stamp">♞ <span>EST. 2026<br><b>PLAY SMART</b></span></div>
+  </div>
 </div>
 
+<div class="app-shell">
 <div class="tabs">
-  <button class="active" data-tab="home">Sảnh chính</button>
-  <button data-tab="leaderboard">🏆 Bảng xếp hạng</button>
-  <button data-tab="history">📜 Lịch sử ván đấu</button>
-  <button data-tab="friends">Bạn bè & Online</button>
-  <button data-tab="profile">Tài khoản</button>
-  <button data-tab="admin" id="adminTabBtn" hidden>🛡️ Quản trị</button>
+  <button class="active" data-tab="home"><span class="nav-icon">⌂</span><span>Tổng quan</span></button>
+  <button data-tab="leaderboard"><span class="nav-icon">♛</span><span>Bảng xếp hạng</span></button>
+  <button data-tab="history"><span class="nav-icon">◷</span><span>Lịch sử trận</span></button>
+  <button data-tab="friends"><span class="nav-icon">♧</span><span>Bạn bè & Online</span></button>
+  <button data-tab="profile"><span class="nav-icon">◎</span><span>Tài khoản</span></button>
+  <button data-tab="admin" id="adminTabBtn" hidden><span class="nav-icon">⚙</span><span>Quản trị</span></button>
+  <div class="sidebar-foot"><div class="sidebar-mark">♟</div><small>CHESS ULTIMATE<br><b>THINK. PLAY. WIN.</b></small></div>
 </div>
-
+<div class="workspace">
 <section id="home" class="section active">
 <div class="layout">
   <div class="panel">
@@ -440,6 +472,11 @@ body.hell .board-shell{border-color:#61243a;box-shadow:0 0 0 2px #ff647c,0 0 55p
     </div>
     <div class="notice" style="margin-top:12px">Bạn cần <strong>đăng nhập</strong> để chơi mọi chế độ (đấu máy & online). Lịch sử đấu của mỗi người chỉ chính họ và quản trị viên mới xem được.</div>
   </div>
+  <aside class="home-aside">
+    <div class="welcome-card"><div class="welcome-orbit">♞</div><div class="eyebrow">YOUR NEXT MOVE</div><h3>Sẵn sàng<br>vào cuộc?</h3><p>Một ván cờ hay bắt đầu từ một quyết định táo bạo.</p><div class="welcome-line"><span>01</span><i></i><span>CHOOSE YOUR RIVAL</span></div></div>
+    <div class="mini-card"><div class="mini-head"><span>♜</span><b>Chế độ luyện tập</b><em>4 cấp độ</em></div><div class="mini-levels"><i></i><i></i><i></i><i class="hot"></i></div><small>Từ làm quen đến thử thách Địa ngục</small></div>
+    <div class="quick-card"><div class="mini-head"><b>Đi nhanh đến</b><span>↗</span></div><button data-tab="leaderboard">♛ Bảng xếp hạng <span>→</span></button><button data-tab="friends">♧ Mời bạn bè đấu <span>→</span></button><button data-tab="history">◷ Xem trận gần đây <span>→</span></button></div>
+  </aside>
 </div>
 </section>
 
@@ -680,7 +717,8 @@ body.hell .board-shell{border-color:#61243a;box-shadow:0 0 0 2px #ff647c,0 0 55p
   <div class="rv-sub" id="rvSub"></div>
   <div class="rv-nav"><button id="rvFirst">⏮</button><button id="rvPrev">◀</button><button id="rvNext">▶</button><button id="rvLast">⏭</button><button id="rvExit" class="ghost">Thoát</button></div>
 </div>
-<footer>CHESS ULTIMATE · Powered by HTML5 Canvas, Celestial UCI & Firebase</footer>
+</div>
+<footer>CHESS ULTIMATE <span>·</span> THINK. PLAY. WIN.</footer>
 </main>
 
 <!-- Modal Đăng Nhập Nhanh -->
