@@ -797,11 +797,11 @@ const DIFFICULTY = {
   medium: { skill: 7,  depth: 8,  movetime: 120  },
   hard:   { skill: 14, depth: 12, movetime: 280  },
   // Địa ngục: KHÔNG giới hạn độ sâu, chỉ giới hạn theo thời gian (xem hellThinkMs).
-  // Bản cũ: depth 18 / 600ms.
-  hell:   { skill: 20, depth: 0,  movetime: 4000 }
+  // Bản cũ: depth 18 / 600ms. 3000ms là TRẦN; nước dễ sẽ dừng sớm (xem shouldStopEarly).
+  hell:   { skill: 20, depth: 0,  movetime: 3000 }
 };
 
-let engineKind = "sf10", botWatch = null;
+let engineKind = "sf10", botWatch = null, earlyStop = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 
 function armBotWatch(ms){
@@ -858,6 +858,7 @@ async function initEngine(forceCdn){
         $("engineBadge").textContent = "⚡ Celestial Ready";
         $("engineBadge").classList.add("ready");
       }
+      if(earlyStop && engineMode === "play" && line.startsWith("info ")) trackEarlyStop(line);
       if(line.startsWith("info ") && line.includes(" score ") && isAdminUser() && engineMode === "eval") {
         const mateMatch = line.match(/score mate (-?\d+)/);
         const cpMatch = line.match(/score cp (-?\d+)/);
@@ -877,6 +878,7 @@ async function initEngine(forceCdn){
       if(line.startsWith("bestmove")) {
         const uci = line.split(" ")[1];
         clearTimeout(botWatch);
+        earlyStop = null;
         engineBusy = false;
         if(!uci || uci === "(none)") return;
 
@@ -1451,6 +1453,7 @@ function startGame(){
     alert("Vui lòng đăng nhập để chơi tất cả chế độ.");
     return;
   }
+  earlyStop = null;
   stopReviewJob(); reviewMode = false; reviewFull = null; $("reviewBar").hidden = true; $("reviewModal").hidden = true; document.body.classList.remove("reviewing");
   isOnlineGame = false;
   onlineRoomData = null;
@@ -1566,6 +1569,35 @@ async function squareClick(sq){
   render();
 }
 
+// --- Bot Địa ngục: dừng sớm khi nước đi đã "chín" ---
+// Nếu nước tốt nhất không đổi qua 4 độ sâu liên tiếp và điểm gần như không dao động,
+// việc nghĩ thêm hiếm khi đổi kết quả → dừng để đỡ chờ. Nước khó (nước đi/điểm còn đổi) vẫn dùng đủ trần.
+// Hàm này giống hệt bản trong arena.html.
+function shouldStopEarly(hist, elapsedMs, budgetMs){
+  if(elapsedMs < Math.max(300, budgetMs * 0.3)) return false;
+  if(hist.length < 4) return false;
+  const last = hist.slice(-4);
+  if(last[last.length - 1].d < 10) return false;
+  if(!last.every(x => x.mv === last[0].mv)) return false;
+  const cps = last.map(x => x.cp);
+  return Math.max(...cps) - Math.min(...cps) <= 20;
+}
+function trackEarlyStop(line){
+  const es = earlyStop;
+  if(!es || es.sent) return;
+  if(line.includes("lowerbound") || line.includes("upperbound")) return;
+  const dm = line.match(/ depth (\d+)/), sm = line.match(/score (cp|mate) (-?\d+)/), pm = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+  if(!dm || !sm || !pm) return;
+  const d = Number(dm[1]), v = Number(sm[2]);
+  if(d <= es.lastDepth) return;                  // chỉ lấy dòng đầu của mỗi độ sâu
+  es.lastDepth = d;
+  es.hist.push({ d, mv: pm[1], cp: sm[1] === "mate" ? (v > 0 ? 1 : -1) * (100000 - Math.abs(v)) : v });
+  if(shouldStopEarly(es.hist, performance.now() - es.t0, es.budget)){
+    es.sent = true;
+    engine.postMessage("stop");
+  }
+}
+
 // --- Bot Địa ngục: phân bổ thời gian + gửi lịch sử nước đi ---
 // Thời gian nghĩ của bot Địa ngục (ms). Hàm này giống hệt bản trong arena.html.
 function hellThinkMs(baseMs, leftMs){
@@ -1605,6 +1637,7 @@ function botMove(){
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     engine.postMessage(hell ? botPositionCmd() : "position fen " + game.fen());
     // Hell: chỉ giới hạn theo thời gian. Các mức khác giữ nguyên depth + movetime như cũ.
+    earlyStop = hell ? { t0: performance.now(), budget: think, hist: [], lastDepth: 0, sent: false } : null;
     engine.postMessage(hell ? `go movetime ${think}` : `go depth ${cfg.depth} movetime ${cfg.movetime}`);
     armBotWatch(Math.max(3000, think + (hell ? 3000 : 2000)));
     return;
