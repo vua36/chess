@@ -793,12 +793,11 @@ let hintArrow=null;
 
 const CELESTIAL_CDN = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
 const DIFFICULTY = {
-  easy:   { skill: 2,  depth: 4,  movetime: 40   },
-  medium: { skill: 7,  depth: 8,  movetime: 120  },
-  hard:   { skill: 14, depth: 12, movetime: 280  },
-  // Địa ngục: KHÔNG giới hạn độ sâu, chỉ giới hạn theo thời gian (xem hellThinkMs).
-  // Bản cũ: depth 18 / 600ms. 1500ms là TRẦN (chỉnh số này để nhanh/chậm); nước dễ sẽ dừng sớm (xem shouldStopEarly).
-  hell:   { skill: 20, depth: 0,  movetime: 1500 }
+  // Thời gian được giữ ngắn; tăng skill/depth để cải thiện chất lượng thay vì bắt người chơi chờ lâu.
+  easy:   { skill: 4,  depth: 5,  movetime: 55  },
+  medium: { skill: 9,  depth: 9,  movetime: 115 },
+  hard:   { skill: 16, depth: 13, movetime: 230 },
+  hell:   { skill: 20, depth: 0,  movetime: 950 }
 };
 
 let engineKind = "sf10", botWatch = null, earlyStop = null;
@@ -918,7 +917,8 @@ async function initEngine(forceCdn){
           const isCheck = game.in_check();
           playSound(isCapture ? "capture" : (isCheck ? "check" : "move"));
           if (movingPiece) startMoveAnimation(moveObj.from, moveObj.to, movingPiece);
-          else render();
+          // startMoveAnimation is intentionally disabled on mobile; render must still run.
+          render();
           checkGameOver();
         } catch {
           fallbackMove();
@@ -1545,7 +1545,8 @@ async function squareClick(sq){
       const isCheck = game.in_check();
       playSound(isCapture ? "capture" : (isCheck ? "check" : "move"));
       if (movingPiece) startMoveAnimation(moveRes.from, sq, movingPiece);
-      else render();
+      // The animation is disabled for mobile stability, so redraw synchronously.
+      render();
       if(isOnlineGame && roomId && fbReady) {
         await update(ref(db, `rooms/${roomId}`), {
           fen: game.fen(),
@@ -1559,7 +1560,12 @@ async function squareClick(sq){
         });
       }
       if(game.game_over()){ checkGameOver(); return; }
-      if(!isOnlineGame) setTimeout(botMove, 50);
+      if(!isOnlineGame) {
+        engineBusy = false;
+        setTimeout(() => {
+          if(!game.game_over() && game.turn() !== human) botMove();
+        }, 0);
+      }
       return;
     }
   }
@@ -1621,8 +1627,24 @@ function botPositionCmd(){
   return "position fen " + game.fen();
 }
 
+function getNonRepeatingBotMoves(){
+  const legal = game.moves({verbose:true});
+  const seen = positionHistory;
+  const safe = [];
+  for(const m of legal){
+    try{
+      const probe = new Chess(game.fen());
+      probe.move({from:m.from, to:m.to, promotion:m.promotion || "q"});
+      const key = probe.fen().split(" ").slice(0,4).join(" ");
+      if(!seen.has(key)) safe.push(m);
+    }catch(e){}
+  }
+  // Never make the engine think forever when every legal move revisits a position.
+  return (safe.length ? safe : legal).map(m => m.from + m.to + (m.promotion || ""));
+}
+
 function botMove(){
-  if(isOnlineGame || game.game_over() || game.turn()===human) return;
+  if(isOnlineGame || game.game_over() || game.turn()===human || engineBusy) return;
   if(engineReady && engine){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     const hell = mode === "hell";
@@ -1633,17 +1655,24 @@ function botMove(){
     engineMode = "play";
     render();
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
-    engine.postMessage(hell ? botPositionCmd() : "position fen " + game.fen());
-    // Hell: chỉ giới hạn theo thời gian. Các mức khác giữ nguyên depth + movetime như cũ.
+    // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
+    engine.postMessage(botPositionCmd());
     earlyStop = hell ? { t0: performance.now(), budget: think, hist: [], lastDepth: 0, sent: false } : null;
-    engine.postMessage(hell ? `go movetime ${think}` : `go depth ${cfg.depth} movetime ${cfg.movetime}`);
-    armBotWatch(hell ? Math.max(2500, think + 1500) : Math.max(3000, cfg.movetime + 2000));
+    const avoidMoves = getNonRepeatingBotMoves();
+    const searchPrefix = avoidMoves.length ? `searchmoves ${avoidMoves.join(" ")}` : "";
+    const goCmd = hell
+      ? `go ${searchPrefix} movetime ${think}`.replace(/\s+/g," ").trim()
+      : `go ${searchPrefix} depth ${cfg.depth} movetime ${cfg.movetime}`.replace(/\s+/g," ").trim();
+    engine.postMessage(goCmd);
+    // Watchdog ngắn hơn để không mắc kẹt khi Worker không trả bestmove.
+    armBotWatch(hell ? Math.max(2200, think + 1100) : Math.max(1800, cfg.movetime + 1200));
     return;
   }
   fallbackMove();
 }
 
 function fallbackMove(){
+  engineBusy = false;
   const moves=game.moves({verbose:true});
   if(!moves.length) return;
   let move=moves[Math.floor(Math.random()*moves.length)];
