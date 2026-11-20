@@ -1317,7 +1317,7 @@ const ctx = canvas.getContext("2d");
 let lastGlowKey = "", moveGlowStart = 0, glowRaf = null;
 const spriteCache = {};
 
-function pieceSprite(color, type, size){
+function pieceSpriteFallback(color, type, size){
   const key = color + type + size + "-regal-v2";
   if (spriteCache[key]) return spriteCache[key];
   const light = color === "w";
@@ -1418,6 +1418,48 @@ function pieceSprite(color, type, size){
   g.beginPath();g.moveTo(29,80);g.quadraticCurveTo(23,58,35,34);
   g.strokeStyle="#ffffff";g.lineWidth=2.2;g.lineCap="round";g.stroke();g.restore();
   return (spriteCache[key]=c);
+}
+
+// Bộ quân SVG Western từ Sashité (CC0 / public domain).
+// Tải SVG trực tiếp, giữ fallback nếu người chơi đang offline.
+const remotePieceImages = {};
+const remotePieceUrls = {
+  w: { k:"king", q:"queen", r:"rook", b:"bishop", n:"knight", p:"pawn" },
+  b: { k:"king", q:"queen", r:"rook", b:"bishop", n:"knight", p:"pawn" }
+};
+function remotePieceUrl(color, type){
+  const side = color === "w" ? "first" : "second";
+  return `https://sashite.dev/assets/chess/sides/${side}/representations/western/${remotePieceUrls[color][type]}.svg`;
+}
+function getRemotePiece(color, type){
+  const key = color + type;
+  if(!remotePieceImages[key]){
+    const img = new Image();
+    img.onload = () => {
+      Object.keys(spriteCache).forEach(k => { if(k.startsWith(key)) delete spriteCache[k]; });
+      render();
+      if(typeof renderCaptured === "function") renderCaptured();
+    };
+    img.onerror = () => { remotePieceImages[key] = null; };
+    img.src = remotePieceUrl(color, type);
+    remotePieceImages[key] = img;
+  }
+  return remotePieceImages[key];
+}
+function pieceSprite(color, type, size){
+  const key = color + type + size + "-remote-svg";
+  if(spriteCache[key]) return spriteCache[key];
+  const c = document.createElement("canvas"); c.width = c.height = size;
+  const g = c.getContext("2d");
+  const img = getRemotePiece(color, type);
+  if(img && img.complete && img.naturalWidth){
+    // Leave generous padding around the official SVG artwork.
+    g.drawImage(img, size*.035, size*.025, size*.93, size*.95);
+  }else{
+    const fallback = pieceSpriteFallback(color, type, size);
+    g.drawImage(fallback, 0, 0, size, size);
+  }
+  return (spriteCache[key] = c);
 }
 function squareToGrid(sq) {
   const f = "abcdefgh".indexOf(sq[0]);
@@ -2658,9 +2700,10 @@ document.addEventListener("visibilitychange", () => { if(document.visibilityStat
 // --- Quân đã ăn: hiện dưới tên mỗi bên, kèm chênh lệch điểm ---
 const capImgCache = {};
 function pieceImg(color, type, px){
-  const key = color + type;
-  if(!capImgCache[key]){ try{ capImgCache[key] = pieceSprite(color, type, 96).toDataURL(); }catch(e){ return ""; } }
-  return `<img src="${capImgCache[key]}" width="${px}" height="${px}" alt="" draggable="false">`;
+  // Use the same online SVG art for captured-piece rows; fallback stays embedded.
+  const img = getRemotePiece(color, type);
+  const src = img && img.complete && img.naturalWidth ? remotePieceUrl(color, type) : pieceSpriteFallback(color, type, 96).toDataURL();
+  return `<img src="${src}" width="${px}" height="${px}" alt="" draggable="false">`;
 }
 function capHTML(verboseHist, color){
   const cnt = {}; let mine = 0, theirs = 0;
