@@ -425,7 +425,7 @@ main{max-width:1440px;padding:18px clamp(16px,4vw,64px) 72px}.utility-strip{disp
   </div>
 
   <div class="pre-game-grid">
-    <div class="setup-panel"><div class="eyebrow">MATCH SETTINGS</div><h3>Thiết lập trận đấu</h3><div class="setup-fields"><div class="field"><label>QUÂN CỦA BẠN</label><select id="colorChoice"><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option></select></div><div class="field"><label>THỜI GIAN MỖI BÊN</label><select id="timeChoice"><option value="0">Không giới hạn</option><option value="60">1 phút (Bullet)</option><option value="180">3 phút (Blitz)</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="900">15 phút</option><option value="1800">30 phút</option><option value="custom">⏱ Tùy chỉnh…</option></select><input id="customTimeInput" type="number" min="1" max="180" step="1" value="7" placeholder="Nhập số phút, vd: 7" style="display:none;margin-top:6px" title="Thời gian mỗi bên (phút)"></div></div><div class="setup-note"><span>✦</span><span>Trận đấu, Elo và lịch sử được lưu theo tài khoản của bạn.</span></div></div>
+    <div class="setup-panel"><div class="eyebrow">MATCH SETTINGS</div><h3>Thiết lập trận đấu</h3><div class="setup-fields"><div class="field"><label>QUÂN CỦA BẠN</label><select id="colorChoice"><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option></select></div><div class="field"><label>THỜI GIAN MỖI BÊN</label><select id="timeChoice"><option value="0">Không giới hạn</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="900">15 phút</option></select></div></div><div class="setup-note"><span>✦</span><span>Trận đấu, Elo và lịch sử được lưu theo tài khoản của bạn.</span></div></div>
     <div class="daily-panel"><div class="daily-symbol">✧</div><div class="eyebrow">YOUR NEXT MOVE</div><h3>Không chỉ là một ván cờ.</h3><p>Rèn tư duy, tích lũy Elo và ghi lại hành trình trở thành kỳ thủ mạnh hơn.</p><div class="daily-meta"><span>64 Ô CỜ</span><span>∞ KHẢ NĂNG</span></div></div>
   </div>
   <div class="notice login-note">Bạn cần <strong>đăng nhập</strong> để chơi các chế độ và lưu tiến trình. Lịch sử đấu chỉ hiển thị với chủ tài khoản và quản trị viên.</div>
@@ -465,6 +465,7 @@ main{max-width:1440px;padding:18px clamp(16px,4vw,64px) 72px}.utility-strip{disp
             <button id="fullscreenBtn">⛶ Toàn màn hình</button>
             <button id="newBtn">Ván mới</button>
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
+            <button id="forceBotBtn" class="danger" hidden>👑 Ép bot thua (Admin)</button>
           </div>
         </div>
       </div>
@@ -878,11 +879,11 @@ const DIFFICULTY = {
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
   hard:   { skill: 19, depth: 24, movetime: 2200 },
-  hell:   { skill: 20, depth: 0,  movetime: 12000 }
+  hell:   { skill: 20, depth: 0,  movetime: 8000 } // base 8s, tàn cuộc x1.5 = 12s đúng trần
 };
 const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0.04, hell: 0 };
 const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 12, hell: 14 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 15000; // bot thường tối đa 4s, Địa ngục tối đa 15s
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 12000; // Địa ngục TỐI ĐA 12s, không vượt quá
 
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
@@ -935,7 +936,7 @@ async function initEngine(forceCdn){
       const line = String(e.data || "").trim();
       if(swallowBest && line.startsWith("bestmove")){ swallowBest = false; return; }
       if(reviewJob){ reviewLine(line); return; }
-      if(line === "uciok") { engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? 256 : 128}`); engine.postMessage("setoption name Threads value 4"); engine.postMessage("isready"); }
+      if(line === "uciok") { engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? 512 : 256}`); engine.postMessage("setoption name Threads value 4"); engine.postMessage("isready"); }
       if(line === "readyok") {
         engineReady = true;
         resumeBotIfPending();
@@ -1010,27 +1011,8 @@ if($("engineBadge")) heroEngineObserver.observe($("engineBadge"),{childList:true
 const glyph={w:{k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:"♙"},b:{k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"}};
 const modeNames={easy:"Khởi đầu",medium:"Thử thách",hard:"Cao thủ",hell:"🔥 ĐỊA NGỤC"};
 
-function isGameInProgress(){
-  return saveEnabled && !reviewMode && !matchRecorded && !game.game_over() && game.history().length > 0;
-}
-function getChosenTimeSeconds(){
-  const v = $("timeChoice") ? $("timeChoice").value : "0";
-  if(v === "custom"){
-    const m = parseInt($("customTimeInput") ? $("customTimeInput").value : "", 10);
-    if(!m || m < 1) return 0;
-    return Math.min(180, m) * 60;
-  }
-  return Number(v) || 0;
-}
-function confirmLeaveGame(msg){
-  if(!isGameInProgress()) return true;
-  return confirm(msg || "Ván đấu đang dở! Rời khỏi sẽ tính là Bỏ dở và lưu vào lịch sử. Bạn chắc chắn muốn thoát?");
-}
 function tab(name){
   if(name === "admin" && !isAdminUser()) name = "home";
-  // Cảnh báo thoát trận: đang ở tab game mà chuyển sang tab khác
-  const cur = document.querySelector(".section.active");
-  if(cur && cur.id === "game" && name !== "game" && !confirmLeaveGame()) return;
   document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===name));
   document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
   if(name==="game") setTimeout(render, 30);
@@ -1679,13 +1661,13 @@ function startGame(){
     alert("Vui lòng đăng nhập để chơi tất cả chế độ.");
     return;
   }
-  if(isGameInProgress() && !confirm("Ván đấu đang dở! Bắt đầu ván mới sẽ tính là Bỏ dở. Bạn chắc chắn muốn bắt đầu ván mới?")) return;
   if(!reviewMode && !matchRecorded && game.history().length) saveFinishedGame("abandoned","Bỏ dở");
   earlyStop = null;
   stopReviewJob(); reviewMode = false; reviewFull = null; $("reviewBar").hidden = true; $("reviewModal").hidden = true; document.body.classList.remove("reviewing");
   isOnlineGame = false;
   onlineRoomData = null;
-  $("resignBtn").hidden = true;
+  $("resignBtn").hidden = false;
+  $("forceBotBtn").hidden = !isAdminUser();
   matchRecorded = false;
   if(roomUnsub) { roomUnsub(); roomUnsub = null; }
   game = new Chess();
@@ -1696,7 +1678,7 @@ function startGame(){
   human = $("colorChoice").value;
   flipped = human === "b";
   saveEnabled = true;
-  clockSeconds = getChosenTimeSeconds();
+  clockSeconds = Number($("timeChoice").value);
   remaining = { w: clockSeconds, b: clockSeconds };
 
   $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
@@ -1719,7 +1701,7 @@ function startGame(){
     engine.postMessage("ucinewgame");
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     if(mode === "hell") {
-      engine.postMessage("setoption name Contempt value 100"); engine.postMessage("setoption name Move Overhead value 50");
+      engine.postMessage("setoption name Contempt value 150"); engine.postMessage("setoption name Move Overhead value 30");
     }
   }
 
@@ -1729,10 +1711,36 @@ function startGame(){
   startClock();
 }
 
-if($("timeChoice")) $("timeChoice").onchange = () => { if($("customTimeInput")) $("customTimeInput").style.display = $("timeChoice").value === "custom" ? "" : "none"; };
 $("startBtn").onclick = startGame;
-$("backHome").onclick = () => { if(!confirmLeaveGame()) return; stopReviewJob(); exitReview(); $("reviewModal").hidden = true; stopClock(); tab("home"); };
-$("newBtn").onclick = startGame;
+function gameInProgress(){
+  return !reviewMode && !matchRecorded && !game.game_over() && game.history().length > 0 && saveEnabled;
+}
+function stopBotThinking(){
+  pendingBot = false; earlyStop = null; engineBusy = false;
+  clearTimeout(botWatch);
+  try{ if(engine) engine.postMessage("stop"); }catch(e){}
+}
+async function forfeitCurrentGame(reason){
+  if(!gameInProgress()) return true;
+  const opp = isOnlineGame ? "đối thủ" : "bot";
+  if(!confirm(`Ván đang đánh dở. Xác nhận thoát = tính là THUA ${opp} và bị trừ Elo.\n\nBạn chắc chắn muốn thoát?`)) return false;
+  stopBotThinking();
+  const winnerColor = human === "w" ? "b" : "w";
+  await checkGameOver(winnerColor, reason);
+  $("resignBtn").hidden = true; $("forceBotBtn").hidden = true;
+  if(isOnlineGame && fbReady && roomId){
+    try{ await update(ref(db, `rooms/${roomId}`), { status: "resigned", winner: winnerColor, updatedAt: serverTimestamp() }); }catch(e){}
+  }
+  return true;
+}
+$("backHome").onclick = async () => {
+  if(!(await forfeitCurrentGame("Thoát giữa ván (tính thua)"))) return;
+  stopReviewJob(); exitReview(); $("reviewModal").hidden = true; stopClock(); tab("home");
+};
+$("newBtn").onclick = async () => {
+  if(!(await forfeitCurrentGame("Thoát giữa ván (tính thua)"))) return;
+  startGame();
+};
 
 function render(){
   drawBoardCanvas();
@@ -1822,13 +1830,13 @@ async function squareClick(sq){
 function shouldStopEarly(hist, elapsedMs, budgetMs){
   // Hell: KHÔNG cho dừng sớm dễ dàng - phải nghĩ gần hết ngân sách, sâu >=28, ổn định 6 độ sâu, dao động <=5cp
   if(mode === "hell"){
-    if(elapsedMs < Math.max(1000, budgetMs * 0.85)) return false;
-    if(hist.length < 6) return false;
-    const last = hist.slice(-6);
-    if(last[last.length - 1].d < 28) return false;
+    if(elapsedMs < Math.max(1000, budgetMs * 0.92)) return false;
+    if(hist.length < 8) return false;
+    const last = hist.slice(-8);
+    if(last[last.length - 1].d < 32) return false;
     if(!last.every(x => x.mv === last[0].mv)) return false;
     const cps = last.map(x => x.cp);
-    return Math.max(...cps) - Math.min(...cps) <= 5;
+    return Math.max(...cps) - Math.min(...cps) <= 3;
   }
   if(elapsedMs < Math.max(400, budgetMs * 0.5)) return false;
   if(hist.length < 4) return false;
@@ -1863,7 +1871,7 @@ function hellThinkMs(baseMs, leftMs){
   if(ply < 10) t = Math.round(t * 0.8);            // khai cuộc vẫn nghĩ kỹ (trước đây chỉ 0.5)
   else if(ply < 30) t = Math.round(t * 1.2);       // trung cuộc: +20%
   else t = Math.round(t * 1.5);                     // tàn cuộc: +50% - nơi quyết định thắng thua
-  if(game.in_check()) t = Math.round(t * 1.3);      // đang bị chiếu: nghĩ kỹ hơn
+  if(game.in_check()) t = Math.round(t * 1.4);      // đang bị chiếu: nghĩ kỹ hơn
   if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200)); // dùng nhiều giờ hơn (trước /30)
   return Math.max(120, Math.round(t));
 }
@@ -2048,19 +2056,19 @@ function botMove(){
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     const variety = wantVariety();
     engine.postMessage(`setoption name MultiPV value ${variety ? 4 : 1}`);
-    mpv = variety ? { d: 0, lines: {}, tol: hell ? 8 : 30 } : null;
+    mpv = variety ? { d: 0, lines: {}, tol: hell ? 5 : 30 } : null;
     shownDepth = 0;
     // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
     engine.postMessage(botPositionCmd());
     earlyStop = hell ? { t0: performance.now(), budget: think, hist: [], lastDepth: 0, sent: false } : null;
-    const avoidMoves = getNonRepeatingBotMoves(hell ? 3 : 1); // hell: tránh lặp tới 3 lần, ép thắng thay vì hòa
+    const avoidMoves = getNonRepeatingBotMoves(hell ? 4 : 1); // hell: tránh lặp tới 4 lần, ép thắng thay vì hòa
     const searchPrefix = avoidMoves.length ? `searchmoves ${avoidMoves.join(" ")}` : "";
     const goCmd = hell
       ? `go ${searchPrefix} movetime ${think}`.replace(/\s+/g," ").trim()
       : `go ${searchPrefix} depth ${cfg.depth} movetime ${Math.round(think)}`.replace(/\s+/g," ").trim();
     engine.postMessage(goCmd);
     // Watchdog ngắn hơn để không mắc kẹt khi Worker không trả bestmove.
-    armBotWatch(hell ? Math.max(4000, think + 3000) : Math.max(1800, think + 1200)); // hell: cho nghĩ đủ 15s, không cắt ngang
+    armBotWatch(hell ? Math.max(4000, think + 2000) : Math.max(1800, think + 1200)); // hell: trần 12s, watchdog +2s là đủ
     return;
   }
   fallbackMove();
@@ -2234,21 +2242,20 @@ document.addEventListener("fullscreenchange", () => {
   setTimeout(render, 100);
 });
 
-// Resign (online only)
+// Đầu hàng: đấu bot + đấu online đều dùng được. Xác nhận = thua + trừ Elo như thường.
 $("resignBtn").onclick = async () => {
-  if (!isOnlineGame || !roomId || game.game_over()) return;
-  if (!confirm("Bạn chắc chắn muốn đầu hàng? Đối thủ sẽ thắng.")) return;
-  playSound("end");
-  const winnerColor = human === "w" ? "b" : "w";
-  await checkGameOver(winnerColor, "Bạn đầu hàng");
-  $("resignBtn").hidden = true;
-  if (fbReady && roomId) {
-    await update(ref(db, `rooms/${roomId}`), {
-      status: "resigned",
-      winner: winnerColor,
-      updatedAt: serverTimestamp()
-    });
-  }
+  if(game.game_over() || matchRecorded || reviewMode) return;
+  await forfeitCurrentGame("Bạn đầu hàng");
+};
+// Ép bot thua: CHỈ ADMIN. Bot tự đầu hàng, bạn thắng + cộng Elo như thắng thật.
+$("forceBotBtn").onclick = async () => {
+  if(!isAdminUser()) return;
+  if(isOnlineGame || game.game_over() || matchRecorded || reviewMode || !game.history().length) return;
+  if(!confirm("Ép bot đầu hàng? Bạn sẽ được tính THẮNG và cộng Elo như thắng thật.")) return;
+  stopBotThinking();
+  await checkGameOver(human, "Bot đầu hàng (Admin ép thua)");
+  $("resignBtn").hidden = true; $("forceBotBtn").hidden = true;
+  $("gameStatus").textContent = "👑 Bot đã đầu hàng · Bạn thắng! (Admin ép thua)";
 };
 
 // CHỈ ADMIN MỚI GỌI ĐƯỢC ĐÁNH GIÁ
@@ -2626,6 +2633,7 @@ function subscribeRoom(id, myColor) {
   isOnlineGame = true;
   matchRecorded = false;
   $("resignBtn").hidden = false;
+  $("forceBotBtn").hidden = true; // online không có ép bot thua
   // Khởi động đồng hồ cho online (dùng thời gian đã chọn hoặc mặc định)
   if(!clockSeconds) clockSeconds = 600; // mặc định 10 phút nếu chưa chọn
   remaining = { w: clockSeconds, b: clockSeconds };
@@ -2649,7 +2657,7 @@ function subscribeRoom(id, myColor) {
       $("gameStatus").textContent = resultForMe === "win"
         ? "🎉 Đối thủ đầu hàng · Bạn thắng!"
         : "Bạn đã đầu hàng.";
-      $("resignBtn").hidden = true;
+      $("resignBtn").hidden = true; $("forceBotBtn").hidden = true;
       return;
     }
 
@@ -2734,7 +2742,7 @@ function rebuildPositionHistory(){
 function resumeBotIfPending(){
   if(!pendingBot || !engineReady || !engine) return;
   pendingBot = false;
-  if(mode === "hell") engine.postMessage("setoption name Contempt value 100");
+  if(mode === "hell") engine.postMessage("setoption name Contempt value 150");
   setTimeout(() => { if(!isOnlineGame && !reviewMode && !game.game_over() && !matchRecorded && game.turn() !== human) botMove(); }, 100);
 }
 function restoreSavedGame(){
@@ -2750,13 +2758,6 @@ function restoreSavedGame(){
   rebuildPositionHistory();
   document.querySelectorAll("[data-mode]").forEach(x => x.classList.toggle("selected", x.dataset.mode === mode));
   $("colorChoice").value = human;
-  // Khôi phục lựa chọn thời gian: nếu không khớp option cố định thì đưa về Tùy chỉnh
-  if($("timeChoice")){
-    const fixed = ["0","60","180","300","600","900","1800"];
-    if(fixed.includes(String(s.clockSeconds || 0))){ $("timeChoice").value = String(s.clockSeconds || 0); }
-    else { $("timeChoice").value = "custom"; if($("customTimeInput")) $("customTimeInput").value = Math.round((s.clockSeconds || 0) / 60) || 7; }
-    if($("customTimeInput")) $("customTimeInput").style.display = $("timeChoice").value === "custom" ? "" : "none";
-  }
   $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell" ? "Celestial Max (Elo ~3000+)" : "Celestial Bot"}`;
   $("topName").textContent = human === "w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = (user && (user.displayName || user.email)) || "Bạn";
@@ -2775,14 +2776,6 @@ function restoreSavedGame(){
   }
   return true;
 }
-window.addEventListener("beforeunload", (e) => {
-  if(isGameInProgress()){
-    saveGame();
-    e.preventDefault();
-    e.returnValue = "Ván đấu đang dở! Rời khỏi sẽ tính là Bỏ dở.";
-    return e.returnValue;
-  }
-});
 window.addEventListener("pagehide", saveGame);
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") saveGame(); });
 
