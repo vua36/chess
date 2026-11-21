@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#070c14"><title>Chess Ultimate</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -634,6 +634,15 @@ main{width:auto!important;max-width:1560px!important;margin:0 auto 0 92px!import
 }
 @media(max-width:390px){#home .arena-copy h1{font-size:42px!important}#home .arena-stage{min-height:185px!important}#home .stage-queen{width:165px!important}}
 @media(prefers-reduced-motion:reduce){#home .stage-queen{animation:none!important}}
+
+/* ===== Tối ưu hiệu năng ===== */
+#boardCanvas{contain:layout paint}
+.friend,.move-row{content-visibility:auto;contain-intrinsic-size:auto 44px}
+@media (max-width:760px),(pointer:coarse){
+  header.topbar,.topbar,.modal-backdrop,#reviewBar{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .hero-king,.hero-art:before,#home .rival-model,#home .stage-queen{animation:none!important}
+  .rival-card,.rival-card:hover{transition:none!important}
+}
 </style>
 
 </head>
@@ -707,7 +716,7 @@ main{width:auto!important;max-width:1560px!important;margin:0 auto 0 92px!import
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
     </button>
     <button class="rival-card rival-hard" data-mode="hard">
-      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 1650</span></span>
+      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2800</span></span>
       <span class="rival-model-wrap"><svg class="rival-model" viewBox="0 0 180 180" aria-hidden="true"><defs><linearGradient id="gBishop" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0c7"/><stop offset=".4" stop-color="#e3ad61"/><stop offset="1" stop-color="#87502f"/></linearGradient><linearGradient id="gBishopSide"><stop stop-color="#57351f"/><stop offset="1" stop-color="#c18b4c"/></linearGradient></defs><ellipse cx="90" cy="158" rx="56" ry="10" fill="#ffc16b" opacity=".2"/><path d="M40 144 Q47 131 66 130 L114 130 Q133 131 140 144 L132 154 L48 154Z" fill="url(#gBishopSide)" stroke="#ffe4ad" stroke-opacity=".7"/><path d="M51 133 Q90 124 129 133 L133 145 L47 145Z" fill="url(#gBishop)"/><path d="M66 129 Q82 109 80 89 Q68 73 75 53 Q81 33 90 24 Q99 33 105 53 Q112 73 100 89 Q98 109 114 129Z" fill="url(#gBishop)" stroke="#fff0d0" stroke-opacity=".75" stroke-width="2"/><path d="M91 25 L85 61 L95 72 L82 99 L91 125 L105 129 Q98 109 100 89 Q112 73 105 53Z" fill="url(#gBishopSide)" opacity=".75"/><path d="M74 63 L107 48" stroke="#fff5d8" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="18" r="6" fill="#fff0c8"/><path d="M70 128 Q90 119 110 128" fill="none" stroke="#fff1d2" stroke-width="2"/></svg><span class="model-aura"></span></span><span class="rival-name">Đại kiện tướng</span><span class="rival-desc">Áp lực cao · Ít sai lầm</span>
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
     </button>
@@ -1070,7 +1079,7 @@ try {
 const BOT_ELO_TABLE = {
   easy:   { win: +8,  draw: -2,  loss: -15, label: "Bot Khởi đầu (Elo ~600)",   botElo: 600  },
   medium: { win: +15, draw: +2,  loss: -12, label: "Bot Thử thách (Elo ~1000)",  botElo: 1000 },
-  hard:   { win: +28, draw: +6,  loss: -8,  label: "Bot Cao thủ (Skill 19)",   botElo: 1650 },
+  hard:   { win: +40, draw: +10, loss: -6,  label: "Bot Đại kiện tướng (Elo ~2800)", botElo: 2800 },
   hell:   { win: +70, draw: +20, loss: -3,  label: "Bot Địa ngục (Elo ~3400+)", botElo: 3400 }
 };
 
@@ -1133,6 +1142,7 @@ function playSound(type = "move") {
 
 // === SMOOTH MOVE ANIMATION ===
 let animating = null; // {from,to,piece,start,duration}
+let drawCache = null, lastDisplaySize = 0, lastMoveListKey = null;
 const ANIM_DURATION = 300;
 let animationFrame = 0;
 function startMoveAnimation(from, to, piece) {
@@ -1173,12 +1183,12 @@ const DIFFICULTY = {
   // easy/medium đã nerf cho đúng Elo. hell BUFF MAX: nghĩ lâu gấp ~2x, không giới hạn depth
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
-  hard:   { skill: 19, depth: 24, movetime: 2200 },
+  hard:   { skill: 20, depth: 0,  movetime: 4500 }, // Đại kiện tướng: full skill, nền 4.5s (trần 8s), có ponder
   hell:   { skill: 20, depth: 0,  movetime: 11000 } // Full strength: nền 11s (khai cuộc 8.8s, trung cuộc 13.2s, tàn cuộc/bị chiếu chạm trần 15s)
 };
-const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0.04, hell: 0 };
+const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0, hell: 0 };
 const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 12, hell: 14 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 15000; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 15 giây cho 1 nước
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 15000, HARD_MAX_THINK_MS = 8000; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 15 giây cho 1 nước
 
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
@@ -1240,7 +1250,8 @@ async function initEngine(forceCdn){
         if(line.startsWith("bestmove")){ if(ponder.stopping) finishPonderStop(); else ponder.on = false; return; }
         if(line.startsWith("info ")){ if(ponder.on) ponderInfo(line); return; }
       }
-      if(line === "uciok") { engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? 512 : 256}`); engine.postMessage("setoption name Threads value 4"); engine.postMessage("isready"); }
+      if(line === "uciok") { const mobileDev = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+          engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? (mobileDev ? 256 : 512) : (mobileDev ? 128 : 256)}`); /* điện thoại: bớt RAM để khỏi bị tắt tab */ engine.postMessage("setoption name Threads value 4"); engine.postMessage("isready"); }
       if(line === "readyok") {
         engineReady = true;
         resumeBotIfPending();
@@ -1304,7 +1315,7 @@ async function initEngine(forceCdn){
     console.warn("Không thể tải Celestial CDN:", err);
   }
 }
-initEngine();
+(window.requestIdleCallback ? requestIdleCallback(() => initEngine(), { timeout:1200 }) : setTimeout(initEngine, 300)); // nạp engine sau khi trang đã vẽ xong
 const heroEngineObserver = new MutationObserver(()=>{
   const t = $("engineBadge")?.textContent || "";
   const h = $("heroEngineState");
@@ -1812,8 +1823,9 @@ function drawArrow(fromSq, toSq) {
 
 function drawBoardCanvas() {
   const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  const displaySize = Math.max(280, Math.floor(rect.width || 640));
+  let displaySize;
+  if(animating && lastDisplaySize) displaySize = lastDisplaySize; // đang animation: khỏi đo layout mỗi khung hình
+  else { const rect = canvas.getBoundingClientRect(); displaySize = lastDisplaySize = Math.max(280, Math.floor(rect.width || 640)); }
   // Android may report a fractional devicePixelRatio (e.g. 2.625).
   // Canvas backing dimensions are integers; round once to avoid resetting
   // the backing store on every redraw, which causes visible flashing.
@@ -1823,18 +1835,23 @@ function drawBoardCanvas() {
     canvas.height = backingSize;
   }
   const sqSize = canvas.width / 8;
-  const b = game.board();
+  // Cache dữ liệu theo thế cờ: lịch sử/nước đi hợp lệ chỉ tính 1 lần mỗi nước, không tính lại ở từng khung hình animation.
+  const fk = game.fen();
+  if(!drawCache || drawCache.fen !== fk || drawCache.sel !== selected){
+    drawCache = { fen:fk, sel:selected, b:game.board(), turn:game.turn(), inChk:game.in_check(),
+      legalTo:new Set(selected ? game.moves({square:selected, verbose:true}).map(m => m.to) : []),
+      lastMove:game.history({verbose:true}).slice(-1)[0], histLen:game.history().length };
+  }
+  const dc = drawCache, b = dc.b, lastMove = dc.lastMove, legalTo = dc.legalTo;
   const files = flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const ranks = flipped ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
-  const legal = selected ? game.moves({square: selected, verbose: true}) : [];
-  const lastMove = game.history({verbose: true}).slice(-1)[0];
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = "source-over";
   ctx.globalAlpha = 1;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const nowT = performance.now();
-  const mvKey = lastMove ? game.history().length + lastMove.from + lastMove.to : "";
+  const mvKey = lastMove ? dc.histLen + lastMove.from + lastMove.to : "";
   if (mvKey !== lastGlowKey) { lastGlowKey = mvKey; moveGlowStart = nowT; }
   const gAge = nowT - moveGlowStart, gK = Math.max(0, 1 - gAge / 2200), gPulse = 0.5 + 0.5 * Math.sin(gAge / 120);
   const rvm = (reviewMode && reviewPly > 0 && reviewData) ? reviewData.moves[reviewPly - 1] : null;
@@ -1870,7 +1887,7 @@ function drawBoardCanvas() {
         ctx.strokeRect(x + ctx.lineWidth/2, y + ctx.lineWidth/2, sqSize - ctx.lineWidth, sqSize - ctx.lineWidth);
       }
 
-      if (piece && piece.type === "k" && piece.color === game.turn() && game.in_check()) {
+      if (piece && piece.type === "k" && piece.color === dc.turn && dc.inChk) {
         const grad = ctx.createRadialGradient(x + sqSize/2, y + sqSize/2, sqSize*0.1, x + sqSize/2, y + sqSize/2, sqSize*0.5);
         grad.addColorStop(0, "rgba(231, 76, 60, 0.85)");
         grad.addColorStop(1, "rgba(231, 76, 60, 0)");
@@ -1878,8 +1895,10 @@ function drawBoardCanvas() {
         ctx.fillRect(x, y, sqSize, sqSize);
       }
 
-      ctx.font = `600 ${Math.floor(sqSize * 0.16)}px "DM Sans", sans-serif`;
-      ctx.fillStyle = isDark ? "rgba(234, 220, 194, 0.8)" : "rgba(41, 35, 27, 0.75)";
+      if (col === 0 || row === 7) {
+        ctx.font = `600 ${Math.floor(sqSize * 0.16)}px "DM Sans", sans-serif`;
+        ctx.fillStyle = isDark ? "rgba(234, 220, 194, 0.8)" : "rgba(41, 35, 27, 0.75)";
+      }
       if (col === 0) {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
@@ -1912,7 +1931,7 @@ function drawBoardCanvas() {
         ctx.fillText(B.sym, bx, by + sqSize * 0.01);
         ctx.restore();
       }
-      if (legal.some(m => m.to === sq)) {
+      if (legalTo.has(sq)) {
         ctx.save();
         if (piece) {
           ctx.strokeStyle = "rgba(33, 77, 54, 0.72)";
@@ -1960,7 +1979,8 @@ canvas.addEventListener("pointerdown", e => {
   squareClick(sq);
 });
 
-window.addEventListener("resize", () => render());
+let _rzRaf = 0;
+window.addEventListener("resize", () => { lastDisplaySize = 0; cancelAnimationFrame(_rzRaf); _rzRaf = requestAnimationFrame(drawBoardCanvas); });
 
 function startGame(){
   if(!user || !fbReady){
@@ -2053,14 +2073,18 @@ $("newBtn").onclick = async () => {
 function render(){
   drawBoardCanvas();
 
-  $("moveList").innerHTML="";
   const hist=game.history();
-  for(let i=0;i<hist.length;i+=2){
-    const row=document.createElement("div"); row.className="move-row";
-    row.innerHTML=`<span>${i/2+1}.</span><span>${hist[i]||""}</span><span>${hist[i+1]||""}</span>`;
-    $("moveList").append(row);
+  const mlKey = hist.join(" "), mlChanged = mlKey !== lastMoveListKey;
+  if(mlChanged){ // chỉ dựng lại danh sách nước đi / quân bị ăn khi ván thật sự đổi
+    lastMoveListKey = mlKey;
+    const frag = document.createDocumentFragment();
+    for(let i=0;i<hist.length;i+=2){
+      const row=document.createElement("div"); row.className="move-row";
+      row.innerHTML=`<span>${i/2+1}.</span><span>${hist[i]||""}</span><span>${hist[i+1]||""}</span>`;
+      frag.append(row);
+    }
+    const ml = $("moveList"); ml.textContent = ""; ml.append(frag); ml.scrollTop = ml.scrollHeight;
   }
-  $("moveList").scrollTop=$("moveList").scrollHeight;
 
   const turn=game.turn()==="w"?"Trắng":"Đen";
   if(!game.game_over()) {
@@ -2072,7 +2096,7 @@ function render(){
   $("reviewBtn").hidden = !(game.game_over() && !reviewMode && hist.length > 0);
   const canUndo = hist.length > 0 && !isOnlineGame && !reviewMode && (isAdminUser() || mode === "easy");
   $("undoBtn").disabled = !canUndo;
-  renderCaptured();
+  if(mlChanged) renderCaptured();
   saveGame();
 }
 
@@ -2175,7 +2199,7 @@ function trackEarlyStop(line){
 // Bảng băm (Hash) được giữ nguyên nên khi bạn đi xong, lượt tìm kiếm thật của bot bắt đầu từ một cây đã
 // được đào sâu sẵn → cùng 15s nhưng nhìn sâu hơn hẳn. Bạn đi càng lâu, bot càng "chín".
 function canPonder(){
-  return mode === "hell" && engineReady && !!engine && !isOnlineGame && !reviewMode && !reviewJob &&
+  return (mode === "hell" || mode === "hard") && engineReady && !!engine && !isOnlineGame && !reviewMode && !reviewJob &&
          !matchRecorded && !game.game_over() && !engineBusy && !pendingBot &&
          game.turn() === human && game.history().length > 0 && !ponder.on && !ponder.stopping;
 }
@@ -2186,7 +2210,7 @@ function startPonder(){
     engine.postMessage("setoption name Skill Level value 20");
     engine.postMessage("setoption name MultiPV value 1");
     engine.postMessage(botPositionCmd());
-    engine.postMessage(`go movetime ${PONDER_MAX_MS}`);
+    engine.postMessage(`go movetime ${mode === "hell" ? PONDER_MAX_MS : 45000}`);
   }catch(e){ ponder.on = false; }
 }
 function flushPonder(){
@@ -2218,7 +2242,7 @@ function ponderInfo(line){
   ponder.depth = d;
   if(engineBusy || reviewMode || matchRecorded || game.game_over() || game.turn() !== human) return;
   const turn = game.turn() === "w" ? "Trắng" : "Đen";
-  $("gameStatus").textContent = `${turn} đi${game.in_check() ? " · Đang bị chiếu!" : ""} · 🧠 Địa ngục đang nghĩ trước (d${d})`;
+  $("gameStatus").textContent = `${turn} đi${game.in_check() ? " · Đang bị chiếu!" : ""} · 🧠 ${mode === "hell" ? "Địa ngục" : "Đại kiện tướng"} đang nghĩ trước (d${d})`;
 }
 document.addEventListener("visibilitychange", () => {
   if(document.hidden) stopPonder();            // ẩn tab/app → nghỉ cho đỡ nóng máy, hao pin
@@ -2244,7 +2268,7 @@ function hellTick(){
   const el = performance.now() - es.t0;
   if(el < es.budget) return;
   let stop = el >= es.hard - 150;
-  if(!stop && es.lastDepth >= HELL_MIN_STOP_DEPTH && !hellUnstable(es.hist)) stop = true;
+  if(!stop && es.lastDepth >= es.minDepth && !hellUnstable(es.hist)) stop = true;
   if(stop){
     es.sent = true; clearInterval(hellTimer); hellTimer = null;
     try{ engine.postMessage("stop"); }catch(e){}
@@ -2350,6 +2374,19 @@ function hellThinkMs(baseMs, leftMs){
   else t = Math.round(t * 1.5);                     // tàn cuộc: +50% - nơi quyết định thắng thua
   if(game.in_check()) t = Math.round(t * 1.4);      // đang bị chiếu: nghĩ kỹ hơn
   if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200)); // dùng nhiều giờ hơn (trước /30)
+  return Math.max(120, Math.round(t));
+}
+
+// Đại kiện tướng: ngân sách mềm theo giai đoạn ván (khai 0.7x, trung 1.1x, tàn 1.4x), trần 8s.
+function hardThinkMs(baseMs, leftMs){
+  const ply = game.history().length;
+  let t = baseMs;
+  if(game.moves().length === 1) return 120;
+  if(ply < 10) t = Math.round(t * 0.7);
+  else if(ply < 30) t = Math.round(t * 1.1);
+  else t = Math.round(t * 1.4);
+  if(game.in_check()) t = Math.round(t * 1.3);
+  if(leftMs != null) t = Math.min(t, Math.max(300, leftMs / 25 - 200));
   return Math.max(120, Math.round(t));
 }
 
@@ -2526,8 +2563,10 @@ function botMove(){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     const hell = mode === "hell";
     const leftMs = clockSeconds ? remaining[game.turn()] * 1000 : null;
-    const think = Math.min(hell ? HELL_MAX_THINK_MS : MAX_THINK_MS, hell
+    const gm = mode === "hard", deep = hell || gm; // deep = bot dùng quản lý thời gian thông minh + dừng sớm khi chín
+    const think = Math.min(hell ? HELL_MAX_THINK_MS : gm ? HARD_MAX_THINK_MS : MAX_THINK_MS, hell
       ? hellThinkMs(cfg.movetime, leftMs)
+      : gm ? hardThinkMs(cfg.movetime, leftMs)
       : (leftMs != null ? Math.min(cfg.movetime, Math.max(250, leftMs / 30 - 200)) : cfg.movetime));
     engineBusy = true;
     engineMode = "play";
@@ -2535,7 +2574,7 @@ function botMove(){
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     const variety = wantVariety();
     engine.postMessage(`setoption name MultiPV value ${variety ? 4 : 1}`);
-    mpv = variety ? { d: 0, lines: {}, tol: hell ? 5 : 30 } : null;
+    mpv = variety ? { d: 0, lines: {}, tol: hell ? 5 : 12 } : null;
     shownDepth = 0;
     // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
     engine.postMessage(botPositionCmd());
@@ -2543,17 +2582,18 @@ function botMove(){
     const forced = game.moves().length === 1;
     const hardMs = hell
       ? (forced ? think : (leftMs != null ? Math.min(HELL_MAX_THINK_MS, Math.max(think, Math.round(leftMs / 10))) : HELL_MAX_THINK_MS))
+      : gm ? (forced ? think : Math.min(HARD_MAX_THINK_MS, Math.round(think * 1.4)))
       : think;
-    earlyStop = hell ? { t0: performance.now(), budget: think, hard: hardMs, hist: [], lastDepth: 0, sent: false } : null;
+    earlyStop = deep ? { t0: performance.now(), budget: think, hard: hardMs, minDepth: hell ? HELL_MIN_STOP_DEPTH : 18, hist: [], lastDepth: 0, sent: false } : null;
     const avoidMoves = getNonRepeatingBotMoves(hell ? 4 : 1); // hell: tránh lặp tới 4 lần, ép thắng thay vì hòa
     const searchPrefix = avoidMoves.length ? `searchmoves ${avoidMoves.join(" ")}` : "";
-    const goCmd = hell
+    const goCmd = deep
       ? `go movetime ${hardMs} ${searchPrefix}`.replace(/\s+/g," ").trim() // searchmoves PHẢI nằm cuối lệnh go, nếu không movetime bị nuốt mất
       : `go ${searchPrefix} depth ${cfg.depth} movetime ${Math.round(think)}`.replace(/\s+/g," ").trim();
     engine.postMessage(goCmd);
-    if(hell){ clearInterval(hellTimer); hellTimer = setInterval(hellTick, 100); }
+    if(deep){ clearInterval(hellTimer); hellTimer = setInterval(hellTick, 100); }
     // Watchdog ngắn hơn để không mắc kẹt khi Worker không trả bestmove.
-    armBotWatch(hell ? Math.max(4000, hardMs + 2500) : Math.max(1800, think + 1200)); // hell: trần cứng 15s + 2.5s dự phòng
+    armBotWatch(deep ? Math.max(3500, hardMs + 2500) : Math.max(1800, think + 1200)); // hell: trần cứng 15s + 2.5s dự phòng
     return;
   }
   fallbackMove();
@@ -2898,7 +2938,7 @@ function startClock(){
     if(game.game_over()) { stopClock(); return; }
     const side = game.turn(); // luôn dùng lượt thật từ vị trí hiện tại
     if(remaining[side] > 0) remaining[side]--;
-    updateClock(); saveGame();
+    updateClock(); if(remaining[side] % 5 === 0) saveGame(); // đồng hồ: 5s lưu 1 lần thay vì mỗi giây
     if(remaining[side] <= 0){
       stopClock();
       const winnerSide = side === "w" ? "b" : "w";
@@ -3224,7 +3264,12 @@ $("joinRoomBtn").onclick=async()=>{
 // ============================================================================
 // 10. LƯU VÁN ĐANG CHƠI, LỊCH SỬ VÁN ĐẤU & QUÂN ĐÃ ĂN
 // ============================================================================
-function saveGame(){
+let _saveT = 0;
+function saveGame(){ clearTimeout(_saveT); _saveT = setTimeout(saveGameNow, 350); } // gộp nhiều lần lưu → 1 lần ghi localStorage
+function flushSave(){ clearTimeout(_saveT); saveGameNow(); }
+document.addEventListener("visibilitychange", () => { if(document.hidden) flushSave(); });
+window.addEventListener("pagehide", flushSave);
+function saveGameNow(){
   if(!saveEnabled || reviewMode || isOnlineGame) return;
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify({ moves:game.history(), mode, human, flipped, clockSeconds, remaining, matchRecorded })); }catch(e){}
 }
