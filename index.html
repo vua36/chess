@@ -2093,7 +2093,7 @@ function render(){
   const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
   $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
-  $("reviewBtn").hidden = !(game.game_over() && !reviewMode && hist.length > 0);
+  $("reviewBtn").hidden = !((game.game_over() || matchRecorded) && !reviewMode && hist.length > 0); // matchRecorded: ván kết thúc do lặp thế/hết giờ/đầu hàng (chess.js không tính là game_over)
   const canUndo = hist.length > 0 && !isOnlineGame && !reviewMode && (isAdminUser() || mode === "easy");
   $("undoBtn").disabled = !canUndo;
   if(mlChanged) renderCaptured();
@@ -2635,6 +2635,7 @@ async function checkGameOver(timeoutWinnerColor = null, forceReason = null) {
   if(matchRecorded) return true;
   matchRecorded = true;
   stopPonder();
+  if(!reviewMode && game.history().length > 0) $("reviewBtn").hidden = false; // hiện nút Xem lại ngay khi ván kết thúc, không chờ render()
   stopClock();
   playSound("end");
 
