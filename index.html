@@ -775,7 +775,7 @@ const BOT_ELO_TABLE = {
   easy:   { win: +8,  draw: -2,  loss: -15, label: "Bot Khởi đầu (Elo ~600)",   botElo: 600  },
   medium: { win: +15, draw: +2,  loss: -12, label: "Bot Thử thách (Elo ~1000)",  botElo: 1000 },
   hard:   { win: +28, draw: +6,  loss: -8,  label: "Bot Cao thủ (Skill 19)",   botElo: 1650 },
-  hell:   { win: +55, draw: +15, loss: -5,  label: "Bot Địa ngục (Elo ~3000+)", botElo: 3000 }
+  hell:   { win: +70, draw: +20, loss: -3,  label: "Bot Địa ngục (Elo ~3400+)", botElo: 3400 }
 };
 
 function calcPvpEloDelta(myElo, oppElo, score) {
@@ -874,15 +874,15 @@ let hintArrow=null;
 
 const CELESTIAL_CDN = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
 const DIFFICULTY = {
-  // TUNED cho đúng Elo - đã giảm mạnh easy/medium
+  // easy/medium đã nerf cho đúng Elo. hell BUFF MAX: nghĩ lâu gấp ~2x, không giới hạn depth
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
   hard:   { skill: 19, depth: 24, movetime: 2200 },
-  hell:   { skill: 20, depth: 0,  movetime: 6800 }
+  hell:   { skill: 20, depth: 0,  movetime: 9000 }
 };
 const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0.04, hell: 0 };
 const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 12, hell: 14 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 7000; // bot thường tối đa 4s, Địa ngục tối đa 7s
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 10000; // bot thường tối đa 4s, Địa ngục tối đa 10s
 
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
@@ -935,7 +935,7 @@ async function initEngine(forceCdn){
       const line = String(e.data || "").trim();
       if(swallowBest && line.startsWith("bestmove")){ swallowBest = false; return; }
       if(reviewJob){ reviewLine(line); return; }
-      if(line === "uciok") { engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? 64 : 32}`); engine.postMessage("isready"); }
+      if(line === "uciok") { engine.postMessage(`setoption name Hash value ${engineKind === "sf19" ? 256 : 128}`); engine.postMessage("setoption name Threads value 4"); engine.postMessage("isready"); }
       if(line === "readyok") {
         engineReady = true;
         resumeBotIfPending();
@@ -1699,7 +1699,7 @@ function startGame(){
     engine.postMessage("ucinewgame");
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     if(mode === "hell") {
-      if(engineKind !== "sf19") engine.postMessage("setoption name Contempt value 24");
+      engine.postMessage("setoption name Contempt value 100"); engine.postMessage("setoption name Move Overhead value 50");
     }
   }
 
@@ -1799,6 +1799,16 @@ async function squareClick(sq){
 // Hàm này giống hệt bản trong arena.html.
 // (Bản mạnh hơn: nghĩ tối thiểu nửa ngân sách, sâu >=20 nước (10 nước mỗi bên), nước đi giữ nguyên 4 độ sâu liên tiếp, điểm dao động <=15.)
 function shouldStopEarly(hist, elapsedMs, budgetMs){
+  // Hell: KHÔNG cho dừng sớm dễ dàng - phải nghĩ gần hết ngân sách, sâu >=28, ổn định 6 độ sâu, dao động <=5cp
+  if(mode === "hell"){
+    if(elapsedMs < Math.max(1000, budgetMs * 0.75)) return false;
+    if(hist.length < 6) return false;
+    const last = hist.slice(-6);
+    if(last[last.length - 1].d < 28) return false;
+    if(!last.every(x => x.mv === last[0].mv)) return false;
+    const cps = last.map(x => x.cp);
+    return Math.max(...cps) - Math.min(...cps) <= 5;
+  }
   if(elapsedMs < Math.max(400, budgetMs * 0.5)) return false;
   if(hist.length < 4) return false;
   const last = hist.slice(-4);
@@ -1828,9 +1838,12 @@ function trackEarlyStop(line){
 function hellThinkMs(baseMs, leftMs){
   const ply = game.history().length;
   let t = baseMs;
-  if(game.moves().length === 1) return 120;       // chỉ có 1 nước hợp lệ → khỏi nghĩ
-  if(ply < 10) t = Math.round(t * 0.5);           // khai cuộc: đi nhanh, dành giờ cho trung/tàn cuộc
-  if(leftMs != null) t = Math.min(t, Math.max(250, leftMs / 30 - 200)); // không để bot hết giờ
+  if(game.moves().length === 1) return 120;
+  if(ply < 10) t = Math.round(t * 0.8);            // khai cuộc vẫn nghĩ kỹ (trước đây chỉ 0.5)
+  else if(ply < 30) t = Math.round(t * 1.2);       // trung cuộc: +20%
+  else t = Math.round(t * 1.5);                     // tàn cuộc: +50% - nơi quyết định thắng thua
+  if(game.in_check()) t = Math.round(t * 1.3);      // đang bị chiếu: nghĩ kỹ hơn
+  if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200)); // dùng nhiều giờ hơn (trước /30)
   return Math.max(120, Math.round(t));
 }
 
@@ -1903,27 +1916,22 @@ const uciOf = m => m.from + m.to + (m.promotion || "");
 function getBlunderMove(){
   const moves = game.moves({verbose:true});
   if(!moves.length) return null;
-  // Ưu tiên nước dở: không ăn quân, không chiếu, không phát triển trung tâm
   const scored = moves.map(m=>{
     let s = Math.random()*2;
-    if(m.captured) s += 6; // nước tốt -> trừ điểm để chọn nước dở
+    if(m.captured) s += 6;
     if(m.san.includes('+') || m.san.includes('#')) s += 4;
-    if(['e4','e5','d4','d5','c4','c5'].some(c=>m.from.includes(c) || m.to.includes(c))) s += 0.5;
-    // tốt đi 1 ô lẻ lẻ là dở
     if(m.piece==='p' && Math.abs(parseInt(m.from[1])-parseInt(m.to[1]))===1) s -= 1.2;
-    if(m.piece==='n' && ['a','h'].includes(m.to[0])) s -= 1.5; // mã biên dở
+    if(m.piece==='n' && ['a','h'].includes(m.to[0])) s -= 1.5;
     return {m, s};
   }).sort((a,b)=>a.s-b.s);
-  // lấy 40% nước tệ nhất
   const cut = Math.max(1, Math.floor(scored.length*0.45));
   const pool = scored.slice(0, cut);
   const pick = pool[Math.floor(Math.random()*pool.length)];
   return pick.m.from + pick.m.to + (pick.m.promotion||"");
 }
 function shouldBotBlunder(){
-  if(game.history().length < 4) return false; // không blunder quá sớm
-  const rate = BLUNDER_RATE[mode] ?? 0;
-  return Math.random() < rate;
+  if(game.history().length < 4) return false;
+  return Math.random() < (BLUNDER_RATE[mode] ?? 0);
 }
 function bookMove(){
   const hist = game.history({verbose:true}).map(uciOf), ply = hist.length;
@@ -1941,7 +1949,7 @@ function bookMove(){
 }
 
 // --- Hết sách: Địa ngục/Cao thủ xét 4 nước tốt nhất trong ~16 bán nước đầu, chọn ngẫu nhiên giữa các nước gần ngang điểm
-function wantVariety(){ return (mode === "hell" || mode === "hard") && game.history().length < 14 && game.moves().length > 1; }
+function wantVariety(){ return (mode === "hell" || mode === "hard") && game.history().length < 16 && game.moves().length > 1; }
 function trackMultiPv(line){
   const dm = line.match(/ depth (\d+)/), km = line.match(/ multipv (\d+)/), sm = line.match(/score (cp|mate) (-?\d+)/), pm = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
   if(!dm || !sm || !pm) return;
@@ -1986,16 +1994,12 @@ function applyBotUci(uci){
 
 function botMove(){
   if(isOnlineGame || game.game_over() || game.turn()===human || engineBusy) return;
-  // Bot yếu sẽ blunder ngay cả khi có sách - tạo cảm giác sai lầm tự nhiên
   if(shouldBotBlunder()){
     const bl = getBlunderMove();
     if(bl){
       engineBusy = true; render();
       const fen0 = game.fen();
-      setTimeout(()=>{
-        engineBusy=false;
-        if(game.fen()===fen0 && !game.game_over() && game.turn()!==human) applyBotUci(bl);
-      }, 250 + Math.random()*400);
+      setTimeout(()=>{ engineBusy=false; if(game.fen()===fen0 && !game.game_over() && game.turn()!==human) applyBotUci(bl); }, 250 + Math.random()*400);
       return;
     }
   }
@@ -2021,21 +2025,21 @@ function botMove(){
     engineMode = "play";
     render();
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
-    const variety = wantVariety() && (mode!=='easy' && mode!=='medium');
-    engine.postMessage(`setoption name MultiPV value ${variety ? 3 : 1}`);
-    mpv = variety ? { d: 0, lines: {}, tol: hell ? 20 : 30 } : null;
+    const variety = wantVariety();
+    engine.postMessage(`setoption name MultiPV value ${variety ? 4 : 1}`);
+    mpv = variety ? { d: 0, lines: {}, tol: hell ? 8 : 30 } : null;
     shownDepth = 0;
     // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
     engine.postMessage(botPositionCmd());
     earlyStop = hell ? { t0: performance.now(), budget: think, hist: [], lastDepth: 0, sent: false } : null;
-    const avoidMoves = getNonRepeatingBotMoves(hell ? 2 : 1);
+    const avoidMoves = getNonRepeatingBotMoves(hell ? 3 : 1); // hell: tránh lặp tới 3 lần, ép thắng thay vì hòa
     const searchPrefix = avoidMoves.length ? `searchmoves ${avoidMoves.join(" ")}` : "";
     const goCmd = hell
       ? `go ${searchPrefix} movetime ${think}`.replace(/\s+/g," ").trim()
       : `go ${searchPrefix} depth ${cfg.depth} movetime ${Math.round(think)}`.replace(/\s+/g," ").trim();
     engine.postMessage(goCmd);
     // Watchdog ngắn hơn để không mắc kẹt khi Worker không trả bestmove.
-    armBotWatch(hell ? Math.max(2200, think + 1100) : Math.max(1800, think + 1200));
+    armBotWatch(hell ? Math.max(3500, think + 2000) : Math.max(1800, think + 1200)); // hell: cho nghĩ đủ 10s, không cắt ngang
     return;
   }
   fallbackMove();
@@ -2046,18 +2050,9 @@ function fallbackMove(){
   const moves=game.moves({verbose:true});
   if(!moves.length) return;
   let move=moves[Math.floor(Math.random()*moves.length)];
-  if(mode==="easy"){
-    // easy fallback = 70% random tệ
-    if(Math.random()<0.7){
-      const u = getBlunderMove();
-      if(u){ move = {from:u.slice(0,2), to:u.slice(2,4), promotion:u[4]||"q"}; }
-    }
-  } else if(mode==="medium"){
-    if(Math.random()<0.35){
-      const u = getBlunderMove();
-      if(u){ move = {from:u.slice(0,2), to:u.slice(2,4), promotion:u[4]||"q"}; }
-    }
-  } else if(mode==="hard"||mode==="hell"){
+  if(mode==="easy" && Math.random()<0.7){ const u=getBlunderMove(); if(u) move={from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||"q"}; }
+  else if(mode==="medium" && Math.random()<0.35){ const u=getBlunderMove(); if(u) move={from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]||"q"}; }
+  if(mode==="hard"||mode==="hell"){
     const scored=moves.map(m=>({
       m,
       s:(m.captured?({p:1,n:3,b:3,r:5,q:9}[m.captured]||0):0)+(m.san.includes("+")?2:0)+(m.san.includes("#")?100:0)
@@ -2718,7 +2713,7 @@ function rebuildPositionHistory(){
 function resumeBotIfPending(){
   if(!pendingBot || !engineReady || !engine) return;
   pendingBot = false;
-  if(mode === "hell" && engineKind !== "sf19") engine.postMessage("setoption name Contempt value 24");
+  if(mode === "hell") engine.postMessage("setoption name Contempt value 100");
   setTimeout(() => { if(!isOnlineGame && !reviewMode && !game.game_over() && !matchRecorded && game.turn() !== human) botMove(); }, 100);
 }
 function restoreSavedGame(){
