@@ -335,8 +335,7 @@ body.reviewing{padding-bottom:150px}
   height: min(100vw, 100vh);
 }
 .fullscreen-exit {
-  display: none;
-  position: absolute;
+  position: fixed;
   top: 12px;
   right: 12px;
   z-index: 101;
@@ -348,7 +347,6 @@ body.reviewing{padding-bottom:150px}
   font-size: 14px;
   cursor: pointer;
 }
-.board-shell.fullscreen .fullscreen-exit { display: block; }
 
 /* ===== CHESS ULTIMATE : ARENA REDESIGN ===== */
 :root{--bg:#080b10;--panel:#111821;--panel2:#171f29;--line:#283442;--gold:#d5b77a;--gold2:#f0d9a5;--muted:#84909d;--text:#f3f0e9;--green:#7bc7a2;--red:#ef666b;--accent:#d5b77a}
@@ -427,7 +425,7 @@ main{max-width:1440px;padding:18px clamp(16px,4vw,64px) 72px}.utility-strip{disp
   </div>
 
   <div class="pre-game-grid">
-    <div class="setup-panel"><div class="eyebrow">MATCH SETTINGS</div><h3>Thiết lập trận đấu</h3><div class="setup-fields"><div class="field"><label>QUÂN CỦA BẠN</label><select id="colorChoice"><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option></select></div><div class="field"><label>THỜI GIAN MỖI BÊN</label><select id="timeChoice"><option value="0">Không giới hạn</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="900">15 phút</option></select></div></div><div class="setup-note"><span>✦</span><span>Trận đấu, Elo và lịch sử được lưu theo tài khoản của bạn.</span></div></div>
+    <div class="setup-panel"><div class="eyebrow">MATCH SETTINGS</div><h3>Thiết lập trận đấu</h3><div class="setup-fields"><div class="field"><label>QUÂN CỦA BẠN</label><select id="colorChoice"><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option></select></div><div class="field"><label>THỜI GIAN MỖI BÊN</label><select id="timeChoice"><option value="0">Không giới hạn</option><option value="60">1 phút (Bullet)</option><option value="180">3 phút (Blitz)</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="900">15 phút</option><option value="1800">30 phút</option><option value="custom">⏱ Tùy chỉnh…</option></select><input id="customTimeInput" type="number" min="1" max="180" step="1" value="7" placeholder="Nhập số phút, vd: 7" style="display:none;margin-top:6px" title="Thời gian mỗi bên (phút)"></div></div><div class="setup-note"><span>✦</span><span>Trận đấu, Elo và lịch sử được lưu theo tài khoản của bạn.</span></div></div>
     <div class="daily-panel"><div class="daily-symbol">✧</div><div class="eyebrow">YOUR NEXT MOVE</div><h3>Không chỉ là một ván cờ.</h3><p>Rèn tư duy, tích lũy Elo và ghi lại hành trình trở thành kỳ thủ mạnh hơn.</p><div class="daily-meta"><span>64 Ô CỜ</span><span>∞ KHẢ NĂNG</span></div></div>
   </div>
   <div class="notice login-note">Bạn cần <strong>đăng nhập</strong> để chơi các chế độ và lưu tiến trình. Lịch sử đấu chỉ hiển thị với chủ tài khoản và quản trị viên.</div>
@@ -444,7 +442,6 @@ main{max-width:1440px;padding:18px clamp(16px,4vw,64px) 72px}.utility-strip{disp
         <div class="cap" id="topCap"></div>
         <div class="board-shell">
           <canvas id="boardCanvas" width="640" height="640" aria-label="Bàn cờ vua Canvas"></canvas>
-          <button id="fullscreenExitBtn" class="fullscreen-exit" type="button">✕ Thu nhỏ</button>
         </div>
         <!-- CHỈ HIỆN VỚI QUẢN TRỊ VIÊN -->
         <div id="evalRow" class="eval-row" hidden>
@@ -468,7 +465,6 @@ main{max-width:1440px;padding:18px clamp(16px,4vw,64px) 72px}.utility-strip{disp
             <button id="fullscreenBtn">⛶ Toàn màn hình</button>
             <button id="newBtn">Ván mới</button>
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
-            <button id="forceBotResignBtn" class="danger" hidden title="Chỉ Admin: ép Bot đầu hàng ngay">👑 Ép Bot đầu hàng</button>
           </div>
         </div>
       </div>
@@ -1014,8 +1010,27 @@ if($("engineBadge")) heroEngineObserver.observe($("engineBadge"),{childList:true
 const glyph={w:{k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:"♙"},b:{k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"}};
 const modeNames={easy:"Khởi đầu",medium:"Thử thách",hard:"Cao thủ",hell:"🔥 ĐỊA NGỤC"};
 
+function isGameInProgress(){
+  return saveEnabled && !reviewMode && !matchRecorded && !game.game_over() && game.history().length > 0;
+}
+function getChosenTimeSeconds(){
+  const v = $("timeChoice") ? $("timeChoice").value : "0";
+  if(v === "custom"){
+    const m = parseInt($("customTimeInput") ? $("customTimeInput").value : "", 10);
+    if(!m || m < 1) return 0;
+    return Math.min(180, m) * 60;
+  }
+  return Number(v) || 0;
+}
+function confirmLeaveGame(msg){
+  if(!isGameInProgress()) return true;
+  return confirm(msg || "Ván đấu đang dở! Rời khỏi sẽ tính là Bỏ dở và lưu vào lịch sử. Bạn chắc chắn muốn thoát?");
+}
 function tab(name){
   if(name === "admin" && !isAdminUser()) name = "home";
+  // Cảnh báo thoát trận: đang ở tab game mà chuyển sang tab khác
+  const cur = document.querySelector(".section.active");
+  if(cur && cur.id === "game" && name !== "game" && !confirmLeaveGame()) return;
   document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===name));
   document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
   if(name==="game") setTimeout(render, 30);
@@ -1664,11 +1679,13 @@ function startGame(){
     alert("Vui lòng đăng nhập để chơi tất cả chế độ.");
     return;
   }
+  if(isGameInProgress() && !confirm("Ván đấu đang dở! Bắt đầu ván mới sẽ tính là Bỏ dở. Bạn chắc chắn muốn bắt đầu ván mới?")) return;
   if(!reviewMode && !matchRecorded && game.history().length) saveFinishedGame("abandoned","Bỏ dở");
   earlyStop = null;
   stopReviewJob(); reviewMode = false; reviewFull = null; $("reviewBar").hidden = true; $("reviewModal").hidden = true; document.body.classList.remove("reviewing");
   isOnlineGame = false;
   onlineRoomData = null;
+  $("resignBtn").hidden = true;
   matchRecorded = false;
   if(roomUnsub) { roomUnsub(); roomUnsub = null; }
   game = new Chess();
@@ -1679,7 +1696,7 @@ function startGame(){
   human = $("colorChoice").value;
   flipped = human === "b";
   saveEnabled = true;
-  clockSeconds = Number($("timeChoice").value);
+  clockSeconds = getChosenTimeSeconds();
   remaining = { w: clockSeconds, b: clockSeconds };
 
   $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
@@ -1712,19 +1729,13 @@ function startGame(){
   startClock();
 }
 
+if($("timeChoice")) $("timeChoice").onchange = () => { if($("customTimeInput")) $("customTimeInput").style.display = $("timeChoice").value === "custom" ? "" : "none"; };
 $("startBtn").onclick = startGame;
-$("backHome").onclick = () => { stopReviewJob(); exitReview(); $("reviewModal").hidden = true; stopClock(); tab("home"); };
+$("backHome").onclick = () => { if(!confirmLeaveGame()) return; stopReviewJob(); exitReview(); $("reviewModal").hidden = true; stopClock(); tab("home"); };
 $("newBtn").onclick = startGame;
 
-function updateResignButtons(){
-  const inGame = (saveEnabled || isOnlineGame) && !reviewMode && !matchRecorded && !game.game_over();
-  $("resignBtn").hidden = !inGame;
-  // Ép Bot đầu hàng: CHỈ admin + CHỈ ván đấu máy (không phải online)
-  if($("forceBotResignBtn")) $("forceBotResignBtn").hidden = !(inGame && !isOnlineGame && isAdminUser());
-}
 function render(){
   drawBoardCanvas();
-  updateResignButtons();
 
   $("moveList").innerHTML="";
   const hist=game.history();
@@ -2086,13 +2097,6 @@ async function checkGameOver(timeoutWinnerColor = null, forceReason = null) {
   if(matchRecorded) return true;
   matchRecorded = true;
   stopClock();
-  // Dừng bot ngay để nó không đi tiếp sau khi ván đã kết thúc
-  clearTimeout(botWatch);
-  pendingBot = false;
-  if(engine) { try { engine.postMessage("stop"); } catch(e){} }
-  engineBusy = false; earlyStop = null;
-  $("resignBtn").hidden = true;
-  if($("forceBotResignBtn")) $("forceBotResignBtn").hidden = true;
   playSound("end");
 
   let resultForHuman = "draw";
@@ -2213,64 +2217,38 @@ $("undoBtn").onclick=()=>{
 };
 $("flipBtn").onclick=()=>{ flipped=!flipped; render(); };
 
-// Fullscreen - FIX: trước đây .fullscreen-exit chỉ là CSS, không có element nào dùng nó,
-// board-shell fullscreen lại che mất nút Toàn màn hình ở panel -> bấm phóng to xong không có cách nào thu nhỏ.
-// Giờ: có nút "Thu nhỏ" NẰM TRONG board-shell + nút panel tự đổi nhãn + fallback khi trình duyệt chặn Fullscreen API.
-function isBoardFullscreen(){
-  return document.querySelector(".board-shell")?.classList.contains("fullscreen") || !!document.fullscreenElement;
-}
-function syncFullscreenUI(){
+// Fullscreen
+$("fullscreenBtn").onclick = () => {
   const shell = document.querySelector(".board-shell");
-  const on = isBoardFullscreen();
-  shell?.classList.toggle("fullscreen", on);
-  const btn = $("fullscreenBtn");
-  if(btn) btn.textContent = on ? "⛶ Thu nhỏ" : "⛶ Toàn màn hình";
-}
-async function enterFullscreen(){
+  if (!document.fullscreenElement) {
+    shell.requestFullscreen?.() || shell.webkitRequestFullscreen?.();
+    shell.classList.add("fullscreen");
+  } else {
+    document.exitFullscreen?.();
+    shell.classList.remove("fullscreen");
+  }
+};
+document.addEventListener("fullscreenchange", () => {
   const shell = document.querySelector(".board-shell");
-  shell.classList.add("fullscreen"); // thêm class TRƯỚC để dù API bị chặn vẫn phóng to được
-  try {
-    const r = shell.requestFullscreen?.() || shell.webkitRequestFullscreen?.();
-    if(r && r.catch) await r.catch(()=>{});
-  } catch(e){}
-  syncFullscreenUI();
-}
-async function exitFullscreen(){
-  try {
-    if(document.fullscreenElement) await document.exitFullscreen?.();
-    else if(document.webkitFullscreenElement) await document.webkitExitFullscreen?.();
-  } catch(e){}
-  document.querySelector(".board-shell")?.classList.remove("fullscreen");
-  syncFullscreenUI();
+  if (!document.fullscreenElement) shell.classList.remove("fullscreen");
   setTimeout(render, 100);
-}
-$("fullscreenBtn").onclick = () => { isBoardFullscreen() ? exitFullscreen() : enterFullscreen(); };
-$("fullscreenExitBtn").onclick = (e) => { e.stopPropagation(); exitFullscreen(); };
-document.addEventListener("fullscreenchange", syncFullscreenUI);
-document.addEventListener("webkitfullscreenchange", syncFullscreenUI);
-document.addEventListener("keydown", (e) => { if(e.key === "Escape" && isBoardFullscreen()) exitFullscreen(); });
+});
 
-// Resign: chạy cả ván đấu máy lẫn online (trước đây chỉ online nên đấu máy không thấy nút)
+// Resign (online only)
 $("resignBtn").onclick = async () => {
-  if (game.game_over() || matchRecorded || reviewMode) return;
+  if (!isOnlineGame || !roomId || game.game_over()) return;
   if (!confirm("Bạn chắc chắn muốn đầu hàng? Đối thủ sẽ thắng.")) return;
   playSound("end");
   const winnerColor = human === "w" ? "b" : "w";
   await checkGameOver(winnerColor, "Bạn đầu hàng");
-  if (isOnlineGame && fbReady && roomId) {
+  $("resignBtn").hidden = true;
+  if (fbReady && roomId) {
     await update(ref(db, `rooms/${roomId}`), {
       status: "resigned",
       winner: winnerColor,
       updatedAt: serverTimestamp()
     });
   }
-};
-// Ép Bot đầu hàng: CHỈ admin + CHỈ ván đấu máy. Bấm là bot thua ngay, bạn nhận Elo thắng như bình thường.
-$("forceBotResignBtn").onclick = async () => {
-  if (!isAdminUser()) return;
-  if (isOnlineGame || game.game_over() || matchRecorded || reviewMode) return;
-  if (!confirm("Ép Bot đầu hàng ngay? Bạn sẽ thắng ván này.")) return;
-  await checkGameOver(human, "Admin ép Bot đầu hàng");
 };
 
 // CHỈ ADMIN MỚI GỌI ĐƯỢC ĐÁNH GIÁ
@@ -2647,6 +2625,7 @@ function subscribeRoom(id, myColor) {
   if(roomUnsub) roomUnsub();
   isOnlineGame = true;
   matchRecorded = false;
+  $("resignBtn").hidden = false;
   // Khởi động đồng hồ cho online (dùng thời gian đã chọn hoặc mặc định)
   if(!clockSeconds) clockSeconds = 600; // mặc định 10 phút nếu chưa chọn
   remaining = { w: clockSeconds, b: clockSeconds };
@@ -2771,6 +2750,13 @@ function restoreSavedGame(){
   rebuildPositionHistory();
   document.querySelectorAll("[data-mode]").forEach(x => x.classList.toggle("selected", x.dataset.mode === mode));
   $("colorChoice").value = human;
+  // Khôi phục lựa chọn thời gian: nếu không khớp option cố định thì đưa về Tùy chỉnh
+  if($("timeChoice")){
+    const fixed = ["0","60","180","300","600","900","1800"];
+    if(fixed.includes(String(s.clockSeconds || 0))){ $("timeChoice").value = String(s.clockSeconds || 0); }
+    else { $("timeChoice").value = "custom"; if($("customTimeInput")) $("customTimeInput").value = Math.round((s.clockSeconds || 0) / 60) || 7; }
+    if($("customTimeInput")) $("customTimeInput").style.display = $("timeChoice").value === "custom" ? "" : "none";
+  }
   $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell" ? "Celestial Max (Elo ~3000+)" : "Celestial Bot"}`;
   $("topName").textContent = human === "w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = (user && (user.displayName || user.email)) || "Bạn";
@@ -2789,6 +2775,14 @@ function restoreSavedGame(){
   }
   return true;
 }
+window.addEventListener("beforeunload", (e) => {
+  if(isGameInProgress()){
+    saveGame();
+    e.preventDefault();
+    e.returnValue = "Ván đấu đang dở! Rời khỏi sẽ tính là Bỏ dở.";
+    return e.returnValue;
+  }
+});
 window.addEventListener("pagehide", saveGame);
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") saveGame(); });
 
