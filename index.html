@@ -36,7 +36,7 @@ button{
   color:var(--text);
   border-radius:12px;
   padding:10px 16px;
-  transition:background-color .15s ease, border-color .15s ease, transform .15s ease;
+  transition:all .2s ease;
   font-size:14px;
   font-weight:500;
 }
@@ -62,7 +62,8 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 header{
   height:68px;
   border-bottom:1px solid #e0c07a22;
-  background:linear-gradient(180deg,#0e1624,#0a121c); /* bỏ backdrop-filter blur: gây giật khi cuộn trên mobile */
+  background:linear-gradient(180deg,#0e1624ee,#0a121ce8);
+  backdrop-filter:blur(16px);
   box-shadow:0 4px 24px #0005;
   display:flex;
   align-items:center;
@@ -134,7 +135,7 @@ main{max-width:1200px;margin:0 auto;padding:28px 18px 70px}
   border:1px solid #2a3d52;
   border-radius:16px;
   box-shadow:0 6px 20px #0004;
-  transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+  transition:all .2s;
 }
 .mode .ico{font-size:26px;display:block;margin-bottom:8px}
 .mode strong{display:block;font-size:15.5px;margin-bottom:4px}
@@ -207,11 +208,11 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px #e0c07a22
   position:relative;
 }
 body.hell .board-shell{box-shadow:0 0 0 2px #ef8a8acc,0 0 40px #e0404044,0 20px 50px #000a,inset 0 0 20px #0006}
-#boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block;will-change:transform;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
+#boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
 
 .sidebox{display:flex;flex-direction:column;gap:12px}
 .sidebox>div{background:linear-gradient(160deg,#121c2bcc,#0e1724cc);border:1px solid #2a3d5288;border-radius:16px;box-shadow:0 8px 24px #0004}
-.move-list{height:200px;overflow:auto;content-visibility:auto;background:#0a121c;border:1px solid #2a3d52;border-radius:12px;padding:10px;font-size:13px}
+.move-list{height:200px;overflow:auto;background:#0a121c;border:1px solid #2a3d52;border-radius:12px;padding:10px;font-size:13px}
 .move-row{display:grid;grid-template-columns:28px 1fr 1fr;gap:6px;padding:4px 6px;border-bottom:1px solid #1a2a3a}
 .move-row span:first-child{color:var(--muted)}
 
@@ -354,6 +355,14 @@ body{background:radial-gradient(ellipse at 78% 0%,#202b35 0%,#0b1017 36%,#07090d
 .brand{font:700 16px 'DM Sans',sans-serif;letter-spacing:2px;gap:12px;line-height:1.1}.brand>span{display:flex;flex-direction:column;gap:4px}.brand-light{color:var(--gold);margin-left:4px}.brand small{font:600 8px 'DM Sans',sans-serif;letter-spacing:2.7px;color:#74808d}.brand-mark{width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#e4cf9d,#9d7841);font-size:27px;box-shadow:0 5px 22px #d5b77a25}
 .header-right{gap:10px}.user-pill{background:#111923;border-color:#293541;color:#b9c0c8}.auth-button{border-color:#74603d;background:#d7bd86;color:#17130d;font-weight:800}.auth-button:hover{background:#ead39f;color:#17130d}
 .tabs{margin:0;justify-content:center;align-items:center;gap:4px}.tabs button{border:0;background:transparent;color:#8d98a4;padding:11px 13px;border-radius:10px;font-size:12px;white-space:nowrap}.tabs button span{font-size:15px;margin-right:4px}.tabs button:hover,.tabs button.active{background:#ffffff0b;color:#f0d9a5;border-color:transparent;box-shadow:inset 0 -2px #d5b77a}
+  /* === Chọn thời gian tuỳ ý === */
+  .time-presets{display:flex;flex-wrap:wrap;gap:8px}
+  .time-presets button{padding:8px 12px;border-radius:12px;font-size:13px;background:#141e2c;border:1px solid #2a3d52}
+  .time-presets button.selected{border-color:var(--gold);color:var(--gold2);background:#e0c07a14;font-weight:700}
+  .custom-time-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+  .custom-time-row label{font-size:11px;color:var(--muted);letter-spacing:.5px}
+  .custom-time-row input{width:100%;margin-top:4px;background:#0a121c;border:1px solid #2a3d52;border-radius:10px;color:var(--text);padding:9px 10px;font-size:14px}
+  .time-summary{margin-top:10px;font-size:13px;color:var(--gold2);font-weight:600}
 main{max-width:1440px;padding:18px clamp(16px,4vw,64px) 72px}.utility-strip{display:flex;align-items:center;gap:12px;min-height:30px;margin-bottom:18px;color:#667381;font-size:9px;letter-spacing:1.8px;font-weight:700}.utility-label{color:#c6a96f}.utility-spacer{flex:1}.utility-strip .tag{font-size:10px;padding:3px 9px}
 .arena-hero{position:relative;min-height:330px;overflow:hidden;border:1px solid #c6a96f30;border-radius:24px;background:linear-gradient(105deg,#17202a 0%,#111922 47%,#171b20 100%);display:flex;align-items:center;padding:42px 5.2%;box-shadow:0 24px 70px #0005}.arena-hero:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 45%,#d6b97b0b 100%),repeating-linear-gradient(90deg,transparent 0 79px,#ffffff04 80px);pointer-events:none}.arena-copy{position:relative;z-index:2;max-width:580px}.eyebrow{font-size:9px;letter-spacing:2.5px;color:#cbb17c;font-weight:800}.live-dot{display:inline-block;width:6px;height:6px;background:#77c69b;border-radius:50%;margin-right:7px;box-shadow:0 0 10px #77c69b}.arena-copy h1{font:700 clamp(38px,5.4vw,68px)/.98 'Playfair Display',serif;letter-spacing:-1.5px;margin:18px 0 14px;color:#f4f0e8}.arena-copy h1 i{font-weight:600;color:#d4b77c}.arena-copy p{color:#9ba6b1;font-size:14px;letter-spacing:.02em}.hero-actions{display:flex;align-items:center;gap:16px;margin-top:28px}.hero-actions .primary{display:flex;gap:30px;align-items:center;padding:13px 20px;border-radius:9px;background:#d9c18f;color:#17130d;box-shadow:0 8px 24px #d9c18f22}.hero-actions .primary b{font-size:19px}.hero-hint{font-size:11px;color:#84909d}.hero-art{position:absolute;right:8%;top:50%;transform:translateY(-50%);width:340px;height:280px;display:grid;place-items:center;z-index:1}.hero-king{font:260px/1 'Noto Sans Symbols 2','Segoe UI Symbol',serif;color:#d8c08e;text-shadow:0 18px 40px #000,0 0 50px #d5b77a33;transform:translateY(-4px);z-index:2}.orbit{position:absolute;border:1px solid #d5b77a27;border-radius:50%;transform:rotate(-25deg)}.orbit-a{width:330px;height:140px}.orbit-b{width:240px;height:240px;border-color:#ffffff10}.hero-coordinate,.hero-index{position:absolute;color:#cbb17c;font-size:9px;letter-spacing:2px}.hero-coordinate{right:0;top:34px}.hero-index{left:8px;bottom:20px}.hero-foot{position:absolute;bottom:0;left:0;right:0;z-index:3;border-top:1px solid #ffffff12;padding:10px 5.2%;display:flex;justify-content:space-between;color:#697684;font-size:8px;letter-spacing:2px}.hero-foot b{color:#82c59e;margin-left:8px}
 .section-heading{display:flex;justify-content:space-between;align-items:end;margin:34px 0 15px}.section-heading h2{font:700 27px 'Playfair Display',serif;margin:6px 0 2px}.section-heading p{margin:0;color:#87929e;font-size:12px}.roster-count{font:700 24px 'Playfair Display',serif;color:#d5b77a;text-align:right}.roster-count small{display:block;font:700 8px 'DM Sans',sans-serif;letter-spacing:2px;color:#74808c}
@@ -424,7 +433,25 @@ main{max-width:1440px;padding:18px clamp(16px,4vw,64px) 72px}.utility-strip{disp
   </div>
 
   <div class="pre-game-grid">
-    <div class="setup-panel"><div class="eyebrow">MATCH SETTINGS</div><h3>Thiết lập trận đấu</h3><div class="setup-fields"><div class="field"><label>QUÂN CỦA BẠN</label><select id="colorChoice"><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option></select></div><div class="field"><label>THỜI GIAN MỖI BÊN</label><select id="timeChoice"><option value="0">Không giới hạn</option><option value="300">5 phút</option><option value="600">10 phút</option><option value="900">15 phút</option></select></div></div><div class="setup-note"><span>✦</span><span>Trận đấu, Elo và lịch sử được lưu theo tài khoản của bạn.</span></div></div>
+    <div class="setup-panel"><div class="eyebrow">MATCH SETTINGS</div><h3>Thiết lập trận đấu</h3><div class="setup-fields"><div class="field"><label>QUÂN CỦA BẠN</label><select id="colorChoice"><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option></select></div><div class="field"><label>THỜI GIAN THI ĐẤU MỖI BÊN</label>
+<div class="time-presets" id="timePresets">
+<button type="button" data-seconds="0" data-inc="0">∞ Không giới hạn</button>
+<button type="button" data-seconds="60" data-inc="0">1 phút · Bullet</button>
+<button type="button" data-seconds="180" data-inc="2">3 + 2 · Blitz</button>
+<button type="button" data-seconds="300" data-inc="0">5 phút</button>
+<button type="button" data-seconds="600" data-inc="5" class="selected">10 + 5</button>
+<button type="button" data-seconds="900" data-inc="10">15 + 10</button>
+<button type="button" data-seconds="1800" data-inc="0">30 phút</button>
+<button type="button" data-seconds="3600" data-inc="0">60 phút</button>
+<button type="button" data-seconds="-1" data-inc="0">✏️ Tuỳ chỉnh…</button>
+</div>
+<div class="custom-time-row" id="customTimeRow" hidden>
+<div><label>PHÚT (0–180)</label><input id="customMinutes" type="number" min="0" max="180" step="1" value="10"></div>
+<div><label>GIÂY THÊM (0–59)</label><input id="customSeconds" type="number" min="0" max="59" step="1" value="0"></div>
+<div><label>CỘNG / NƯỚC — INCREMENT (0–60s)</label><input id="customIncrement" type="number" min="0" max="60" step="1" value="5"></div>
+</div>
+<div class="time-summary" id="timeSummary">⏱ 10 phút + 5 giây mỗi nước</div>
+</div></div><div class="setup-note"><span>✦</span><span>Trận đấu, Elo và lịch sử được lưu theo tài khoản của bạn.</span></div></div>
     <div class="daily-panel"><div class="daily-symbol">✧</div><div class="eyebrow">YOUR NEXT MOVE</div><h3>Không chỉ là một ván cờ.</h3><p>Rèn tư duy, tích lũy Elo và ghi lại hành trình trở thành kỳ thủ mạnh hơn.</p><div class="daily-meta"><span>64 Ô CỜ</span><span>∞ KHẢ NĂNG</span></div></div>
   </div>
   <div class="notice login-note">Bạn cần <strong>đăng nhập</strong> để chơi các chế độ và lưu tiến trình. Lịch sử đấu chỉ hiển thị với chủ tài khoản và quản trị viên.</div>
@@ -849,7 +876,8 @@ function animateFrame(now) {
   if (now - animating.start >= animating.duration) {
     animating = null;
     animationFrame = 0;
-    return; // frame này đã vẽ ở đầu hàm rồi, không vẽ thừa lần 2
+    drawBoardCanvas();
+    return;
   }
   animationFrame = requestAnimationFrame(animateFrame);
 }
@@ -868,6 +896,59 @@ function checkCustomRepetition() {
 let engine=null, engineReady=false, engineBusy=false, engineMode="play";
 let roomId=null, isOnlineGame=false, onlineRoomData=null, matchRecorded=false;
 let clockSeconds=0, clockTimer=null, remaining={w:0,b:0};
+let timeIncrement=0, selectedTimePreset="600|5"; // "giây|increment", -1 = tuỳ chỉnh
+const TIME_KEY="chess-ultimate-time-v1";
+function clampNum(v, lo, hi, def){ v = Math.round(Number(v)); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : def; }
+function fmtTimeLabel(sec, inc){
+  if(!sec) return "∞ Không giới hạn" + (inc ? ` · +${inc}s/nước (không áp dụng)` : "");
+  const m = Math.floor(sec/60), s = sec%60;
+  const base = s ? `${m} phút ${s} giây` : `${m} phút`;
+  return `⏱ ${base}` + (inc ? ` + ${inc} giây mỗi nước` : "");
+}
+function getTimeSettings(){
+  // Đọc từ preset đang chọn hoặc ô tuỳ chỉnh, kẹp trong giới hạn cho phép
+  if(selectedTimePreset === "custom"){
+    const sec = clampNum($("customMinutes").value, 0, 180, 10) * 60 + clampNum($("customSeconds").value, 0, 59, 0);
+    const inc = clampNum($("customIncrement").value, 0, 60, 0);
+    return { seconds: sec, increment: sec ? inc : 0 };
+  }
+  const [sec, inc] = selectedTimePreset.split("|").map(Number);
+  return { seconds: sec || 0, increment: sec ? (inc || 0) : 0 };
+}
+function refreshTimeSummary(){
+  const s = getTimeSettings();
+  $("timeSummary").textContent = fmtTimeLabel(s.seconds, s.increment);
+  try{ localStorage.setItem(TIME_KEY, JSON.stringify({ preset: selectedTimePreset, min: $("customMinutes").value, sec: $("customSeconds").value, inc: $("customIncrement").value })); }catch(e){}
+}
+function applyIncrement(color){
+  // Sau mỗi nước đi, cộng increment cho bên vừa đi (chuẩn Fischer). Chỉ bên đi mới cộng, bên nhận đồng bộ Online không cộng lại.
+  if(clockSeconds && timeIncrement > 0) remaining[color] = (remaining[color] || 0) + timeIncrement;
+}
+function initTimePicker(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(TIME_KEY) || "null");
+    if(saved){
+      if(saved.preset) selectedTimePreset = saved.preset;
+      if($("customMinutes")) $("customMinutes").value = saved.min ?? 10;
+      if($("customSeconds")) $("customSeconds").value = saved.sec ?? 0;
+      if($("customIncrement")) $("customIncrement").value = saved.inc ?? 5;
+    }
+  }catch(e){}
+  document.querySelectorAll("#timePresets button").forEach(btn => {
+    const key = btn.dataset.seconds === "-1" ? "custom" : `${btn.dataset.seconds}|${btn.dataset.inc}`;
+    btn.classList.toggle("selected", key === selectedTimePreset);
+    btn.onclick = () => {
+      selectedTimePreset = key;
+      document.querySelectorAll("#timePresets button").forEach(b => b.classList.toggle("selected", b === btn));
+      $("customTimeRow").hidden = key !== "custom";
+      refreshTimeSummary();
+    };
+  });
+  $("customTimeRow").hidden = selectedTimePreset !== "custom";
+  ["customMinutes","customSeconds","customIncrement"].forEach(id => { $(id).oninput = refreshTimeSummary; });
+  refreshTimeSummary();
+}
+initTimePicker();
 let hintArrow=null;
 
 const CELESTIAL_CDN = "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js";
@@ -943,10 +1024,8 @@ async function initEngine(forceCdn){
       if(earlyStop && engineMode === "play" && line.startsWith("info ")) trackEarlyStop(line);
       if(engineMode === "play" && engineBusy && line.startsWith("info ")){
         const dm = line.match(/ depth (\d+)/);
-        // Throttle: chỉ cập nhật khi depth tăng >=2 hoặc đã qua 300ms, tránh layout liên tục
-        if(dm && Number(dm[1]) > shownDepth + 1 && !game.game_over() && performance.now() - (window._lastDepthTxt || 0) > 300){
+        if(dm && Number(dm[1]) > shownDepth && !game.game_over()){
           shownDepth = Number(dm[1]);
-          window._lastDepthTxt = performance.now();
           $("gameStatus").textContent = `⏳ Celestial đang tính… nhìn trước ${shownDepth} nước`;
         }
         if(mpv && line.includes(" score ") && !/bound/.test(line)) trackMultiPv(line);
@@ -1502,21 +1581,10 @@ function drawArrow(fromSq, toSq) {
   ctx.restore();
 }
 
-let cachedCanvasSize = 0;
-function measureBoardCanvas(){
-  const rect = canvas.getBoundingClientRect();
-  cachedCanvasSize = Math.max(280, Math.floor(rect.width || 640));
-}
-const _boardEl = document.getElementById("boardCanvas");
-if(_boardEl) measureBoardCanvas(); // đo 1 lần lúc load
-if(typeof ResizeObserver !== "undefined" && _boardEl){
-  // Chỉ đo lại khi kích thước thật sự đổi (xoay màn hình / resize), không đo mỗi frame
-  new ResizeObserver(() => { measureBoardCanvas(); drawBoardCanvas(); }).observe(_boardEl);
-}
-window.addEventListener("resize", () => { measureBoardCanvas(); });
 function drawBoardCanvas() {
   const dpr = window.devicePixelRatio || 1;
-  const displaySize = cachedCanvasSize || 640;
+  const rect = canvas.getBoundingClientRect();
+  const displaySize = Math.max(280, Math.floor(rect.width || 640));
   // Android may report a fractional devicePixelRatio (e.g. 2.625).
   // Canvas backing dimensions are integers; round once to avoid resetting
   // the backing store on every redraw, which causes visible flashing.
@@ -1529,12 +1597,8 @@ function drawBoardCanvas() {
   const b = game.board();
   const files = flipped ? [7,6,5,4,3,2,1,0] : [0,1,2,3,4,5,6,7];
   const ranks = flipped ? [0,1,2,3,4,5,6,7] : [7,6,5,4,3,2,1,0];
-  const histVerbose = game.history({verbose: true});
   const legal = selected ? game.moves({square: selected, verbose: true}) : [];
-  const legalTo = new Set(legal.map(m => m.to)); // tra cứu O(1) thay vì .some() 64 lần
-  const legalFrom = new Set(legal.map(m => m.from));
-  const lastMove = histVerbose[histVerbose.length - 1];
-  const inCheckNow = game.in_check(); // gọi 1 lần thay vì mỗi ô vua
+  const lastMove = game.history({verbose: true}).slice(-1)[0];
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalCompositeOperation = "source-over";
@@ -1577,7 +1641,7 @@ function drawBoardCanvas() {
         ctx.strokeRect(x + ctx.lineWidth/2, y + ctx.lineWidth/2, sqSize - ctx.lineWidth, sqSize - ctx.lineWidth);
       }
 
-      if (piece && piece.type === "k" && piece.color === game.turn() && inCheckNow) {
+      if (piece && piece.type === "k" && piece.color === game.turn() && game.in_check()) {
         const grad = ctx.createRadialGradient(x + sqSize/2, y + sqSize/2, sqSize*0.1, x + sqSize/2, y + sqSize/2, sqSize*0.5);
         grad.addColorStop(0, "rgba(231, 76, 60, 0.85)");
         grad.addColorStop(1, "rgba(231, 76, 60, 0)");
@@ -1619,7 +1683,7 @@ function drawBoardCanvas() {
         ctx.fillText(B.sym, bx, by + sqSize * 0.01);
         ctx.restore();
       }
-      if (legalTo.has( sq)) {
+      if (legal.some(m => m.to === sq)) {
         ctx.save();
         if (piece) {
           ctx.strokeStyle = "rgba(33, 77, 54, 0.72)";
@@ -1691,10 +1755,11 @@ function startGame(){
   human = $("colorChoice").value;
   flipped = human === "b";
   saveEnabled = true;
-  clockSeconds = Number($("timeChoice").value);
+  const ts = getTimeSettings();
+  clockSeconds = ts.seconds; timeIncrement = ts.increment;
   remaining = { w: clockSeconds, b: clockSeconds };
 
-  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
+  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"} · ${fmtTimeLabel(clockSeconds, timeIncrement).replace("⏱ ","")}`;
   $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
   document.body.classList.toggle("hell", mode === "hell");
@@ -1728,28 +1793,17 @@ $("startBtn").onclick = startGame;
 $("backHome").onclick = () => { stopReviewJob(); exitReview(); $("reviewModal").hidden = true; stopClock(); tab("home"); };
 $("newBtn").onclick = startGame;
 
-let lastRenderFen = "", lastRenderHistLen = -1, lastRenderCaptured = "";
 function render(){
   drawBoardCanvas();
 
+  $("moveList").innerHTML="";
   const hist=game.history();
-  // Trước đây: rebuild toàn bộ moveList (tạo DOM + innerHTML) MỖI lần render, kể cả khi chỉ đổi lượt / đổi trạng thái.
-  // Giờ: chỉ rebuild khi số nước đi đổi. Ván dài 100 nước -> tiết kiệm hàng trăm DOM node mỗi lần vẽ.
-  if(hist.length !== lastRenderHistLen){
-    lastRenderHistLen = hist.length;
-    const frag = document.createDocumentFragment();
-    for(let i=0;i<hist.length;i+=2){
-      const row=document.createElement("div"); row.className="move-row";
-      row.textContent = "";
-      const n1 = document.createElement("span"); n1.textContent = (i/2+1) + ".";
-      const n2 = document.createElement("span"); n2.textContent = hist[i] || "";
-      const n3 = document.createElement("span"); n3.textContent = hist[i+1] || "";
-      row.append(n1, n2, n3);
-      frag.append(row);
-    }
-    $("moveList").replaceChildren(frag);
-    $("moveList").scrollTop=$("moveList").scrollHeight;
+  for(let i=0;i<hist.length;i+=2){
+    const row=document.createElement("div"); row.className="move-row";
+    row.innerHTML=`<span>${i/2+1}.</span><span>${hist[i]||""}</span><span>${hist[i+1]||""}</span>`;
+    $("moveList").append(row);
   }
+  $("moveList").scrollTop=$("moveList").scrollHeight;
 
   const turn=game.turn()==="w"?"Trắng":"Đen";
   if(!game.game_over()) {
@@ -1761,8 +1815,7 @@ function render(){
   $("reviewBtn").hidden = !(game.game_over() && !reviewMode && hist.length > 0);
   const canUndo = hist.length > 0 && !isOnlineGame && !reviewMode && (isAdminUser() || mode === "easy");
   $("undoBtn").disabled = !canUndo;
-  const fenNow = game.fen();
-  if(fenNow !== lastRenderFen){ lastRenderFen = fenNow; renderCaptured(); }
+  renderCaptured();
   saveGame();
 }
 
@@ -1781,6 +1834,7 @@ async function squareClick(sq){
       }
       const movingPiece = game.get(selected);
       const moveRes = game.move({from:selected, to:sq, promotion});
+      applyIncrement(human); // bạn vừa đi -> +increment cho bạn
       if (checkCustomRepetition()) {
         setTimeout(() => checkGameOver(null, "Hoà cờ (Lặp lại 3 lần)"), 50);
         return;
@@ -2001,7 +2055,9 @@ function applyBotUci(uci){
   const moveObj = { from: uci.slice(0,2), to: uci.slice(2,4), promotion: uci[4] || "q" };
   try {
     const movingPiece = game.get(moveObj.from);
+    const botColor = human === "w" ? "b" : "w";
     game.move(moveObj);
+    applyIncrement(botColor); // bot vừa đi -> +increment cho bot
     if (checkCustomRepetition()) {
       checkGameOver(null, "Hoà cờ (Lặp lại 3 lần)");
       return;
@@ -2087,6 +2143,7 @@ function fallbackMove(){
     move=scored[0].m;
   }
   game.move(move);
+  applyIncrement(human === "w" ? "b" : "w"); // fallback của bot
   if (checkCustomRepetition()) {
     checkGameOver(null, "Hoà cờ (Lặp lại 3 lần)");
     return;
@@ -2402,7 +2459,7 @@ function startClock(){
     if(game.game_over()) { stopClock(); return; }
     const side = game.turn(); // luôn dùng lượt thật từ vị trí hiện tại
     if(remaining[side] > 0) remaining[side]--;
-    updateClock(); // KHÔNG saveGame() mỗi giây: ghi localStorage 1 lần/giây là nguyên nhân đơ
+    updateClock(); saveGame();
     if(remaining[side] <= 0){
       stopClock();
       const winnerSide = side === "w" ? "b" : "w";
@@ -2477,6 +2534,8 @@ async function inviteFriendToPlay(friendUid, friendName, btnEl) {
       fen: game.fen(),
       pgn: "",
       turn: "w",
+      clockSeconds: getTimeSettings().seconds,
+      timeIncrement: getTimeSettings().increment,
       createdAt: serverTimestamp()
     });
 
@@ -2632,8 +2691,8 @@ function subscribeRoom(id, myColor) {
   isOnlineGame = true;
   matchRecorded = false;
   $("resignBtn").hidden = false;
-  // Khởi động đồng hồ cho online (dùng thời gian đã chọn hoặc mặc định)
-  if(!clockSeconds) clockSeconds = 600; // mặc định 10 phút nếu chưa chọn
+  // Khởi động đồng hồ cho online: chủ phòng dùng giờ đã chọn, khách sẽ nhận giờ từ phòng (xem onValue bên dưới)
+  if(!clockSeconds){ const ts = getTimeSettings(); clockSeconds = ts.seconds || 600; timeIncrement = ts.increment; }
   remaining = { w: clockSeconds, b: clockSeconds };
   startClock();
   human = myColor;
@@ -2659,7 +2718,11 @@ function subscribeRoom(id, myColor) {
       return;
     }
 
-    // Đồng bộ thời gian từ phòng (nếu có)
+    // Đồng bộ thời gian từ phòng (nếu có) - khách nhận giờ tuỳ chỉnh của chủ phòng
+    if(typeof data.clockSeconds === "number") clockSeconds = data.clockSeconds;
+    if(typeof data.timeIncrement === "number") timeIncrement = data.timeIncrement;
+    // Phòng mới tạo chưa có remaining -> đồng hồ = đúng giờ tuỳ chỉnh của chủ phòng (không lấy giờ ván cũ)
+    if(typeof data.remainingW !== "number" && typeof data.remainingB !== "number") remaining = { w: clockSeconds, b: clockSeconds };
     if(typeof data.remainingW === "number") remaining.w = data.remainingW;
     if(typeof data.remainingB === "number") remaining.b = data.remainingB;
     updateClock();
@@ -2727,18 +2790,9 @@ $("joinRoomBtn").onclick=async()=>{
 // ============================================================================
 // 10. LƯU VÁN ĐANG CHƠI, LỊCH SỬ VÁN ĐẤU & QUÂN ĐÃ ĂN
 // ============================================================================
-let saveTimer = null, lastSavedFen = "";
 function saveGame(){
   if(!saveEnabled || reviewMode || isOnlineGame) return;
-  const fenNow = game.fen();
-  if(fenNow === lastSavedFen && !saveTimer) return; // không đổi thì không ghi
-  // Debounce 500ms: nhiều render dồn trong 1 frame chỉ ghi 1 lần, không chặn UI
-  if(saveTimer) return;
-  saveTimer = setTimeout(() => {
-    saveTimer = null;
-    lastSavedFen = game.fen();
-    try{ localStorage.setItem(SAVE_KEY, JSON.stringify({ moves:game.history(), mode, human, flipped, clockSeconds, remaining, matchRecorded })); }catch(e){}
-  }, 500);
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({ moves:game.history(), mode, human, flipped, clockSeconds, timeIncrement, remaining, matchRecorded })); }catch(e){}
 }
 function rebuildPositionHistory(){
   positionHistory = new Map();
@@ -2760,6 +2814,7 @@ function restoreSavedGame(){
   for(const san of s.moves){ if(!g.move(san)) return false; }
   game = g; mode = modeNames[s.mode] ? s.mode : "easy"; human = s.human === "b" ? "b" : "w"; flipped = !!s.flipped;
   clockSeconds = Number(s.clockSeconds) || 0;
+  timeIncrement = Number(s.timeIncrement) || 0;
   remaining = (s.remaining && typeof s.remaining.w === "number") ? s.remaining : { w:clockSeconds, b:clockSeconds };
   matchRecorded = !!s.matchRecorded; isOnlineGame = false; selected = null; hintArrow = null;
   rebuildPositionHistory();
