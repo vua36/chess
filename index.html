@@ -208,7 +208,7 @@ input:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px #e0c07a22
   position:relative;
 }
 body.hell .board-shell{box-shadow:0 0 0 2px #ef8a8acc,0 0 40px #e0404044,0 20px 50px #000a,inset 0 0 20px #0006}
-#boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block;touch-action:manipulation;cursor:pointer}
+#boardCanvas{width:100%;height:auto;aspect-ratio:1/1;display:block;touch-action:none;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;cursor:pointer}
 
 .sidebox{display:flex;flex-direction:column;gap:12px}
 .sidebox>div{background:linear-gradient(160deg,#121c2bcc,#0e1724cc);border:1px solid #2a3d5288;border-radius:16px;box-shadow:0 8px 24px #0004}
@@ -1504,9 +1504,13 @@ function drawBoardCanvas() {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   const displaySize = Math.max(280, Math.floor(rect.width || 640));
-  if (canvas.width !== displaySize * dpr) {
-    canvas.width = displaySize * dpr;
-    canvas.height = displaySize * dpr;
+  // Android may report a fractional devicePixelRatio (e.g. 2.625).
+  // Canvas backing dimensions are integers; round once to avoid resetting
+  // the backing store on every redraw, which causes visible flashing.
+  const backingSize = Math.round(displaySize * dpr);
+  if (canvas.width !== backingSize || canvas.height !== backingSize) {
+    canvas.width = backingSize;
+    canvas.height = backingSize;
   }
   const sqSize = canvas.width / 8;
   const b = game.board();
@@ -1633,6 +1637,8 @@ function drawBoardCanvas() {
 }
 
 canvas.addEventListener("pointerdown", e => {
+  // Suppress Android's synthesized tap highlight / duplicate touch behavior.
+  if (e.cancelable) e.preventDefault();
   initAudio();
   const rect = canvas.getBoundingClientRect();
   const col = Math.floor(((e.clientX - rect.left) / rect.width) * 8);
