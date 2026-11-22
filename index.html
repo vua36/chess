@@ -1187,16 +1187,16 @@ const DIFFICULTY = {
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
   hard:   { skill: 11, depth: 12, movetime: 1200 }, // Đại kiện tướng: ĐÃ NERF (skill 11, giới hạn depth 12, ~1.2s), KHÔNG ponder, không dừng-sớm-thông-minh
-  hell:   { skill: 20, depth: 0,  movetime: 8000 } // Full strength: nền 8s (khai cuộc ~4.4s, trung cuộc 8s, tàn cuộc/bị chiếu chạm trần 10s)
+  hell:   { skill: 20, depth: 0,  movetime: 4500 } // Full strength: nền 4.5s (khai cuộc ~2.5s, trung cuộc 4.5s, tàn cuộc/bị chiếu chạm trần 6s)
 };
 const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0, hell: 0 };
 const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 8, hell: 14 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 10000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 10 giây cho 1 nước
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 6000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 6 giây cho 1 nước
 
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 // Địa ngục "nghĩ ké" ở lượt người chơi (ponder). on = đang tìm kiếm nền, stopping = đã gửi stop, đợi engine trả bestmove.
-const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 24, HELL_CONTEMPT = 40;
+const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 20, HELL_CONTEMPT = 40;
 const ponder = { on:false, stopping:false, depth:0, cp:null, timer:null, thens:[], pred:null, hit:false };
 let botPred = null; // nước người chơi mà engine dự đoán (từ "bestmove X ponder Y") → nghĩ-ké đúng thế đó
 let hellTimer = null;
@@ -2276,7 +2276,7 @@ document.addEventListener("visibilitychange", () => {
   else setTimeout(startPonder, 250);
 });
 
-// Thế cờ "chưa chín": nước tốt nhất còn đổi, điểm dao động hoặc đang tụt → nghĩ thêm tới trần 10s.
+// Thế cờ "chưa chín": nước tốt nhất còn đổi, điểm dao động hoặc đang tụt → nghĩ thêm tới trần 6s.
 function hellUnstable(h){
   if(h.length < 3) return true;
   const w = h.slice(-7);
@@ -2404,9 +2404,9 @@ function hellThinkMs(baseMs, leftMs){
   if(game.moves().length === 1) return 120;
   if(ply < 10) t = Math.round(t * 0.55);           // khai cuộc: sách khai cuộc + nghĩ-ké đã lo phần nặng → đi nhanh
   else if(ply < 30) t = Math.round(t * 1.0);       // trung cuộc: ngân sách nền
-  else t = Math.round(t * 1.25);                    // tàn cuộc: nhiều hơn một chút - nơi quyết định thắng thua (trần 10s)
+  else t = Math.round(t * 1.25);                    // tàn cuộc: nhiều hơn một chút - nơi quyết định thắng thua (trần 6s)
   if(game.in_check()) t = Math.round(t * 1.25);     // đang bị chiếu: nghĩ kỹ hơn
-  // Bàn băm đã được đào sâu lúc bạn đang nghĩ → bớt thời gian nền (thế cờ chưa chín vẫn được kéo tới trần 10s)
+  // Bàn băm đã được đào sâu lúc bạn đang nghĩ → bớt thời gian nền (thế cờ chưa chín vẫn được kéo tới trần 6s)
   if(ponder.hit && ponder.depth >= 18) t = Math.round(t * 0.7);                 // đoán trúng nước người chơi → bàn băm đã sâu sẵn ở đúng thế
   else if(!ponder.pred && ponder.depth >= 22 && !game.in_check()) t = Math.round(t * 0.85);
   if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200));
@@ -2617,7 +2617,7 @@ function botMove(){
     shownDepth = 0;
     // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
     engine.postMessage(botPositionCmd());
-    // hardMs = trần cứng (10s). think = ngân sách mềm: tới đó mà thế cờ đã chín thì dừng, chưa chín thì nghĩ tiếp tới trần.
+    // hardMs = trần cứng (6s). think = ngân sách mềm: tới đó mà thế cờ đã chín thì dừng, chưa chín thì nghĩ tiếp tới trần.
     const forced = game.moves().length === 1;
     const hardMs = hell
       ? (forced ? think : (leftMs != null ? Math.min(HELL_MAX_THINK_MS, Math.max(think, Math.round(leftMs / 10))) : HELL_MAX_THINK_MS))
@@ -2635,7 +2635,7 @@ function botMove(){
     engine.postMessage(goCmd);
     if(deep){ clearInterval(hellTimer); hellTimer = setInterval(hellTick, 50); }
     // Watchdog ngắn hơn để không mắc kẹt khi Worker không trả bestmove.
-    armBotWatch(deep ? Math.max(3500, hardMs + 2500) : Math.max(1800, think + 1200)); // hell: trần cứng 10s + 2.5s dự phòng
+    armBotWatch(deep ? Math.max(3500, hardMs + 2500) : Math.max(1800, think + 1200)); // hell: trần cứng 6s + 2.5s dự phòng
     return;
   }
   fallbackMove();
