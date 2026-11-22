@@ -716,7 +716,7 @@ main{width:auto!important;max-width:1560px!important;margin:0 auto 0 92px!import
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
     </button>
     <button class="rival-card rival-hard" data-mode="hard">
-      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2800</span></span>
+      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2400</span></span>
       <span class="rival-model-wrap"><svg class="rival-model" viewBox="0 0 180 180" aria-hidden="true"><defs><linearGradient id="gBishop" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0c7"/><stop offset=".4" stop-color="#e3ad61"/><stop offset="1" stop-color="#87502f"/></linearGradient><linearGradient id="gBishopSide"><stop stop-color="#57351f"/><stop offset="1" stop-color="#c18b4c"/></linearGradient></defs><ellipse cx="90" cy="158" rx="56" ry="10" fill="#ffc16b" opacity=".2"/><path d="M40 144 Q47 131 66 130 L114 130 Q133 131 140 144 L132 154 L48 154Z" fill="url(#gBishopSide)" stroke="#ffe4ad" stroke-opacity=".7"/><path d="M51 133 Q90 124 129 133 L133 145 L47 145Z" fill="url(#gBishop)"/><path d="M66 129 Q82 109 80 89 Q68 73 75 53 Q81 33 90 24 Q99 33 105 53 Q112 73 100 89 Q98 109 114 129Z" fill="url(#gBishop)" stroke="#fff0d0" stroke-opacity=".75" stroke-width="2"/><path d="M91 25 L85 61 L95 72 L82 99 L91 125 L105 129 Q98 109 100 89 Q112 73 105 53Z" fill="url(#gBishopSide)" opacity=".75"/><path d="M74 63 L107 48" stroke="#fff5d8" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="18" r="6" fill="#fff0c8"/><path d="M70 128 Q90 119 110 128" fill="none" stroke="#fff1d2" stroke-width="2"/></svg><span class="model-aura"></span></span><span class="rival-name">Đại kiện tướng</span><span class="rival-desc">Áp lực cao · Ít sai lầm</span>
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
     </button>
@@ -1079,7 +1079,7 @@ try {
 const BOT_ELO_TABLE = {
   easy:   { win: +8,  draw: -2,  loss: -15, label: "Bot Khởi đầu (Elo ~600)",   botElo: 600  },
   medium: { win: +15, draw: +2,  loss: -12, label: "Bot Thử thách (Elo ~1000)",  botElo: 1000 },
-  hard:   { win: +40, draw: +10, loss: -6,  label: "Bot Đại kiện tướng (Elo ~2800)", botElo: 2800 },
+  hard:   { win: +40, draw: +10, loss: -6,  label: "Bot Đại kiện tướng (Elo ~2400)", botElo: 2400 },
   hell:   { win: +70, draw: +20, loss: -3,  label: "Bot Địa ngục (Elo ~3400+)", botElo: 3400 }
 };
 
@@ -1183,18 +1183,18 @@ const DIFFICULTY = {
   // easy/medium đã nerf cho đúng Elo. hell BUFF MAX: nghĩ lâu gấp ~2x, không giới hạn depth
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
-  hard:   { skill: 20, depth: 0,  movetime: 4500 }, // Đại kiện tướng: full skill, nền 4.5s (trần 8s), có ponder
-  hell:   { skill: 20, depth: 0,  movetime: 11000 } // Full strength: nền 11s (khai cuộc 8.8s, trung cuộc 13.2s, tàn cuộc/bị chiếu chạm trần 15s)
+  hard:   { skill: 11, depth: 12, movetime: 1200 }, // Đại kiện tướng: ĐÃ NERF (skill 11, giới hạn depth 12, ~1.2s), KHÔNG ponder, không dừng-sớm-thông-minh
+  hell:   { skill: 20, depth: 0,  movetime: 14000 } // Full strength: nền 14s (khai cuộc ~12s, trung cuộc/tàn cuộc/bị chiếu chạm trần 15s)
 };
 const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0, hell: 0 };
-const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 12, hell: 14 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 15000, HARD_MAX_THINK_MS = 8000; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 15 giây cho 1 nước
+const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 8, hell: 14 };
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 15000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 15 giây cho 1 nước
 
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 // Địa ngục "nghĩ ké" ở lượt người chơi (ponder). on = đang tìm kiếm nền, stopping = đã gửi stop, đợi engine trả bestmove.
-const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 22;
-const ponder = { on:false, stopping:false, depth:0, timer:null, thens:[] };
+const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 28, HELL_CONTEMPT = 40;
+const ponder = { on:false, stopping:false, depth:0, cp:null, timer:null, thens:[] };
 let hellTimer = null;
 
 function armBotWatch(ms){
@@ -2028,8 +2028,8 @@ function startGame(){
     engine.postMessage("ucinewgame");
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     if(mode === "hell") {
-      engine.postMessage("setoption name Contempt value 20"); engine.postMessage("setoption name Move Overhead value 30");
-    }
+      engine.postMessage(`setoption name Contempt value ${HELL_CONTEMPT}`); engine.postMessage("setoption name Move Overhead value 30");
+    } else { engine.postMessage("setoption name Contempt value 24"); } // mặc định, tránh dính Contempt của ván Địa ngục trước
   }
 
   tab("game");
@@ -2199,18 +2199,18 @@ function trackEarlyStop(line){
 // Bảng băm (Hash) được giữ nguyên nên khi bạn đi xong, lượt tìm kiếm thật của bot bắt đầu từ một cây đã
 // được đào sâu sẵn → cùng 15s nhưng nhìn sâu hơn hẳn. Bạn đi càng lâu, bot càng "chín".
 function canPonder(){
-  return (mode === "hell" || mode === "hard") && engineReady && !!engine && !isOnlineGame && !reviewMode && !reviewJob &&
+  return mode === "hell" && engineReady && !!engine && !isOnlineGame && !reviewMode && !reviewJob &&
          !matchRecorded && !game.game_over() && !engineBusy && !pendingBot &&
          game.turn() === human && game.history().length > 0 && !ponder.on && !ponder.stopping;
 }
 function startPonder(){
   if(!canPonder()) return;
   try{
-    ponder.on = true; ponder.stopping = false; ponder.depth = 0;
+    ponder.on = true; ponder.stopping = false; ponder.depth = 0; ponder.cp = null;
     engine.postMessage("setoption name Skill Level value 20");
     engine.postMessage("setoption name MultiPV value 1");
     engine.postMessage(botPositionCmd());
-    engine.postMessage(`go movetime ${mode === "hell" ? PONDER_MAX_MS : 45000}`);
+    engine.postMessage(`go movetime ${PONDER_MAX_MS}`);
   }catch(e){ ponder.on = false; }
 }
 function flushPonder(){
@@ -2237,12 +2237,14 @@ function stopPonder(then){
 function ponderInfo(line){
   const dm = line.match(/ depth (\d+)/);
   if(!dm) return;
+  { const sm = line.match(/score (cp|mate) (-?\d+)/); // điểm theo góc nhìn người chơi (bên đang tới lượt)
+    if(sm && !/bound/.test(line)){ const v = Number(sm[2]); ponder.cp = sm[1] === "mate" ? (v > 0 ? 1 : -1) * (100000 - Math.abs(v)) : v; } }
   const d = Number(dm[1]);
   if(d <= ponder.depth) return;
   ponder.depth = d;
   if(engineBusy || reviewMode || matchRecorded || game.game_over() || game.turn() !== human) return;
   const turn = game.turn() === "w" ? "Trắng" : "Đen";
-  $("gameStatus").textContent = `${turn} đi${game.in_check() ? " · Đang bị chiếu!" : ""} · 🧠 ${mode === "hell" ? "Địa ngục" : "Đại kiện tướng"} đang nghĩ trước (d${d})`;
+  $("gameStatus").textContent = `${turn} đi${game.in_check() ? " · Đang bị chiếu!" : ""} · 🧠 Địa ngục đang nghĩ trước (d${d})`;
 }
 document.addEventListener("visibilitychange", () => {
   if(document.hidden) stopPonder();            // ẩn tab/app → nghỉ cho đỡ nóng máy, hao pin
@@ -2252,12 +2254,13 @@ document.addEventListener("visibilitychange", () => {
 // Thế cờ "chưa chín": nước tốt nhất còn đổi, điểm dao động hoặc đang tụt → nghĩ thêm tới trần 15s.
 function hellUnstable(h){
   if(h.length < 3) return true;
-  const w = h.slice(-5);
+  const w = h.slice(-7);
   if(new Set(w.map(x => x.mv)).size > 1) return true;
   const cps = w.map(x => x.cp), last = cps[cps.length - 1];
-  if(Math.max(...cps) - Math.min(...cps) > 25) return true;
+  if(Math.max(...cps) - Math.min(...cps) > 10) return true;   // chặt hơn: điểm còn dao động >10cp là chưa chín
   const prev = h.length >= 8 ? h[h.length - 8].cp : h[0].cp;
-  if(prev - last > 40) return true;
+  if(prev - last > 20) return true;                            // điểm đang tụt → tìm thêm phòng thủ
+  if(Math.abs(last) >= 90000 && last < 0) return true;         // đang bị chiếu hết → kiếm nước kháng cự tốt nhất tới trần
   return false;
 }
 // Chạy mỗi 100ms trong lúc Địa ngục tìm nước. Engine tự có trần cứng movetime=hard,
@@ -2268,6 +2271,11 @@ function hellTick(){
   const el = performance.now() - es.t0;
   if(el < es.budget) return;
   let stop = el >= es.hard - 150;
+  // Đã thấy chiếu hết ép thắng ổn định nhiều độ sâu → đi luôn, khỏi nghĩ thêm
+  if(!stop && es.hist.length >= 6){
+    const m6 = es.hist.slice(-6);
+    if(m6.every(x => x.mv === m6[0].mv && x.cp >= 90000)) stop = true;
+  }
   if(!stop && es.lastDepth >= es.minDepth && !hellUnstable(es.hist)) stop = true;
   if(stop){
     es.sent = true; clearInterval(hellTimer); hellTimer = null;
@@ -2369,8 +2377,8 @@ function hellThinkMs(baseMs, leftMs){
   const ply = game.history().length;
   let t = baseMs;
   if(game.moves().length === 1) return 120;
-  if(ply < 10) t = Math.round(t * 0.8);            // khai cuộc vẫn nghĩ kỹ (trước đây chỉ 0.5)
-  else if(ply < 30) t = Math.round(t * 1.2);       // trung cuộc: +20%
+  if(ply < 10) t = Math.round(t * 0.85);           // khai cuộc vẫn nghĩ kỹ
+  else if(ply < 30) t = Math.round(t * 1.1);       // trung cuộc: chạm trần 15s
   else t = Math.round(t * 1.5);                     // tàn cuộc: +50% - nơi quyết định thắng thua
   if(game.in_check()) t = Math.round(t * 1.4);      // đang bị chiếu: nghĩ kỹ hơn
   if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200)); // dùng nhiều giờ hơn (trước /30)
@@ -2492,7 +2500,7 @@ function bookMove(){
 }
 
 // --- Hết sách: Địa ngục/Cao thủ xét 4 nước tốt nhất trong ~16 bán nước đầu, chọn ngẫu nhiên giữa các nước gần ngang điểm
-function wantVariety(){ return (mode === "hell" || mode === "hard") && game.history().length < 16 && game.moves().length > 1; }
+function wantVariety(){ return (mode === "hell" || mode === "hard") && game.history().length < (mode === "hell" ? 8 : 16) && game.moves().length > 1; }
 function trackMultiPv(line){
   const dm = line.match(/ depth (\d+)/), km = line.match(/ multipv (\d+)/), sm = line.match(/score (cp|mate) (-?\d+)/), pm = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
   if(!dm || !sm || !pm) return;
@@ -2563,10 +2571,10 @@ function botMove(){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     const hell = mode === "hell";
     const leftMs = clockSeconds ? remaining[game.turn()] * 1000 : null;
-    const gm = mode === "hard", deep = hell || gm; // deep = bot dùng quản lý thời gian thông minh + dừng sớm khi chín
+    const gm = mode === "hard", deep = hell; // Đại kiện tướng đã nerf: không dùng quản lý thời gian sâu/ dừng sớm; chỉ Địa ngục mới deep // deep = bot dùng quản lý thời gian thông minh + dừng sớm khi chín
     const think = Math.min(hell ? HELL_MAX_THINK_MS : gm ? HARD_MAX_THINK_MS : MAX_THINK_MS, hell
       ? hellThinkMs(cfg.movetime, leftMs)
-      : gm ? hardThinkMs(cfg.movetime, leftMs)
+      : gm ? Math.min(cfg.movetime, leftMs != null ? Math.max(250, leftMs / 30 - 200) : cfg.movetime)
       : (leftMs != null ? Math.min(cfg.movetime, Math.max(250, leftMs / 30 - 200)) : cfg.movetime));
     engineBusy = true;
     engineMode = "play";
@@ -2574,7 +2582,7 @@ function botMove(){
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     const variety = wantVariety();
     engine.postMessage(`setoption name MultiPV value ${variety ? 4 : 1}`);
-    mpv = variety ? { d: 0, lines: {}, tol: hell ? 5 : 12 } : null;
+    mpv = variety ? { d: 0, lines: {}, tol: hell ? 3 : 25 } : null;
     shownDepth = 0;
     // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
     engine.postMessage(botPositionCmd());
@@ -2584,8 +2592,11 @@ function botMove(){
       ? (forced ? think : (leftMs != null ? Math.min(HELL_MAX_THINK_MS, Math.max(think, Math.round(leftMs / 10))) : HELL_MAX_THINK_MS))
       : gm ? (forced ? think : Math.min(HARD_MAX_THINK_MS, Math.round(think * 1.4)))
       : think;
-    earlyStop = deep ? { t0: performance.now(), budget: think, hard: hardMs, minDepth: hell ? HELL_MIN_STOP_DEPTH : 18, hist: [], lastDepth: 0, sent: false } : null;
-    const avoidMoves = getNonRepeatingBotMoves(hell ? 4 : 1); // hell: tránh lặp tới 4 lần, ép thắng thay vì hòa
+    earlyStop = deep ? { t0: performance.now(), budget: think, hard: hardMs, minDepth: HELL_MIN_STOP_DEPTH, hist: [], lastDepth: 0, sent: false } : null;
+    // hell: khi không kém thế (điểm bot >= -100cp) thì TRÁNH mọi nước lặp thế cờ (ép thắng thay vì hoà lặp);
+    // khi đang kém rõ thì được phép lặp để cầu hoà (phòng thủ). Điểm lấy từ lượt nghĩ-ké ở lượt người chơi.
+    const botCp = ponder.cp != null ? -ponder.cp : 0;
+    const avoidMoves = getNonRepeatingBotMoves(hell ? (botCp >= -100 ? 2 : 3) : 1);
     const searchPrefix = avoidMoves.length ? `searchmoves ${avoidMoves.join(" ")}` : "";
     const goCmd = deep
       ? `go movetime ${hardMs} ${searchPrefix}`.replace(/\s+/g," ").trim() // searchmoves PHẢI nằm cuối lệnh go, nếu không movetime bị nuốt mất
@@ -3283,7 +3294,7 @@ function rebuildPositionHistory(){
 function resumeBotIfPending(){
   if(!pendingBot || !engineReady || !engine) return;
   pendingBot = false;
-  if(mode === "hell") engine.postMessage("setoption name Contempt value 20");
+  if(mode === "hell") engine.postMessage(`setoption name Contempt value ${HELL_CONTEMPT}`);
   setTimeout(() => { if(!isOnlineGame && !reviewMode && !game.game_over() && !matchRecorded && game.turn() !== human) botMove(); }, 100);
 }
 function restoreSavedGame(){
