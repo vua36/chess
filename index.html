@@ -1196,7 +1196,7 @@ const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 6000, HARD_MAX_THINK_MS = 2500; /
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 // Địa ngục "nghĩ ké" ở lượt người chơi (ponder). on = đang tìm kiếm nền, stopping = đã gửi stop, đợi engine trả bestmove.
-const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 20, HELL_CONTEMPT = 40;
+const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 24, HELL_CONTEMPT = 40;
 const ponder = { on:false, stopping:false, depth:0, cp:null, timer:null, thens:[], pred:null, hit:false };
 let botPred = null; // nước người chơi mà engine dự đoán (từ "bestmove X ponder Y") → nghĩ-ké đúng thế đó
 let hellTimer = null;
