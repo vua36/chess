@@ -645,6 +645,9 @@ main{width:auto!important;max-width:1560px!important;margin:0 auto 0 92px!import
 }
 </style>
 
+<style>
+body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;opacity:.32!important;filter:grayscale(.85)!important;cursor:not-allowed}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -1184,17 +1187,18 @@ const DIFFICULTY = {
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
   hard:   { skill: 11, depth: 12, movetime: 1200 }, // Đại kiện tướng: ĐÃ NERF (skill 11, giới hạn depth 12, ~1.2s), KHÔNG ponder, không dừng-sớm-thông-minh
-  hell:   { skill: 20, depth: 0,  movetime: 14000 } // Full strength: nền 14s (khai cuộc ~12s, trung cuộc/tàn cuộc/bị chiếu chạm trần 15s)
+  hell:   { skill: 20, depth: 0,  movetime: 8000 } // Full strength: nền 8s (khai cuộc ~4.4s, trung cuộc 8s, tàn cuộc/bị chiếu chạm trần 10s)
 };
 const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0, hell: 0 };
 const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 8, hell: 14 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 15000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 15 giây cho 1 nước
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 10000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG: Địa ngục không bao giờ tìm quá 10 giây cho 1 nước
 
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 // Địa ngục "nghĩ ké" ở lượt người chơi (ponder). on = đang tìm kiếm nền, stopping = đã gửi stop, đợi engine trả bestmove.
-const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 28, HELL_CONTEMPT = 40;
-const ponder = { on:false, stopping:false, depth:0, cp:null, timer:null, thens:[] };
+const PONDER_MAX_MS = 90000, HELL_MIN_STOP_DEPTH = 24, HELL_CONTEMPT = 40;
+const ponder = { on:false, stopping:false, depth:0, cp:null, timer:null, thens:[], pred:null, hit:false };
+let botPred = null; // nước người chơi mà engine dự đoán (từ "bestmove X ponder Y") → nghĩ-ké đúng thế đó
 let hellTimer = null;
 
 function armBotWatch(ms){
@@ -1286,7 +1290,9 @@ async function initEngine(forceCdn){
       }
       if(line.startsWith("bestmove")) {
         if(engineMode === "play" && !engineBusy) return; // bestmove muộn của lượt đã bị huỷ/watchdog → bỏ qua, không đi nước ma
-        let uci = line.split(" ")[1];
+        const bmParts = line.split(" ");
+        let uci = bmParts[1];
+        const bmPred = bmParts[2] === "ponder" ? (bmParts[3] || null) : null;
         clearTimeout(botWatch);
         earlyStop = null;
         engineBusy = false;
@@ -1305,7 +1311,9 @@ async function initEngine(forceCdn){
           return;
         }
 
+        const uci0 = uci;
         uci = pickVariety(uci);
+        botPred = (mode === "hell" && uci === uci0) ? bmPred : null; // đổi nước (đa dạng khai cuộc) thì dự đoán không còn đúng
         applyBotUci(uci);
       }
     };
@@ -1329,12 +1337,20 @@ if($("engineBadge")) heroEngineObserver.observe($("engineBadge"),{childList:true
 const glyph={w:{k:"♔",q:"♕",r:"♖",b:"♗",n:"♘",p:"♙"},b:{k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"}};
 const modeNames={easy:"Khởi đầu",medium:"Thử thách",hard:"Cao thủ",hell:"🔥 ĐỊA NGỤC"};
 
+// Đang trong trận (đã đi ít nhất 1 nước, chưa kết thúc): khoá thanh tab để lỡ tay không bị out trận / thua.
+// Muốn rời ván thì dùng nút "← Sảnh chính" (có hỏi xác nhận thua).
+function matchLocked(){
+  try{ return gameInProgress() && !!$("game") && $("game").classList.contains("active"); }catch(e){ return false; }
+}
+function updateMatchLock(){ document.body.classList.toggle("in-match", matchLocked()); }
 function tab(name){
+  if(name !== "game" && matchLocked()) return;
   if(name === "admin" && !isAdminUser()) name = "home";
   document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===name));
   document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x.dataset.tab===name));
   if(name==="game") setTimeout(render, 30);
   if(name==="history") renderHistory();
+  updateMatchLock();
 }
 document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
@@ -2025,10 +2041,11 @@ function startGame(){
 
   if(engineReady && engine) {
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
+    botPred = null; ponder.pred = null; ponder.hit = false;
     engine.postMessage("ucinewgame");
     engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
     if(mode === "hell") {
-      engine.postMessage(`setoption name Contempt value ${HELL_CONTEMPT}`); engine.postMessage("setoption name Move Overhead value 30");
+      engine.postMessage(`setoption name Contempt value ${HELL_CONTEMPT}`); engine.postMessage("setoption name Move Overhead value 10");
     } else { engine.postMessage("setoption name Contempt value 24"); } // mặc định, tránh dính Contempt của ván Địa ngục trước
   }
 
@@ -2071,6 +2088,7 @@ $("newBtn").onclick = async () => {
 };
 
 function render(){
+  updateMatchLock();
   drawBoardCanvas();
 
   const hist=game.history();
@@ -2206,10 +2224,17 @@ function canPonder(){
 function startPonder(){
   if(!canPonder()) return;
   try{
-    ponder.on = true; ponder.stopping = false; ponder.depth = 0; ponder.cp = null;
+    ponder.on = true; ponder.stopping = false; ponder.depth = 0; ponder.cp = null; ponder.hit = false;
+    // Nghĩ-ké ĐÚNG THẾ: nếu có nước dự đoán của người chơi → tìm kiếm ngay ở thế sau nước đó (bot tới lượt).
+    // Người chơi đi đúng nước → lượt tìm thật bắt đầu từ bàn băm đã sâu sẵn ở đúng thế này (đi nhanh + mạnh).
+    // Không có / sai dự đoán → vẫn có lợi từ bàn băm như cũ.
+    let pcmd = botPositionCmd(); ponder.pred = null;
+    if(botPred && game.moves({verbose:true}).some(m => m.from + m.to + (m.promotion || "") === botPred)){
+      ponder.pred = botPred; pcmd += (pcmd.indexOf(" moves ") >= 0 ? " " : " moves ") + botPred;
+    }
     engine.postMessage("setoption name Skill Level value 20");
     engine.postMessage("setoption name MultiPV value 1");
-    engine.postMessage(botPositionCmd());
+    engine.postMessage(pcmd);
     engine.postMessage(`go movetime ${PONDER_MAX_MS}`);
   }catch(e){ ponder.on = false; }
 }
@@ -2238,7 +2263,7 @@ function ponderInfo(line){
   const dm = line.match(/ depth (\d+)/);
   if(!dm) return;
   { const sm = line.match(/score (cp|mate) (-?\d+)/); // điểm theo góc nhìn người chơi (bên đang tới lượt)
-    if(sm && !/bound/.test(line)){ const v = Number(sm[2]); ponder.cp = sm[1] === "mate" ? (v > 0 ? 1 : -1) * (100000 - Math.abs(v)) : v; } }
+    if(sm && !/bound/.test(line)){ let v = Number(sm[2]); if(ponder.pred) v = -v; /* thế dự đoán: bên tới lượt là bot → đổi về góc nhìn người chơi */ ponder.cp = sm[1] === "mate" ? (v > 0 ? 1 : -1) * (100000 - Math.abs(v)) : v; } }
   const d = Number(dm[1]);
   if(d <= ponder.depth) return;
   ponder.depth = d;
@@ -2251,7 +2276,7 @@ document.addEventListener("visibilitychange", () => {
   else setTimeout(startPonder, 250);
 });
 
-// Thế cờ "chưa chín": nước tốt nhất còn đổi, điểm dao động hoặc đang tụt → nghĩ thêm tới trần 15s.
+// Thế cờ "chưa chín": nước tốt nhất còn đổi, điểm dao động hoặc đang tụt → nghĩ thêm tới trần 10s.
 function hellUnstable(h){
   if(h.length < 3) return true;
   const w = h.slice(-7);
@@ -2377,11 +2402,14 @@ function hellThinkMs(baseMs, leftMs){
   const ply = game.history().length;
   let t = baseMs;
   if(game.moves().length === 1) return 120;
-  if(ply < 10) t = Math.round(t * 0.85);           // khai cuộc vẫn nghĩ kỹ
-  else if(ply < 30) t = Math.round(t * 1.1);       // trung cuộc: chạm trần 15s
-  else t = Math.round(t * 1.5);                     // tàn cuộc: +50% - nơi quyết định thắng thua
-  if(game.in_check()) t = Math.round(t * 1.4);      // đang bị chiếu: nghĩ kỹ hơn
-  if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200)); // dùng nhiều giờ hơn (trước /30)
+  if(ply < 10) t = Math.round(t * 0.55);           // khai cuộc: sách khai cuộc + nghĩ-ké đã lo phần nặng → đi nhanh
+  else if(ply < 30) t = Math.round(t * 1.0);       // trung cuộc: ngân sách nền
+  else t = Math.round(t * 1.25);                    // tàn cuộc: nhiều hơn một chút - nơi quyết định thắng thua (trần 10s)
+  if(game.in_check()) t = Math.round(t * 1.25);     // đang bị chiếu: nghĩ kỹ hơn
+  // Bàn băm đã được đào sâu lúc bạn đang nghĩ → bớt thời gian nền (thế cờ chưa chín vẫn được kéo tới trần 10s)
+  if(ponder.hit && ponder.depth >= 18) t = Math.round(t * 0.7);                 // đoán trúng nước người chơi → bàn băm đã sâu sẵn ở đúng thế
+  else if(!ponder.pred && ponder.depth >= 22 && !game.in_check()) t = Math.round(t * 0.85);
+  if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200));
   return Math.max(120, Math.round(t));
 }
 
@@ -2547,6 +2575,8 @@ function applyBotUci(uci){
 function botMove(){
   if(isOnlineGame || game.game_over() || game.turn()===human || engineBusy) return;
   if(ponder.on || ponder.stopping){ stopPonder(() => botMove()); return; } // dừng nghĩ nền rồi mới đi
+  { const lm = game.history({verbose:true}).slice(-1)[0];
+    ponder.hit = !!(ponder.pred && lm && (lm.from + lm.to + (lm.promotion || "")) === ponder.pred); }
   if(shouldBotBlunder()){
     const bl = getBlunderMove();
     if(bl){
@@ -2564,7 +2594,7 @@ function botMove(){
       engineBusy = false;
       if(game.fen() === fen0 && !reviewMode && !game.game_over() && game.turn() !== human) applyBotUci(bk);
       else { render(); if(!isOnlineGame && !game.game_over() && game.turn() !== human) setTimeout(botMove, 0); }
-    }, 300 + Math.random() * 500);
+    }, mode === "hell" ? 120 + Math.random() * 180 : 300 + Math.random() * 500);
     return;
   }
   if(engineReady && engine){
@@ -2576,6 +2606,7 @@ function botMove(){
       ? hellThinkMs(cfg.movetime, leftMs)
       : gm ? Math.min(cfg.movetime, leftMs != null ? Math.max(250, leftMs / 30 - 200) : cfg.movetime)
       : (leftMs != null ? Math.min(cfg.movetime, Math.max(250, leftMs / 30 - 200)) : cfg.movetime));
+    ponder.pred = null; ponder.hit = false; ponder.depth = 0; botPred = null; // đã dùng xong cho nước này
     engineBusy = true;
     engineMode = "play";
     render();
@@ -2586,7 +2617,7 @@ function botMove(){
     shownDepth = 0;
     // Gửi đầy đủ lịch sử cho TẤT CẢ cấp độ để engine nhận diện lặp thế cờ.
     engine.postMessage(botPositionCmd());
-    // hardMs = trần cứng (15s). think = ngân sách mềm: tới đó mà thế cờ đã chín thì dừng, chưa chín thì nghĩ tiếp tới trần.
+    // hardMs = trần cứng (10s). think = ngân sách mềm: tới đó mà thế cờ đã chín thì dừng, chưa chín thì nghĩ tiếp tới trần.
     const forced = game.moves().length === 1;
     const hardMs = hell
       ? (forced ? think : (leftMs != null ? Math.min(HELL_MAX_THINK_MS, Math.max(think, Math.round(leftMs / 10))) : HELL_MAX_THINK_MS))
@@ -2602,9 +2633,9 @@ function botMove(){
       ? `go movetime ${hardMs} ${searchPrefix}`.replace(/\s+/g," ").trim() // searchmoves PHẢI nằm cuối lệnh go, nếu không movetime bị nuốt mất
       : `go ${searchPrefix} depth ${cfg.depth} movetime ${Math.round(think)}`.replace(/\s+/g," ").trim();
     engine.postMessage(goCmd);
-    if(deep){ clearInterval(hellTimer); hellTimer = setInterval(hellTick, 100); }
+    if(deep){ clearInterval(hellTimer); hellTimer = setInterval(hellTick, 50); }
     // Watchdog ngắn hơn để không mắc kẹt khi Worker không trả bestmove.
-    armBotWatch(deep ? Math.max(3500, hardMs + 2500) : Math.max(1800, think + 1200)); // hell: trần cứng 15s + 2.5s dự phòng
+    armBotWatch(deep ? Math.max(3500, hardMs + 2500) : Math.max(1800, think + 1200)); // hell: trần cứng 10s + 2.5s dự phòng
     return;
   }
   fallbackMove();
@@ -2645,6 +2676,7 @@ async function checkGameOver(timeoutWinnerColor = null, forceReason = null) {
   if(!game.game_over() && !timeoutWinnerColor && !forceReason) return false;
   if(matchRecorded) return true;
   matchRecorded = true;
+  updateMatchLock();
   stopPonder();
   if(!reviewMode && game.history().length > 0) $("reviewBtn").hidden = false; // hiện nút Xem lại ngay khi ván kết thúc, không chờ render()
   stopClock();
