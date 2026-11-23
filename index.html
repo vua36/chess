@@ -1194,6 +1194,7 @@ const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0, hell: 0 };
 const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 8, hell: 14 };
 const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 7000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG Địa ngục: 7 giây/nước
 
+let evalLines = {}; // Admin phân tích: top 3 nước engine đưa ra (multipv)
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 // Địa ngục "nghĩ ké" ở lượt người chơi (ponder). on = đang tìm kiếm nền, stopping = đã gửi stop, đợi engine trả bestmove.
@@ -1277,13 +1278,17 @@ async function initEngine(forceCdn){
         const mateMatch = line.match(/score mate (-?\d+)/);
         const cpMatch = line.match(/score cp (-?\d+)/);
         const pvMatch = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
+        const evM = line.match(/ multipv (\d+)/), evPv = evM ? Number(evM[1]) : 1;
+        if(pvMatch && !/bound/.test(line) && (mateMatch || cpMatch)){
+          evalLines[evPv] = { uci:pvMatch[1], mate:!!mateMatch && Number(mateMatch[1]) > 0, score: mateMatch ? (Number(mateMatch[1]) > 0 ? 100000 : -100000) : Number(cpMatch[1]) };
+        }
         let evalStr = "";
         if(mateMatch) evalStr = `Chiếu hết sau ${Math.abs(Number(mateMatch[1]))} nước`;
         else if(cpMatch) {
           const score = (Number(cpMatch[1]) / 100 * (game.turn()==="w"?1:-1)).toFixed(2);
           evalStr = `Đánh giá: ${score > 0 ? "+"+score : score}`;
         }
-        if(evalStr && pvMatch) {
+        if(evalStr && pvMatch && evPv === 1) {
           const dM = line.match(/ depth (\d+)/), nM = line.match(/ nps (\d+)/);
           const perf = dM ? ` · d${dM[1]}${nM ? " · " + Math.round(Number(nM[1])/1000) + "k nps" : ""}` : "";
           $("analysisText").textContent = `${evalStr} · Nước tối ưu: ${pvMatch[1]}${perf}`;
@@ -1301,10 +1306,31 @@ async function initEngine(forceCdn){
 
         if(engineMode === "eval") {
           if(isAdminUser()) {
-            hintArrow = { from: uci.slice(0,2), to: uci.slice(2,4) };
-            $("analysisText").textContent += ` | Khuyên đi: ${uci}`;
+            // Trong các nước chỉ kém nước tốt nhất ≤ 0.30 (không đi ngu), ưu tiên chiếu / chiếu hết / ăn quân. Có chiếu hết thì giữ nguyên.
+            let pick = uci, swapped = false;
+            try{
+              const top = evalLines[1];
+              if(top && !top.mate && top.score > -90000){
+                const t0 = new Chess(game.fen());
+                const rank = u => {
+                  const mv = t0.move({ from:u.slice(0,2), to:u.slice(2,4), promotion:u[4] || "q" });
+                  if(!mv) return -1; t0.undo();
+                  return (mv.san.includes("#") ? 5 : mv.san.includes("+") ? 3 : 0) + (mv.captured ? 2 : 0) + (mv.promotion ? 2 : 0);
+                };
+                let bestR = rank(uci);
+                [2, 3].forEach(i => {
+                  const c = evalLines[i];
+                  if(c && !c.mate && c.score >= top.score - 30){ const r = rank(c.uci); if(r > bestR){ bestR = r; pick = c.uci; } }
+                });
+                swapped = pick !== uci;
+              }
+            }catch(e){ pick = uci; swapped = false; }
+            hintArrow = { from: pick.slice(0,2), to: pick.slice(2,4) };
+            $("analysisText").textContent += swapped ? ` | Khuyên đi (tấn công): ${pick} · nước máy tính tốt nhất: ${uci} (chênh ≤0.30)` : ` | Khuyên đi: ${pick}`;
           }
           engineMode = "play";
+          engine.postMessage("setoption name MultiPV value 1");
+          engine.postMessage(`setoption name Contempt value ${mode === "hell" ? HELL_CONTEMPT : 24}`);
           const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
           engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
           render();
@@ -1871,7 +1897,7 @@ function drawBoardCanvas() {
   const mvKey = lastMove ? dc.histLen + lastMove.from + lastMove.to : "";
   if (mvKey !== lastGlowKey) { lastGlowKey = mvKey; moveGlowStart = nowT; }
   const gAge = nowT - moveGlowStart, gK = Math.max(0, 1 - gAge / 2200), gPulse = 0.5 + 0.5 * Math.sin(gAge / 120);
-  const rvm = (reviewMode && reviewPly > 0 && reviewData) ? reviewData.moves[reviewPly - 1] : null;
+  const rvm0 = (reviewMode && reviewPly > 0 && reviewData) ? reviewData.moves[reviewPly - 1] : null, rvm = rvm0 && !rvm0.del ? rvm0 : null;
   // Disabled continuous glow RAF (caused green flashing on Android)
   // if (gK > 0 && lastMove && !glowRaf) glowRaf = requestAnimationFrame(() => { glowRaf = null; drawBoardCanvas(); });
 
@@ -2121,7 +2147,7 @@ function render(){
   const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
   $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
-  $("reviewBtn").hidden = !!game._adm || !((game.game_over() || matchRecorded) && !reviewMode && hist.length > 0); // matchRecorded: ván kết thúc do lặp thế/hết giờ/đầu hàng (chess.js không tính là game_over)
+  $("reviewBtn").hidden = !((game.game_over() || matchRecorded) && !reviewMode && hist.length > 0); // matchRecorded: ván kết thúc do lặp thế/hết giờ/đầu hàng (chess.js không tính là game_over)
   const canUndo = hist.length > (game._adm ? game._adm.pre.length : 0) && !isOnlineGame && !reviewMode && (isAdminUser() || mode === "easy");
   $("undoBtn").disabled = !canUndo;
   if(mlChanged) renderCaptured();
@@ -2149,7 +2175,7 @@ function adminNote(msg){ $("gameStatus").textContent = msg; }
 function syncAdminDeleteUI(){
   if(_admGameRef !== game){ _admGameRef = game; adminDeleteMode = false; }
   const btn = $("adminDeleteBtn"); if(!btn) return;
-  const ok = isAdminUser() && !reviewMode && !matchRecorded && !game.game_over() && saveEnabled;
+  const ok = isAdminUser() && !reviewMode && !matchRecorded && !game.game_over() && (saveEnabled || isOnlineGame); // online (đấu bạn bè) không bật saveEnabled nên phải xét riêng
   btn.hidden = !ok;
   if(!ok) adminDeleteMode = false;
   btn.textContent = adminDeleteMode ? "✅ Tắt chế độ xoá" : "🗑 Xoá quân (Admin)";
@@ -2185,7 +2211,8 @@ function adminDeletePiece(sq){
     const st = {
       id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
       fen:newFen, pre:game.history(), preV:game.history({verbose:true}),
-      caps:(prev ? prev.caps : []).concat([{ c: p.color === "w" ? "b" : "w", t: p.type }]) // bên đối diện được tính là đã ăn quân này
+      caps:(prev ? prev.caps : []).concat([{ c: p.color === "w" ? "b" : "w", t: p.type }]), // bên đối diện được tính là đã ăn quân này
+      cuts:(prev && prev.cuts ? prev.cuts : []).concat([{ n:game.history().length, fen:newFen, sq, t:p.type, pc:p.color }]) // mốc xoá quân (để Xem lại trận)
     };
     game = patchAdminHistory(new Chess(newFen), st);
     _admGameRef = game;
@@ -2787,7 +2814,7 @@ async function checkGameOver(timeoutWinnerColor = null, forceReason = null) {
   matchRecorded = true;
   updateMatchLock();
   stopPonder();
-  if(!reviewMode && !game._adm && game.history().length > 0) $("reviewBtn").hidden = false; // hiện nút Xem lại ngay khi ván kết thúc, không chờ render()
+  if(!reviewMode && game.history().length > 0) $("reviewBtn").hidden = false; // hiện nút Xem lại ngay khi ván kết thúc, không chờ render()
   stopClock();
   playSound("end");
 
@@ -2949,13 +2976,16 @@ $("evalBtn").onclick=()=>{
   if(!isAdminUser()) return;
   if(!engineReady || engineBusy || reviewMode) return;
   if(ponder.on || ponder.stopping){ stopPonder(() => $("evalBtn").onclick()); return; }
+  if(game.game_over()) return;
   engineMode = "eval";
   engineBusy = true;
-  engine.postMessage("setoption name MultiPV value 1");
-  $("analysisText").textContent = "Celestial đang phân tích sâu (depth 30, tối đa 5 giây)...";
+  evalLines = {};
+  engine.postMessage("setoption name MultiPV value 3");      // xét 3 nước tốt nhất để chọn nước tấn công mạnh nhất trong số nước ngang nhau
+  engine.postMessage("setoption name Contempt value 80");    // tăng "máu chiến": tránh hoà, ưu tiên thế tấn công
+  $("analysisText").textContent = "Celestial đang phân tích siêu sâu (tối đa 7 giây, ưu tiên nước tấn công)...";
   engine.postMessage("setoption name Skill Level value 20");
-  engine.postMessage("position fen " + game.fen());
-  engine.postMessage("go depth 30 movetime 5000");
+  engine.postMessage(botPositionCmd());
+  engine.postMessage("go movetime 7000");
 };
 
 // ============================================================================
@@ -2965,7 +2995,8 @@ const BADGES = {
   brilliant:{sym:"!!",c:"#1bbfd0",name:"Thiên tài"}, great:{sym:"!",c:"#5b8bd9",name:"Tuyệt vời"},
   best:{sym:"★",c:"#81b64c",name:"Tốt nhất"}, excellent:{sym:"✓",c:"#96bc4b",name:"Xuất sắc"},
   good:{sym:"•",c:"#a3a98c",name:"Tốt"}, inacc:{sym:"?!",c:"#f0b429",name:"Không chính xác"},
-  mistake:{sym:"?",c:"#e58f2a",name:"Sai lầm"}, blunder:{sym:"??",c:"#ca3431",name:"Sai lầm nghiêm trọng"}
+  mistake:{sym:"?",c:"#e58f2a",name:"Sai lầm"}, blunder:{sym:"??",c:"#ca3431",name:"Sai lầm nghiêm trọng"},
+  del:{sym:"🗑",c:"#8e44ad",name:"Admin xoá quân"}
 };
 const winPct = cp => 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * cp)) - 1);
 const PV = {p:1,n:3,b:3,r:5,q:9,k:0};
@@ -2982,14 +3013,18 @@ function isSac(fenAfter, m){
 }
 
 function startReview(){
-  if(reviewJob || reviewMode || game._adm) return;
+  if(reviewJob || reviewMode) return;
   if(ponder.on || ponder.stopping){ stopPonder(() => startReview()); return; }
   if(!engineReady || !engine || engineBusy){ alert("Engine chưa sẵn sàng, thử lại sau giây lát."); return; }
   const hist = game.history({verbose:true});
   if(!hist.length) return;
-  const g = new Chess(), fens = [g.fen()];
-  hist.forEach(m => { g.move(m.san); fens.push(g.fen()); });
-  reviewJob = { fens, hist, i:0, res:[], cur:{} };
+  const adm = game._adm;
+  if(adm && !(Array.isArray(adm.cuts) && adm.cuts.length === adm.caps.length)){ alert("Ván này tạo từ phiên bản cũ nên chưa phân tích được."); return; }
+  let g = new Chess(); const fens = [g.fen()], items = [], cuts = adm ? adm.cuts : []; let ci = 0;
+  const pushCuts = i => { while(ci < cuts.length && cuts[ci].n <= i){ const c = cuts[ci++]; items.push({ del:true, san:"🗑", fen:c.fen, sq:c.sq, piece:c.t, pc:c.pc }); g = new Chess(c.fen); fens.push(g.fen()); } };
+  hist.forEach((m, i) => { pushCuts(i); g.move(m.san); fens.push(g.fen()); items.push(m); });
+  pushCuts(hist.length);
+  reviewJob = { fens, hist:items, i:0, res:[], cur:{} };
   engineBusy = true;
   $("reviewModal").hidden = false; $("rvSummary").hidden = true; $("rvStart").hidden = true; $("rvProgress").hidden = false;
   engine.postMessage("ucinewgame");
@@ -3034,6 +3069,7 @@ function finishReview(){
   engine.postMessage("setoption name MultiPV value 1");
   const evals = j.res.map((r, i) => j.fens[i].split(" ")[1] === "w" ? r.s1 : -r.s1);
   const moves = j.hist.map((m, idx) => {
+    if(m.del) return { side:null, san:m.san, k:"del", del:true, piece:m.piece, pc:m.pc, sq:m.sq, bestSan:null, acc:null };
     const a = j.res[idx], b = j.res[idx + 1];
     const wB = winPct(a.s1), wA = winPct(-b.s1), loss = Math.max(0, wB - wA);
     const uci = m.from + m.to + (m.promotion || "");
@@ -3044,12 +3080,12 @@ function finishReview(){
     if(a.best && uci !== a.best){ try { const r = new Chess(j.fens[idx]).move({from:a.best.slice(0,2), to:a.best.slice(2,4), promotion:a.best[4] || "q"}); bestSan = r ? r.san : null; } catch(e){} }
     return { side:m.color, san:m.san, k, bestSan, acc:Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * loss) - 3.1669)) };
   });
-  reviewData = { moves, evals, hist:j.hist };
+  reviewData = { moves, evals, hist:j.hist, fens:j.fens };
   const cnt = {w:{}, b:{}}, acc = {w:[], b:[]};
-  moves.forEach(m => { cnt[m.side][m.k] = (cnt[m.side][m.k] || 0) + 1; acc[m.side].push(m.acc); });
+  moves.forEach(m => { if(m.del) return; cnt[m.side][m.k] = (cnt[m.side][m.k] || 0) + 1; acc[m.side].push(m.acc); });
   const avg = a => a.length ? (a.reduce((x, y) => x + y, 0) / a.length).toFixed(1) : "–";
   let h = `<div class="rv-row rv-head"><span></span><b>Trắng</b><b>Đen</b></div><div class="rv-row"><span>Độ chính xác</span><b>${avg(acc.w)}%</b><b>${avg(acc.b)}%</b></div>`;
-  Object.keys(BADGES).forEach(k => { h += `<div class="rv-row"><span><i class="rv-dot" style="background:${BADGES[k].c}">${BADGES[k].sym}</i>${BADGES[k].name}</span><b>${cnt.w[k] || 0}</b><b>${cnt.b[k] || 0}</b></div>`; });
+  Object.keys(BADGES).filter(k => k !== "del").forEach(k => { h += `<div class="rv-row"><span><i class="rv-dot" style="background:${BADGES[k].c}">${BADGES[k].sym}</i>${BADGES[k].name}</span><b>${cnt.w[k] || 0}</b><b>${cnt.b[k] || 0}</b></div>`; });
   $("rvSummary").innerHTML = h;
   $("rvProgress").hidden = true; $("rvSummary").hidden = false; $("rvStart").hidden = false;
 }
@@ -3062,14 +3098,21 @@ function exitReview(){
 function gotoPly(k){
   const d = reviewData, n = d.hist.length;
   reviewPly = Math.max(0, Math.min(n, k));
-  game = new Chess();
+  let g = new Chess(); const rcaps = [];
+  for(let i = 0; i < reviewPly; i++){
+    const it = d.hist[i];
+    if(it.del){ // Admin xoá quân: dựng lại ván từ thế cờ sau khi xoá, bên đối diện được tính là đã ăn
+      rcaps.push({ c: it.pc === "w" ? "b" : "w", t: it.piece });
+      g = patchAdminHistory(new Chess(it.fen), { id:"rv" + i, fen:it.fen, pre:g.history(), preV:g.history({verbose:true}), caps:rcaps.slice(), cuts:[] });
+    } else g.move(it.san);
+  }
+  game = g;
   positionHistory = new Map();
-  checkCustomRepetition(); // count initial position
-  for(let i = 0; i < reviewPly; i++) game.move(d.hist[i].san);
+  checkCustomRepetition();
   selected = null; hintArrow = null; render();
   const m = reviewPly > 0 ? d.moves[reviewPly - 1] : null, B = m && BADGES[m.k], ev = d.evals[reviewPly];
   $("rvBadge").hidden = !m;
-  if(m){ $("rvBadge").textContent = B.sym; $("rvBadge").style.background = B.c; $("rvMove").textContent = `${Math.ceil(reviewPly / 2)}${reviewPly % 2 ? "." : "…"} ${m.san}`; $("rvName").textContent = B.name; $("rvName").style.color = B.c; }
+  if(m){ $("rvBadge").textContent = B.sym; $("rvBadge").style.background = B.c; { const f = d.fens[reviewPly - 1].split(" "); $("rvMove").textContent = m.del ? `🗑 Admin xoá ${glyph[m.pc][m.piece]} ở ${m.sq}` : `${f[5]}${f[1] === "w" ? "." : "…"} ${m.san}`; } $("rvName").textContent = B.name; $("rvName").style.color = B.c; }
   else { $("rvMove").textContent = "Vị trí xuất phát"; $("rvName").textContent = ""; }
   let sub = `Đánh giá: ${Math.abs(ev) >= 9000 ? "Chiếu hết" : (ev > 0 ? "+" : "") + (ev / 100).toFixed(2)} · ${reviewPly}/${n}`;
   if(m && m.bestSan) sub += ` · Nước tốt hơn: ${m.bestSan}`;
@@ -3142,8 +3185,31 @@ function renderFriendsListFromCache() {
   });
 }
 
+const fmtTimeOpt = t => t ? `${t / 60} phút` : "Không giới hạn";
+// Màu quân của mình trong phòng: chủ phòng cầm hostColor (mặc định Trắng), khách cầm màu còn lại
+const roomColorFor = val => { const hc = val.hostColor === "b" ? "b" : "w"; return val.host === user.uid ? hc : (hc === "w" ? "b" : "w"); };
+const inviteInfo = inv => typeof inv.clockSeconds === "number" ? ` · Bạn cầm ${inv.hostColor === "b" ? "Trắng" : "Đen"} · ${fmtTimeOpt(inv.clockSeconds)}` : "";
+function askInviteOptions(friendName){
+  return new Promise(resolve => {
+    const ov = document.createElement("div"); ov.className = "rv-modal";
+    const sel = 'style="width:100%;margin-top:4px"';
+    ov.innerHTML = `<div class="rv-card"><h3>⚔️ Mời ${escapeHtml(friendName)}</h3>
+      <div class="field"><label>QUÂN CỦA BẠN</label><select id="invColor" ${sel}><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option><option value="r">Ngẫu nhiên</option></select></div>
+      <div class="field" style="margin-top:10px"><label>THỜI GIAN MỖI BÊN</label><select id="invTime" ${sel}><option value="0">Không giới hạn</option><option value="60">1 phút</option><option value="180">3 phút</option><option value="300">5 phút</option><option value="600" selected>10 phút</option><option value="900">15 phút</option></select></div>
+      <div style="display:flex;gap:8px;margin-top:14px"><button class="primary" style="flex:1" data-ok="1">⚔️ Gửi lời mời</button><button class="ghost" data-no="1">Huỷ</button></div></div>`;
+    document.body.append(ov);
+    const done = v => { ov.remove(); resolve(v); };
+    ov.querySelector("[data-ok]").onclick = () => done({ color: ov.querySelector("#invColor").value, time: Number(ov.querySelector("#invTime").value) });
+    ov.querySelector("[data-no]").onclick = () => done(null);
+    ov.addEventListener("click", e => { if(e.target === ov) done(null); });
+  });
+}
+
 async function inviteFriendToPlay(friendUid, friendName, btnEl) {
   if(!fbReady || !user) { $("authModal").classList.add("open"); return; }
+  const opts = await askInviteOptions(friendName);
+  if(!opts) return;
+  const hostColor = opts.color === "r" ? (Math.random() < 0.5 ? "w" : "b") : opts.color;
   const origText = btnEl.textContent;
   btnEl.disabled = true;
   btnEl.textContent = "Đang mời...";
@@ -3166,6 +3232,8 @@ async function inviteFriendToPlay(friendUid, friendName, btnEl) {
       fen: game.fen(),
       pgn: "",
       turn: "w",
+      hostColor,
+      clockSeconds: opts.time,
       createdAt: serverTimestamp()
     });
 
@@ -3173,14 +3241,16 @@ async function inviteFriendToPlay(friendUid, friendName, btnEl) {
       fromUid: user.uid,
       fromName: myName,
       fromElo: myElo,
+      hostColor,
+      clockSeconds: opts.time,
       roomId: roomId,
       createdAt: Date.now()
     });
 
     $("roomCode").value = roomId;
     $("roomStatus").textContent = `Đã gửi lời mời thách đấu tới ${friendName}! Đang chờ bạn vào phòng...`;
-    $("friendStatus").textContent = `⚔️ Đã mời ${friendName} vào phòng ${roomId}.`;
-    subscribeRoom(roomId, "w");
+    $("friendStatus").textContent = `⚔️ Đã mời ${friendName} vào phòng ${roomId} · Bạn cầm ${hostColor === "w" ? "Trắng" : "Đen"} · ${fmtTimeOpt(opts.time)}.`;
+    subscribeRoom(roomId, hostColor);
   } catch(e) {
     alert("Không thể gửi lời mời: " + e.message);
   } finally {
@@ -3214,7 +3284,7 @@ async function acceptGameInvite(fromUid, invData) {
     }
     roomId = invData.roomId;
     $("roomCode").value = roomId;
-    subscribeRoom(roomId, val.host === user.uid ? "w" : "b");
+    subscribeRoom(roomId, roomColorFor(val));
   } catch(e) {
     alert("Lỗi khi vào phòng: " + e.message);
   }
@@ -3271,7 +3341,7 @@ function loadFriendsAndInvites(){
       row.innerHTML = `
         <div>
           <strong>⚔️ ${escapeHtml(senderName)}</strong> <span class="tag ready">Elo ${senderElo}</span>
-          <div class="notice">Mời bạn vào phòng đấu Online</div>
+          <div class="notice">Mời bạn vào phòng đấu Online${escapeHtml(inviteInfo(inv))}</div>
         </div>
         <div style="display:flex;gap:6px">
           <button class="primary" style="padding:7px 11px;font-size:13px" data-acc="1">Vào bàn</button>
@@ -3286,7 +3356,7 @@ function loadFriendsAndInvites(){
       card.className = "invite-card";
       card.innerHTML = `
         <h4>⚔️ Lời mời thách đấu!</h4>
-        <p>Kỳ thủ <strong>${escapeHtml(senderName)}</strong> (Elo ${senderElo}) vừa mời bạn vào bàn cờ trực tiếp.</p>
+        <p>Kỳ thủ <strong>${escapeHtml(senderName)}</strong> (Elo ${senderElo}) vừa mời bạn vào bàn cờ trực tiếp.${escapeHtml(inviteInfo(inv))}</p>
         <div style="display:flex;gap:8px">
           <button class="primary" style="flex:1;padding:8px 12px;font-size:13px" data-facc="1">⚔️ Chấp nhận vào bàn</button>
           <button class="ghost" style="padding:8px 12px;font-size:13px" data-fdec="1">Bỏ qua</button>
@@ -3318,6 +3388,7 @@ $("addFriendBtn").onclick=async()=>{
 
 function subscribeRoom(id, myColor) {
   if(roomUnsub) roomUnsub();
+  let clockSynced = false;
   isOnlineGame = true;
   matchRecorded = false;
   $("resignBtn").hidden = false;
@@ -3349,6 +3420,15 @@ function subscribeRoom(id, myColor) {
       return;
     }
 
+    // Phòng có chọn thời gian riêng (từ lời mời) → cả 2 bên dùng đúng thời gian đó
+    if(!clockSynced){
+      clockSynced = true;
+      if(typeof data.clockSeconds === "number"){
+        clockSeconds = data.clockSeconds;
+        if(typeof data.remainingW !== "number") remaining = { w: clockSeconds, b: clockSeconds };
+        startClock();
+      }
+    }
     // Đồng bộ thời gian từ phòng (nếu có)
     if(typeof data.remainingW === "number") remaining.w = data.remainingW;
     if(typeof data.remainingB === "number") remaining.b = data.remainingB;
@@ -3356,7 +3436,7 @@ function subscribeRoom(id, myColor) {
 
     // Admin đã xoá quân trong phòng: dựng lại ván từ FEN sau khi xoá (kèm lịch sử cũ + quân đã ăn)
     const dAdm = data.adm && typeof data.adm.fen === "string"
-      ? { id:data.adm.id, fen:data.adm.fen, pre:data.adm.pre || [], preV:data.adm.preV || [], caps:data.adm.caps || [] } : null;
+      ? { id:data.adm.id, fen:data.adm.fen, pre:data.adm.pre || [], preV:data.adm.preV || [], caps:data.adm.caps || [], cuts:data.adm.cuts || [] } : null;
     if(dAdm && (!game._adm || game._adm.id !== dAdm.id)){
       game = patchAdminHistory(new Chess(), dAdm);
       positionHistory = new Map(); selected = null; hintArrow = null; drawCache = null;
@@ -3372,7 +3452,7 @@ function subscribeRoom(id, myColor) {
       render();
       if(game.game_over()) checkGameOver();
     }
-    const oppName = myColor === "w" ? (data.guestName || (data.guest ? "Đối thủ Online" : "⏳ Đang chờ bạn bè vào...")) : (data.hostName || "Chủ phòng");
+    const oppName = data.host === (user && user.uid) ? (data.guestName || (data.guest ? "Đối thủ Online" : "⏳ Đang chờ bạn bè vào...")) : (data.hostName || "Chủ phòng");
     $("topName").textContent = oppName;
   });
 }
@@ -3418,7 +3498,7 @@ $("joinRoomBtn").onclick=async()=>{
       });
     }
     roomId=id;
-    subscribeRoom(roomId, val.host === user.uid ? "w" : "b");
+    subscribeRoom(roomId, roomColorFor(val));
   }catch(e){ $("roomStatus").textContent=e.message; }
 };
 
@@ -3455,7 +3535,7 @@ function restoreSavedGame(){
   if(adm && !(typeof adm.fen === "string" && Array.isArray(adm.pre) && Array.isArray(adm.preV) && Array.isArray(adm.caps))) return false;
   const g = adm ? new Chess(adm.fen) : new Chess();
   for(const san of (adm ? s.moves.slice(adm.pre.length) : s.moves)){ if(!g.move(san)) return false; }
-  if(adm) patchAdminHistory(g, { fen:adm.fen, pre:adm.pre, preV:adm.preV, caps:adm.caps });
+  if(adm) patchAdminHistory(g, { id:adm.id, fen:adm.fen, pre:adm.pre, preV:adm.preV, caps:adm.caps, cuts:adm.cuts || [] });
   game = g; mode = modeNames[s.mode] ? s.mode : "easy"; human = s.human === "b" ? "b" : "w"; flipped = !!s.flipped;
   clockSeconds = Number(s.clockSeconds) || 0;
   remaining = (s.remaining && typeof s.remaining.w === "number") ? s.remaining : { w:clockSeconds, b:clockSeconds };
