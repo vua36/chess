@@ -773,7 +773,7 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
             <button id="newBtn">Ván mới</button>
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
             <button id="forceBotBtn" class="danger" hidden>👑 Ép bot thua (Admin)</button>
-            <button id="adminDeleteBtn" class="danger" hidden>🗑 Xoá quân bot (Admin)</button>
+            <button id="adminDeleteBtn" class="danger" hidden>🗑 Xoá quân (Admin)</button>
           </div>
         </div>
       </div>
@@ -1938,7 +1938,7 @@ function drawBoardCanvas() {
         ctx.restore();
       }
 
-      if (adminDeleteMode && piece && piece.color !== human && piece.type !== "k") {
+      if (adminDeleteMode && piece && piece.type !== "k") {
         ctx.save();
         ctx.fillStyle = "rgba(231, 76, 60, 0.22)"; ctx.fillRect(x, y, sqSize, sqSize);
         ctx.strokeStyle = "rgba(231, 76, 60, 0.95)"; ctx.lineWidth = Math.max(2, sqSize * 0.05);
@@ -2117,7 +2117,7 @@ function render(){
   if(!game.game_over()) {
     $("gameStatus").textContent = engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":"");
   }
-  if(adminDeleteMode && !game.game_over()) $("gameStatus").textContent = "🗑 Chế độ xoá (Admin): bấm vào quân của bot để xoá — quân bị xoá được tính là đã bị ăn.";
+  if(adminDeleteMode && !game.game_over()) $("gameStatus").textContent = "🗑 Chế độ xoá (Admin): bấm vào quân bất kỳ (trừ Vua) để xoá — bên đối diện được tính là đã ăn quân đó.";
   const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
   $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
@@ -2149,37 +2149,44 @@ function adminNote(msg){ $("gameStatus").textContent = msg; }
 function syncAdminDeleteUI(){
   if(_admGameRef !== game){ _admGameRef = game; adminDeleteMode = false; }
   const btn = $("adminDeleteBtn"); if(!btn) return;
-  const ok = isAdminUser() && !isOnlineGame && !reviewMode && !matchRecorded && !game.game_over() && saveEnabled;
+  const ok = isAdminUser() && !reviewMode && !matchRecorded && !game.game_over() && saveEnabled;
   btn.hidden = !ok;
   if(!ok) adminDeleteMode = false;
-  btn.textContent = adminDeleteMode ? "✅ Tắt chế độ xoá" : "🗑 Xoá quân bot (Admin)";
+  btn.textContent = adminDeleteMode ? "✅ Tắt chế độ xoá" : "🗑 Xoá quân (Admin)";
 }
 function adminDeletePiece(sq){
-  if(!isAdminUser() || isOnlineGame || reviewMode || matchRecorded || game.game_over()) return;
-  if(engineBusy || game.turn() !== human){ adminNote("🗑 Chờ tới lượt bạn rồi mới xoá quân của bot."); return; }
+  if(!isAdminUser() || reviewMode || matchRecorded || game.game_over()) return;
   const p = game.get(sq);
-  if(!p || p.color === human){ adminNote("🗑 Hãy bấm vào một quân của bot để xoá."); return; }
-  if(p.type === "k"){ adminNote("🗑 Không thể xoá Vua. Dùng nút \"Ép bot thua\" nếu muốn thắng."); return; }
+  if(!p){ adminNote("🗑 Hãy bấm vào một quân cờ để xoá."); return; }
+  if(p.type === "k"){ adminNote("🗑 Không thể xoá Vua."); return; }
+  const mover = game.turn(), fenBefore = game.fen();
   // Dựng FEN mới: bỏ quân, sửa quyền nhập thành / bắt tốt qua đường / bộ đếm 50 nước
   let parts;
-  try{ const t = new Chess(game.fen()); t.remove(sq); parts = t.fen().split(" "); }catch(e){ adminNote("🗑 Không xoá được quân này."); return; }
+  try{ const t = new Chess(fenBefore); t.remove(sq); parts = t.fen().split(" "); }catch(e){ adminNote("🗑 Không xoá được quân này."); return; }
   if(p.type === "r"){
     const home = { a1:"Q", h1:"K", a8:"q", h8:"k" }[sq];
-    if(home && parts[2] !== "-") parts[2] = parts[2].replace(home, "") || "-";
+    if(home && (home === home.toUpperCase()) === (p.color === "w") && parts[2] !== "-") parts[2] = parts[2].replace(home, "") || "-";
   }
   if(parts[3] !== "-"){
-    const er = Number(parts[3][1]), pawnSq = parts[3][0] + (human === "w" ? er - 1 : er + 1);
+    const er = Number(parts[3][1]), pawnSq = parts[3][0] + (mover === "w" ? er - 1 : er + 1);
     if(p.type === "p" && sq === pawnSq) parts[3] = "-";
   }
   parts[4] = "0";
   const newFen = parts.join(" ");
   if(!game.validate_fen(newFen).valid){ adminNote("🗑 Không xoá được quân này (thế cờ không hợp lệ)."); return; }
-  const flip = parts.slice(); flip[1] = human === "w" ? "b" : "w"; flip[3] = "-";
-  if(new Chess(flip.join(" ")).in_check()){ adminNote("🗑 Không thể xoá quân này: Vua bot sẽ bị chiếu ngay lượt bạn (thế cờ không hợp lệ)."); return; }
+  // Bên không có lượt không được ở thế bị chiếu (thế cờ sai luật)
+  const flip = parts.slice(); flip[1] = mover === "w" ? "b" : "w"; flip[3] = "-";
+  if(new Chess(flip.join(" ")).in_check()){ adminNote("🗑 Không thể xoá quân này: Vua của bên kia sẽ bị chiếu ngay (thế cờ không hợp lệ)."); return; }
   const prev = game._adm;
+  // Đấu bot: nếu bot đang nghĩ thì dừng, xoá xong cho bot nghĩ lại ở thế mới
+  if(!isOnlineGame && (engineBusy || pendingBot)) stopBotThinking();
   stopPonder(() => {
-    if(game.turn() !== human || engineBusy || game.game_over() || matchRecorded) return;
-    const st = { fen:newFen, pre:game.history(), preV:game.history({verbose:true}), caps:(prev ? prev.caps : []).concat([p.type]) };
+    if(matchRecorded || game.game_over() || game.fen() !== fenBefore) return;
+    const st = {
+      id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+      fen:newFen, pre:game.history(), preV:game.history({verbose:true}),
+      caps:(prev ? prev.caps : []).concat([{ c: p.color === "w" ? "b" : "w", t: p.type }]) // bên đối diện được tính là đã ăn quân này
+    };
     game = patchAdminHistory(new Chess(newFen), st);
     _admGameRef = game;
     botPred = null; ponder.pred = null; ponder.hit = false; ponder.cp = null;
@@ -2188,8 +2195,19 @@ function adminDeletePiece(sq){
     playSound("capture");
     renderCaptured();
     render();
+    if(isOnlineGame && roomId && fbReady){
+      try{
+        update(ref(db, `rooms/${roomId}`), {
+          fen: game.fen(), pgn: game.pgn(), movesCount: game.history().length, turn: game.turn(),
+          adm: JSON.parse(JSON.stringify(st)), updatedAt: serverTimestamp()
+        }).catch(()=>{});
+      }catch(e){}
+    }
     if(game.game_over()){ checkGameOver(); return; }
-    setTimeout(startPonder, 40);
+    if(!isOnlineGame){
+      if(game.turn() !== human) setTimeout(() => { if(!game.game_over() && !matchRecorded && game.turn() !== human && !engineBusy) botMove(); }, 900); // chờ bestmove cũ trôi qua
+      else setTimeout(startPonder, 40);
+    }
   });
 }
 $("adminDeleteBtn").onclick = () => {
@@ -3336,8 +3354,17 @@ function subscribeRoom(id, myColor) {
     if(typeof data.remainingB === "number") remaining.b = data.remainingB;
     updateClock();
 
+    // Admin đã xoá quân trong phòng: dựng lại ván từ FEN sau khi xoá (kèm lịch sử cũ + quân đã ăn)
+    const dAdm = data.adm && typeof data.adm.fen === "string"
+      ? { id:data.adm.id, fen:data.adm.fen, pre:data.adm.pre || [], preV:data.adm.preV || [], caps:data.adm.caps || [] } : null;
+    if(dAdm && (!game._adm || game._adm.id !== dAdm.id)){
+      game = patchAdminHistory(new Chess(), dAdm);
+      positionHistory = new Map(); selected = null; hintArrow = null; drawCache = null;
+      playSound("capture");
+    }
     if(data.pgn) {
-      game.load_pgn(data.pgn);
+      if(!game.load_pgn(data.pgn) && dAdm) game.load(data.fen);
+      if(dAdm) renderCaptured();
       render();
       if(game.game_over()) checkGameOver();
     } else if(data.fen && data.fen !== game.fen()) {
@@ -3480,7 +3507,7 @@ function capHTML(verboseHist, color){
   return h + (mine > theirs ? `<b class="cap-adv">+${mine - theirs}</b>` : "");
 }
 function renderCaptured(){
-  const vh = game.history({verbose:true}).concat(game._adm ? game._adm.caps.map(t => ({ color:human, captured:t })) : []);
+  const vh = game.history({verbose:true}).concat(game._adm ? game._adm.caps.map(e => typeof e === "string" ? ({ color:human, captured:e }) : ({ color:e.c, captured:e.t })) : []);
   $("topCap").innerHTML = capHTML(vh, human === "w" ? "b" : "w");
   $("bottomCap").innerHTML = capHTML(vh, human);
 }
