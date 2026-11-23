@@ -762,6 +762,11 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
       <div class="sidebox">
         <div style="padding:13px;border-radius:16px;border:1px solid #2c3f55">
           <div class="status" id="gameStatus" style="margin-top:0">Trắng đi trước.</div>
+          <div id="botPreStartControls" hidden style="display:grid;gap:8px;margin:10px 0">
+            <div class="notice" style="margin:0">Bot đang chờ. Bạn có thể bỏ bớt quân của bot trước khi trận đấu bắt đầu.</div>
+            <button id="preStartDeleteBtn" class="danger" type="button">🗑 Chọn quân bot để xoá</button>
+            <button id="botStartBtn" class="primary" type="button">▶ Bắt đầu — cho bot đi</button>
+          </div>
           <div class="move-list" id="moveList"></div>
         </div>
         <div class="panel" style="padding:13px">
@@ -1194,7 +1199,38 @@ const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0, hell: 0 };
 const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 8, hell: 14 };
 const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 7000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG Địa ngục: 7 giây/nước
 
-let evalLines = {}; // Admin phân tích: top 3 nước engine đưa ra (multipv)
+let evalLines = {}; // Admin phân tích: các phương án engine đưa ra
+let adminDrawMode = false;
+// Đánh giá chất quân theo đơn vị tốt, luôn quy về bên được truyền vào.
+const MATERIAL_VALUE = { p:1, n:3.15, b:3.3, r:5.1, q:9.4, k:0 };
+function materialProfile(color = game.turn()){
+  try{
+    let own = 0, opp = 0, ownCount = 0, oppCount = 0, nonKings = 0;
+    for(const row of game.board()) for(const p of row){
+      if(!p) continue;
+      if(p.type !== "k") nonKings++;
+      const v = MATERIAL_VALUE[p.type] || 0;
+      if(p.color === color){ own += v; if(p.type !== "k") ownCount++; }
+      else { opp += v; if(p.type !== "k") oppCount++; }
+    }
+    return { own, opp, diff: own-opp, ownCount, oppCount, nonKings, behind: opp-own, ahead: own-opp,
+      imbalanced: Math.abs(own-opp) >= 3.5 || Math.abs(ownCount-oppCount) >= 2 };
+  }catch(e){ return {own:0,opp:0,diff:0,ownCount:0,oppCount:0,nonKings:32,behind:0,ahead:0,imbalanced:false}; }
+}
+function isHandicapPosition(color = game.turn()){
+  const m = materialProfile(color);
+  // Không nhầm một nước ăn quân thông thường thành chấp quân ngay đầu ván.
+  return !!(game._adm || m.imbalanced);
+}
+function adminShouldSeekDraw(){
+  try{
+    const m = materialProfile(game.turn());
+    const legal = game.moves();
+    // Chỉ bật mục tiêu cầu hòa khi tàn cuộc ít quân, thua chất rõ và đang bị ép.
+    return m.nonKings <= 3 && m.nonKings >= 1 && m.behind >= 4.5 &&
+      (game.in_check() || legal.length <= 5 || m.behind >= 7);
+  }catch(e){ return false; }
+}
 let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv = null;
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 // Địa ngục "nghĩ ké" ở lượt người chơi (ponder). on = đang tìm kiếm nền, stopping = đã gửi stop, đợi engine trả bestmove.
@@ -1326,11 +1362,13 @@ async function initEngine(forceCdn){
               }
             }catch(e){ pick = uci; swapped = false; }
             hintArrow = { from: pick.slice(0,2), to: pick.slice(2,4) };
+            if(adminDrawMode) $("analysisText").textContent += " · Ưu tiên giữ thế, tìm chiếu vĩnh viễn/lặp nước để hoà";
             $("analysisText").textContent += swapped ? ` | Khuyên đi (tấn công): ${pick} · nước máy tính tốt nhất: ${uci} (chênh ≤0.30)` : ` | Khuyên đi: ${pick}`;
           }
           engineMode = "play";
           engine.postMessage("setoption name MultiPV value 1");
           engine.postMessage(`setoption name Contempt value ${mode === "hell" ? HELL_CONTEMPT : 24}`);
+          adminDrawMode = false;
           const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
           engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
           render();
@@ -2048,11 +2086,13 @@ function startGame(){
   matchRecorded = false;
   if(roomUnsub) { roomUnsub(); roomUnsub = null; }
   game = new Chess();
+  preStartDeleteMode = false;
   positionHistory = new Map();
   checkCustomRepetition(); // count initial position
   selected = null;
   hintArrow = null;
   human = $("colorChoice").value;
+  botStartPending = human === "b";
   flipped = human === "b";
   saveEnabled = true;
   clockSeconds = Number($("timeChoice").value);
@@ -2085,8 +2125,10 @@ function startGame(){
 
   tab("game");
   render();
-  if(human === "b") setTimeout(botMove, 80);
-  startClock();
+  if(human === "b"){
+    stopClock();
+    adminNote("Bot đang chờ bạn chuẩn bị. Có thể xoá bớt quân Trắng của bot rồi bấm Bắt đầu.");
+  } else startClock();
 }
 
 $("startBtn").onclick = startGame;
@@ -2095,6 +2137,7 @@ function gameInProgress(){
 }
 function stopBotThinking(){
   pendingBot = false; earlyStop = null; engineBusy = false;
+  botStartPending = false; preStartDeleteMode = false;
   clearInterval(hellTimer); hellTimer = null; stopPonder();
   clearTimeout(botWatch);
   try{ if(engine) engine.postMessage("stop"); }catch(e){}
@@ -2144,6 +2187,7 @@ function render(){
     $("gameStatus").textContent = engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":"");
   }
   if(adminDeleteMode && !game.game_over()) $("gameStatus").textContent = "🗑 Chế độ xoá (Admin): bấm vào quân bất kỳ (trừ Vua) để xoá — bên đối diện được tính là đã ăn quân đó.";
+  updateBotPreStartUI();
   const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
   $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
@@ -2160,6 +2204,8 @@ function render(){
 // chess.js không có "xoá quân" trong lịch sử nước đi, nên mỗi lần xoá ta dựng ván mới từ FEN sau khi xoá
 // và nối lịch sử cũ vào phía trước (game._adm). Nhờ vậy danh sách nước đi, lưu/khôi phục ván, engine đều chạy đúng.
 let adminDeleteMode = false, _admGameRef = null;
+// Khi người chơi chọn quân Đen, cho phép chỉnh quân Trắng (bot) trước khi bot thực hiện nước đầu tiên.
+let botStartPending = false, preStartDeleteMode = false;
 function patchAdminHistory(g, st){
   const own = g.history.bind(g);
   g.history = (opts) => (opts && opts.verbose ? st.preV : st.pre).concat(own(opts));
@@ -2180,11 +2226,21 @@ function syncAdminDeleteUI(){
   if(!ok) adminDeleteMode = false;
   btn.textContent = adminDeleteMode ? "✅ Tắt chế độ xoá" : "🗑 Xoá quân (Admin)";
 }
-function adminDeletePiece(sq){
-  if(!isAdminUser() || reviewMode || matchRecorded || game.game_over()) return;
+function updateBotPreStartUI(){
+  const wrap = $("botPreStartControls"), del = $("preStartDeleteBtn"), start = $("botStartBtn");
+  if(!wrap || !del || !start) return;
+  wrap.hidden = !botStartPending;
+  wrap.style.display = botStartPending ? "grid" : "none";
+  del.textContent = preStartDeleteMode ? "✅ Xong xoá quân — tắt chế độ" : "🗑 Chọn quân bot để xoá";
+  start.disabled = preStartDeleteMode;
+  start.textContent = preStartDeleteMode ? "Tắt chế độ xoá để bắt đầu" : "▶ Bắt đầu — cho bot đi";
+}
+function adminDeletePiece(sq, setupRemoval=false){
+  if(setupRemoval ? (!botStartPending || reviewMode || matchRecorded || game.game_over()) : (!isAdminUser() || reviewMode || matchRecorded || game.game_over())) return;
   const p = game.get(sq);
   if(!p){ adminNote("🗑 Hãy bấm vào một quân cờ để xoá."); return; }
   if(p.type === "k"){ adminNote("🗑 Không thể xoá Vua."); return; }
+  if(setupRemoval && p.color === human){ adminNote("🗑 Chỉ có thể xoá quân của bot trong bước chuẩn bị."); return; }
   const mover = game.turn(), fenBefore = game.fen();
   // Dựng FEN mới: bỏ quân, sửa quyền nhập thành / bắt tốt qua đường / bộ đếm 50 nước
   let parts;
@@ -2231,8 +2287,8 @@ function adminDeletePiece(sq){
       }catch(e){}
     }
     if(game.game_over()){ checkGameOver(); return; }
-    if(!isOnlineGame){
-      if(game.turn() !== human) setTimeout(() => { if(!game.game_over() && !matchRecorded && game.turn() !== human && !engineBusy) botMove(); }, 900); // chờ bestmove cũ trôi qua
+    if(!isOnlineGame && !botStartPending){
+      if(game.turn() !== human) setTimeout(() => { if(!botStartPending && !game.game_over() && !matchRecorded && game.turn() !== human && !engineBusy) botMove(); }, 900); // chờ bestmove cũ trôi qua
       else setTimeout(startPonder, 40);
     }
   });
@@ -2242,8 +2298,23 @@ $("adminDeleteBtn").onclick = () => {
   adminDeleteMode = !adminDeleteMode; selected = null; hintArrow = null;
   render();
 };
+$("preStartDeleteBtn").onclick = () => {
+  if(!botStartPending) return;
+  preStartDeleteMode = !preStartDeleteMode; selected = null; hintArrow = null;
+  adminNote(preStartDeleteMode ? "🗑 Chọn các quân của bot (quân Trắng) muốn bỏ. Không thể xoá Vua." : "Đã kết thúc chỉnh sửa quân. Bấm Bắt đầu để bot đi.");
+  render();
+};
+$("botStartBtn").onclick = () => {
+  if(!botStartPending || preStartDeleteMode) return;
+  botStartPending = false; preStartDeleteMode = false;
+  updateBotPreStartUI();
+  startClock();
+  render();
+  setTimeout(() => { if(!isOnlineGame && !game.game_over() && game.turn() !== human) botMove(); }, 80);
+};
 
 async function squareClick(sq){
+  if(preStartDeleteMode && botStartPending){ adminDeletePiece(sq, true); return; }
   if(adminDeleteMode){ adminDeletePiece(sq); return; }
   if(reviewMode || game.game_over() || engineBusy || matchRecorded) return;
   if(game.turn() !== human) return;
@@ -2534,14 +2605,18 @@ function safeSearchMove(){
 function hellThinkMs(baseMs, leftMs){
   const ply = game.history().length;
   let t = baseMs;
+  const handicap = isHandicapPosition(game.turn());
   if(game.moves().length === 1) return 120;
-  if(ply < 10) t = Math.round(t * 0.55);           // khai cuộc: sách khai cuộc + nghĩ-ké đã lo phần nặng → đi nhanh
-  else if(ply < 30) t = Math.round(t * 1.0);       // trung cuộc: ngân sách nền
-  else t = Math.round(t * 1.25);                    // tàn cuộc: nhiều hơn một chút - nơi quyết định thắng thua (trần 7s)
-  if(game.in_check()) t = Math.round(t * 1.25);     // đang bị chiếu: nghĩ kỹ hơn
-  // Không giảm ngân sách vì ponder: mỗi nước Địa ngục được quyền dùng gần trọn 7 giây.
+  if(handicap){
+    // Khi một bên đang chấp quân/thua chất, bỏ ưu tiên đi nhanh ở khai cuộc:
+    // dồn gần trọn ngân sách để tìm đòn chiến thuật, phòng thủ và phản công.
+    t = HELL_MAX_THINK_MS;
+  }else if(ply < 10) t = Math.round(t * 0.55);
+  else if(ply < 30) t = Math.round(t * 1.0);
+  else t = Math.round(t * 1.25);
+  if(game.in_check()) t = Math.round(t * 1.25);
   if(leftMs != null) t = Math.min(t, Math.max(400, leftMs / 20 - 200));
-  return Math.max(120, Math.round(t));
+  return Math.min(HELL_MAX_THINK_MS, Math.max(120, Math.round(t)));
 }
 
 // Đại kiện tướng: ngân sách mềm theo giai đoạn ván (khai 0.7x, trung 1.1x, tàn 1.4x), trần 7s.
@@ -2648,7 +2723,7 @@ function shouldBotBlunder(){
   return Math.random() < (BLUNDER_RATE[mode] ?? 0);
 }
 function bookMove(){
-  if(game._adm) return null; // thế cờ đã bị Admin chỉnh → không dùng sách khai cuộc
+  if(game._adm || (mode === "hell" && isHandicapPosition(game.turn()))) return null; // thế chấp quân cần tự tính, không đi theo sách khai cuộc
   const hist = game.history({verbose:true}).map(uciOf), ply = hist.length;
   const maxPly = OPENING_BOOK_PLY[mode] ?? 12;
   if(ply >= maxPly) return null;
@@ -2664,7 +2739,7 @@ function bookMove(){
 }
 
 // --- Hết sách: Địa ngục/Cao thủ xét 4 nước tốt nhất trong ~16 bán nước đầu, chọn ngẫu nhiên giữa các nước gần ngang điểm
-function wantVariety(){ return (mode === "hell" || mode === "hard") && game.history().length < (mode === "hell" ? 8 : 16) && game.moves().length > 1; }
+function wantVariety(){ return !isHandicapPosition(game.turn()) && (mode === "hell" || mode === "hard") && game.history().length < (mode === "hell" ? 8 : 16) && game.moves().length > 1; }
 function trackMultiPv(line){
   const dm = line.match(/ depth (\d+)/), km = line.match(/ multipv (\d+)/), sm = line.match(/score (cp|mate) (-?\d+)/), pm = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/);
   if(!dm || !sm || !pm) return;
@@ -2722,7 +2797,7 @@ function botMove(){
       return;
     }
   }
-  const bk = bookMove();
+  const bk = game._adm ? null : bookMove(); // thế cờ đã chỉnh quân: bắt buộc engine tính từ FEN mới, không dùng khai cuộc mặc định
   if(bk){
     engineBusy = true; render();
     const fen0 = game.fen();
@@ -2980,9 +3055,19 @@ $("evalBtn").onclick=()=>{
   engineMode = "eval";
   engineBusy = true;
   evalLines = {};
-  engine.postMessage("setoption name MultiPV value 3");      // xét 3 nước tốt nhất để chọn nước tấn công mạnh nhất trong số nước ngang nhau
-  engine.postMessage("setoption name Contempt value 80");    // tăng "máu chiến": tránh hoà, ưu tiên thế tấn công
-  $("analysisText").textContent = "Celestial đang phân tích siêu sâu (tối đa 7 giây, ưu tiên nước tấn công)...";
+  adminDrawMode = adminShouldSeekDraw();
+  // Single-PV dồn toàn bộ thời gian vào một biến chính, thường đạt depth sâu hơn MultiPV.
+  // Tăng Hash riêng cho phiên đánh giá; giữ mức vừa phải trên điện thoại để tránh thiếu RAM.
+  const evalMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+  engine.postMessage(`setoption name Hash value ${evalMobile ? 256 : 512}`);
+  engine.postMessage("setoption name MultiPV value 1");
+  const adminMaterial = materialProfile(game.turn());
+  engine.postMessage(`setoption name Contempt value ${adminDrawMode ? -100 : (adminMaterial.behind >= 3.5 ? -25 : 20)}`);
+  $("analysisText").textContent = adminDrawMode
+    ? "Tàn cuộc ít quân và bất lợi: ưu tiên phòng thủ, tìm cơ hội hoà (tối đa 7 giây)..."
+    : adminMaterial.imbalanced
+      ? `Thế chấp quân/lệch chất (${adminMaterial.diff >= 0 ? "+" : ""}${adminMaterial.diff.toFixed(1)} điểm): đang tính phương án chiến thuật sâu (tối đa 7 giây)...`
+      : "Celestial đang phân tích sâu, cân bằng công thủ (tối đa 7 giây)...";
   engine.postMessage("setoption name Skill Level value 20");
   engine.postMessage(botPositionCmd());
   engine.postMessage("go movetime 7000");
@@ -3185,7 +3270,11 @@ function renderFriendsListFromCache() {
   });
 }
 
-const fmtTimeOpt = t => t ? `${t / 60} phút` : "Không giới hạn";
+const fmtTimeOpt = t => {
+  if(!t) return "Không giới hạn";
+  const m = Math.floor(t / 60), sec = t % 60;
+  return sec ? `${m} phút ${sec} giây` : `${m} phút`;
+};
 // Màu quân của mình trong phòng: chủ phòng cầm hostColor (mặc định Trắng), khách cầm màu còn lại
 const roomColorFor = val => { const hc = val.hostColor === "b" ? "b" : "w"; return val.host === user.uid ? hc : (hc === "w" ? "b" : "w"); };
 const inviteInfo = inv => typeof inv.clockSeconds === "number" ? ` · Bạn cầm ${inv.hostColor === "b" ? "Trắng" : "Đen"} · ${fmtTimeOpt(inv.clockSeconds)}` : "";
@@ -3195,11 +3284,20 @@ function askInviteOptions(friendName){
     const sel = 'style="width:100%;margin-top:4px"';
     ov.innerHTML = `<div class="rv-card"><h3>⚔️ Mời ${escapeHtml(friendName)}</h3>
       <div class="field"><label>QUÂN CỦA BẠN</label><select id="invColor" ${sel}><option value="w">Trắng · Đi trước</option><option value="b">Đen · Đi sau</option><option value="r">Ngẫu nhiên</option></select></div>
-      <div class="field" style="margin-top:10px"><label>THỜI GIAN MỖI BÊN</label><select id="invTime" ${sel}><option value="0">Không giới hạn</option><option value="60">1 phút</option><option value="180">3 phút</option><option value="300">5 phút</option><option value="600" selected>10 phút</option><option value="900">15 phút</option></select></div>
+      <div class="field" style="margin-top:10px"><label>THỜI GIAN MỖI BÊN (GIÂY)</label><input id="invTime" type="number" min="0" step="1" inputmode="numeric" value="600" placeholder="Nhập số giây, ví dụ 600" ${sel}><small class="notice">Nhập thời lượng tuỳ ý. 0 = không giới hạn.</small></div>
       <div style="display:flex;gap:8px;margin-top:14px"><button class="primary" style="flex:1" data-ok="1">⚔️ Gửi lời mời</button><button class="ghost" data-no="1">Huỷ</button></div></div>`;
     document.body.append(ov);
     const done = v => { ov.remove(); resolve(v); };
-    ov.querySelector("[data-ok]").onclick = () => done({ color: ov.querySelector("#invColor").value, time: Number(ov.querySelector("#invTime").value) });
+    ov.querySelector("[data-ok]").onclick = () => {
+      const raw = ov.querySelector("#invTime").value.trim();
+      const time = raw === "" ? NaN : Number(raw);
+      if(!Number.isSafeInteger(time) || time < 0){
+        ov.querySelector("#invTime").setCustomValidity("Nhập số giây nguyên không âm, hoặc 0 để không giới hạn.");
+        ov.querySelector("#invTime").reportValidity();
+        return;
+      }
+      done({ color: ov.querySelector("#invColor").value, time });
+    };
     ov.querySelector("[data-no]").onclick = () => done(null);
     ov.addEventListener("click", e => { if(e.target === ov) done(null); });
   });
