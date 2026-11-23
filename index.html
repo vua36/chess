@@ -773,6 +773,7 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
             <button id="newBtn">Ván mới</button>
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
             <button id="forceBotBtn" class="danger" hidden>👑 Ép bot thua (Admin)</button>
+            <button id="adminDeleteBtn" class="danger" hidden>🗑 Xoá quân bot (Admin)</button>
           </div>
         </div>
       </div>
@@ -1937,6 +1938,13 @@ function drawBoardCanvas() {
         ctx.restore();
       }
 
+      if (adminDeleteMode && piece && piece.color !== human && piece.type !== "k") {
+        ctx.save();
+        ctx.fillStyle = "rgba(231, 76, 60, 0.22)"; ctx.fillRect(x, y, sqSize, sqSize);
+        ctx.strokeStyle = "rgba(231, 76, 60, 0.95)"; ctx.lineWidth = Math.max(2, sqSize * 0.05);
+        const alw = ctx.lineWidth / 2; ctx.strokeRect(x + alw, y + alw, sqSize - 2 * alw, sqSize - 2 * alw);
+        ctx.restore();
+      }
       if (rvm && lastMove && lastMove.to === sq) {
         const B = BADGES[rvm.k], bx = x + sqSize * 0.8, by = y + sqSize * 0.2, br = sqSize * 0.19;
         ctx.save();
@@ -2089,6 +2097,7 @@ $("newBtn").onclick = async () => {
 
 function render(){
   updateMatchLock();
+  syncAdminDeleteUI();
   drawBoardCanvas();
 
   const hist=game.history();
@@ -2108,17 +2117,89 @@ function render(){
   if(!game.game_over()) {
     $("gameStatus").textContent = engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":"");
   }
+  if(adminDeleteMode && !game.game_over()) $("gameStatus").textContent = "🗑 Chế độ xoá (Admin): bấm vào quân của bot để xoá — quân bị xoá được tính là đã bị ăn.";
   const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
   $("bottomName").classList.toggle("thinking", !over && game.turn() === human);
-  $("reviewBtn").hidden = !((game.game_over() || matchRecorded) && !reviewMode && hist.length > 0); // matchRecorded: ván kết thúc do lặp thế/hết giờ/đầu hàng (chess.js không tính là game_over)
-  const canUndo = hist.length > 0 && !isOnlineGame && !reviewMode && (isAdminUser() || mode === "easy");
+  $("reviewBtn").hidden = !!game._adm || !((game.game_over() || matchRecorded) && !reviewMode && hist.length > 0); // matchRecorded: ván kết thúc do lặp thế/hết giờ/đầu hàng (chess.js không tính là game_over)
+  const canUndo = hist.length > (game._adm ? game._adm.pre.length : 0) && !isOnlineGame && !reviewMode && (isAdminUser() || mode === "easy");
   $("undoBtn").disabled = !canUndo;
   if(mlChanged) renderCaptured();
   saveGame();
 }
 
+// ============================================================================
+// ADMIN: XOÁ QUÂN CỦA BOT TRÊN BÀN CỜ (quân bị xoá được tính là đã bị ăn)
+// ============================================================================
+// chess.js không có "xoá quân" trong lịch sử nước đi, nên mỗi lần xoá ta dựng ván mới từ FEN sau khi xoá
+// và nối lịch sử cũ vào phía trước (game._adm). Nhờ vậy danh sách nước đi, lưu/khôi phục ván, engine đều chạy đúng.
+let adminDeleteMode = false, _admGameRef = null;
+function patchAdminHistory(g, st){
+  const own = g.history.bind(g);
+  g.history = (opts) => (opts && opts.verbose ? st.preV : st.pre).concat(own(opts));
+  g._adm = st;
+  return g;
+}
+function ownMoves(g){ // các nước đi thật sau lần xoá quân gần nhất
+  const all = g.history({verbose:true});
+  return g._adm ? all.slice(g._adm.pre.length) : all;
+}
+function baseChess(g){ return new Chess(g._adm ? g._adm.fen : undefined); }
+function adminNote(msg){ $("gameStatus").textContent = msg; }
+function syncAdminDeleteUI(){
+  if(_admGameRef !== game){ _admGameRef = game; adminDeleteMode = false; }
+  const btn = $("adminDeleteBtn"); if(!btn) return;
+  const ok = isAdminUser() && !isOnlineGame && !reviewMode && !matchRecorded && !game.game_over() && saveEnabled;
+  btn.hidden = !ok;
+  if(!ok) adminDeleteMode = false;
+  btn.textContent = adminDeleteMode ? "✅ Tắt chế độ xoá" : "🗑 Xoá quân bot (Admin)";
+}
+function adminDeletePiece(sq){
+  if(!isAdminUser() || isOnlineGame || reviewMode || matchRecorded || game.game_over()) return;
+  if(engineBusy || game.turn() !== human){ adminNote("🗑 Chờ tới lượt bạn rồi mới xoá quân của bot."); return; }
+  const p = game.get(sq);
+  if(!p || p.color === human){ adminNote("🗑 Hãy bấm vào một quân của bot để xoá."); return; }
+  if(p.type === "k"){ adminNote("🗑 Không thể xoá Vua. Dùng nút \"Ép bot thua\" nếu muốn thắng."); return; }
+  // Dựng FEN mới: bỏ quân, sửa quyền nhập thành / bắt tốt qua đường / bộ đếm 50 nước
+  let parts;
+  try{ const t = new Chess(game.fen()); t.remove(sq); parts = t.fen().split(" "); }catch(e){ adminNote("🗑 Không xoá được quân này."); return; }
+  if(p.type === "r"){
+    const home = { a1:"Q", h1:"K", a8:"q", h8:"k" }[sq];
+    if(home && parts[2] !== "-") parts[2] = parts[2].replace(home, "") || "-";
+  }
+  if(parts[3] !== "-"){
+    const er = Number(parts[3][1]), pawnSq = parts[3][0] + (human === "w" ? er - 1 : er + 1);
+    if(p.type === "p" && sq === pawnSq) parts[3] = "-";
+  }
+  parts[4] = "0";
+  const newFen = parts.join(" ");
+  if(!game.validate_fen(newFen).valid){ adminNote("🗑 Không xoá được quân này (thế cờ không hợp lệ)."); return; }
+  const flip = parts.slice(); flip[1] = human === "w" ? "b" : "w"; flip[3] = "-";
+  if(new Chess(flip.join(" ")).in_check()){ adminNote("🗑 Không thể xoá quân này: Vua bot sẽ bị chiếu ngay lượt bạn (thế cờ không hợp lệ)."); return; }
+  const prev = game._adm;
+  stopPonder(() => {
+    if(game.turn() !== human || engineBusy || game.game_over() || matchRecorded) return;
+    const st = { fen:newFen, pre:game.history(), preV:game.history({verbose:true}), caps:(prev ? prev.caps : []).concat([p.type]) };
+    game = patchAdminHistory(new Chess(newFen), st);
+    _admGameRef = game;
+    botPred = null; ponder.pred = null; ponder.hit = false; ponder.cp = null;
+    positionHistory = new Map(); checkCustomRepetition();
+    selected = null; hintArrow = null; drawCache = null;
+    playSound("capture");
+    renderCaptured();
+    render();
+    if(game.game_over()){ checkGameOver(); return; }
+    setTimeout(startPonder, 40);
+  });
+}
+$("adminDeleteBtn").onclick = () => {
+  if(!isAdminUser()) return;
+  adminDeleteMode = !adminDeleteMode; selected = null; hintArrow = null;
+  render();
+};
+
 async function squareClick(sq){
+  if(adminDeleteMode){ adminDeletePiece(sq); return; }
   if(reviewMode || game.game_over() || engineBusy || matchRecorded) return;
   if(game.turn() !== human) return;
   const p = game.get(sq);
@@ -2434,6 +2515,10 @@ function hardThinkMs(baseMs, leftMs){
 // Trước đây bot chỉ nhận FEN nên không biết lịch sử → không né/không tận dụng được lặp thế cờ.
 // Gửi "startpos moves ..." để engine nhận biết lặp lại. Có kiểm tra khớp FEN, sai thì quay về FEN.
 function botPositionCmd(){
+  if(game._adm){ // đã xoá quân: bắt đầu từ FEN sau khi xoá + các nước đi thật sau đó (engine vẫn nhận biết lặp thế)
+    const own = ownMoves(game);
+    return "position fen " + game._adm.fen + (own.length ? " moves " + own.map(m => m.from + m.to + (m.promotion || "")).join(" ") : "");
+  }
   try {
     const hv = game.history({verbose:true});
     const rp = new Chess();
@@ -2518,6 +2603,7 @@ function shouldBotBlunder(){
   return Math.random() < (BLUNDER_RATE[mode] ?? 0);
 }
 function bookMove(){
+  if(game._adm) return null; // thế cờ đã bị Admin chỉnh → không dùng sách khai cuộc
   const hist = game.history({verbose:true}).map(uciOf), ply = hist.length;
   const maxPly = OPENING_BOOK_PLY[mode] ?? 12;
   if(ply >= maxPly) return null;
@@ -2683,7 +2769,7 @@ async function checkGameOver(timeoutWinnerColor = null, forceReason = null) {
   matchRecorded = true;
   updateMatchLock();
   stopPonder();
-  if(!reviewMode && game.history().length > 0) $("reviewBtn").hidden = false; // hiện nút Xem lại ngay khi ván kết thúc, không chờ render()
+  if(!reviewMode && !game._adm && game.history().length > 0) $("reviewBtn").hidden = false; // hiện nút Xem lại ngay khi ván kết thúc, không chờ render()
   stopClock();
   playSound("end");
 
@@ -2791,8 +2877,8 @@ $("undoBtn").onclick=()=>{
   if(game.turn()!==human) game.undo();
   // Rebuild position counts from current history
   positionHistory = new Map();
-  const tempGame = new Chess();
-  const hist = game.history({verbose: true});
+  const tempGame = baseChess(game);
+  const hist = ownMoves(game);
   for (const m of hist) {
     tempGame.move(m);
     const key = tempGame.fen().split(' ').slice(0, 4).join(' ');
@@ -2878,7 +2964,7 @@ function isSac(fenAfter, m){
 }
 
 function startReview(){
-  if(reviewJob || reviewMode) return;
+  if(reviewJob || reviewMode || game._adm) return;
   if(ponder.on || ponder.stopping){ stopPonder(() => startReview()); return; }
   if(!engineReady || !engine || engineBusy){ alert("Engine chưa sẵn sàng, thử lại sau giây lát."); return; }
   const hist = game.history({verbose:true});
@@ -3320,13 +3406,13 @@ document.addEventListener("visibilitychange", () => { if(document.hidden) flushS
 window.addEventListener("pagehide", flushSave);
 function saveGameNow(){
   if(!saveEnabled || reviewMode || isOnlineGame) return;
-  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({ moves:game.history(), mode, human, flipped, clockSeconds, remaining, matchRecorded })); }catch(e){}
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify({ moves:game.history(), adm:game._adm || null, mode, human, flipped, clockSeconds, remaining, matchRecorded })); }catch(e){}
 }
 function rebuildPositionHistory(){
   positionHistory = new Map();
-  const t = new Chess(), key = () => t.fen().split(" ").slice(0,4).join(" ");
+  const t = baseChess(game), key = () => t.fen().split(" ").slice(0,4).join(" ");
   positionHistory.set(key(), 1);
-  for(const m of game.history()){ t.move(m); positionHistory.set(key(), (positionHistory.get(key()) || 0) + 1); }
+  for(const m of ownMoves(game)){ t.move(m); positionHistory.set(key(), (positionHistory.get(key()) || 0) + 1); }
 }
 function resumeBotIfPending(){
   if(!pendingBot || !engineReady || !engine) return;
@@ -3338,8 +3424,11 @@ function restoreSavedGame(){
   let s = null;
   try{ s = JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); }catch(e){}
   if(!s || !Array.isArray(s.moves)) return false;
-  const g = new Chess();
-  for(const san of s.moves){ if(!g.move(san)) return false; }
+  const adm = s.adm;
+  if(adm && !(typeof adm.fen === "string" && Array.isArray(adm.pre) && Array.isArray(adm.preV) && Array.isArray(adm.caps))) return false;
+  const g = adm ? new Chess(adm.fen) : new Chess();
+  for(const san of (adm ? s.moves.slice(adm.pre.length) : s.moves)){ if(!g.move(san)) return false; }
+  if(adm) patchAdminHistory(g, { fen:adm.fen, pre:adm.pre, preV:adm.preV, caps:adm.caps });
   game = g; mode = modeNames[s.mode] ? s.mode : "easy"; human = s.human === "b" ? "b" : "w"; flipped = !!s.flipped;
   clockSeconds = Number(s.clockSeconds) || 0;
   remaining = (s.remaining && typeof s.remaining.w === "number") ? s.remaining : { w:clockSeconds, b:clockSeconds };
@@ -3391,7 +3480,7 @@ function capHTML(verboseHist, color){
   return h + (mine > theirs ? `<b class="cap-adv">+${mine - theirs}</b>` : "");
 }
 function renderCaptured(){
-  const vh = game.history({verbose:true});
+  const vh = game.history({verbose:true}).concat(game._adm ? game._adm.caps.map(t => ({ color:human, captured:t })) : []);
   $("topCap").innerHTML = capHTML(vh, human === "w" ? "b" : "w");
   $("bottomCap").innerHTML = capHTML(vh, human);
 }
@@ -3401,7 +3490,7 @@ function loadHist(){ try{ return JSON.parse(localStorage.getItem(HIST_KEY) || "[
 function storeHist(list){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(list.slice(0, 50))); }catch(e){} }
 function saveFinishedGame(result, reason){
   const moves = game.history();
-  if(!moves.length) return;
+  if(!moves.length || game._adm) return; // ván đã bị Admin xoá quân không tua lại được từ thế cờ đầu
   const now = Date.now(), list = loadHist();
   list.unshift({ id:now, date:now, label: isOnlineGame ? "PvP Online" : `Đấu máy · ${modeNames[mode]}`, human, result, reason, moves });
   storeHist(list);
