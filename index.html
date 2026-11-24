@@ -660,6 +660,15 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
 .live-chip small{display:block;color:#9aa4c8;font-size:11px}
 .mv-b{min-width:15px;height:15px;border-radius:8px;font-size:9px;margin-left:4px;padding:0 3px;vertical-align:middle}
 </style>
+<style>
+/* Nút "Vào trận" hiện ngay trên thẻ đối thủ đang chọn */
+#home .rival-start{display:none!important}
+#home .rival-card.selected .rv-pick,#home .rival-card.selected .rival-dots{display:none!important}
+#home .rival-card.selected .rival-start{display:flex!important;flex:1;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:9px 12px;border-radius:12px;background:linear-gradient(135deg,#71eaff,#4d9bff);color:#06142a;font-weight:900;font-size:12px;letter-spacing:1px;cursor:pointer;box-shadow:0 0 22px #52ddff66,inset 0 1px #ffffff88;animation:rvPulse 1.8s ease-in-out infinite}
+#home .rival-card.selected .rival-start:hover{filter:brightness(1.1);transform:translateY(-1px)}
+@keyframes rvPulse{50%{box-shadow:0 0 32px #52ddffaa,inset 0 1px #ffffff88}}
+@media(prefers-reduced-motion:reduce){#home .rival-card.selected .rival-start{animation:none}}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -683,7 +692,7 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
       <div class="eyebrow"><span class="live-dot"></span> CHESS ULTIMATE / NEON DIMENSION</div>
       <h1>BƯỚC VÀO<br><i>ĐẤU TRƯỜNG.</i></h1>
       <p>Chọn cấp độ. Đối đầu trí tuệ máy. Viết nên ván cờ của riêng bạn.</p>
-      <div class="hero-actions"><button class="primary" id="startBtn"><span>Vào trận</span><b>↗</b></button><span class="hero-hint">Chọn một đối thủ bên dưới để bắt đầu</span></div>
+      <div class="hero-actions"><button class="primary" id="startBtn"><span>Vào trận</span><b>↗</b></button><span class="hero-hint">Chọn đối thủ bên dưới, rồi bấm “Vào trận” ngay trên thẻ</span></div>
     </div>
     <div class="hero-art arena-stage" aria-hidden="true">
       <div class="stage-grid"></div><div class="stage-ring stage-ring-one"></div><div class="stage-ring stage-ring-two"></div>
@@ -711,7 +720,7 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
     <button class="rival-card rival-easy selected" data-mode="easy">
       <span class="rival-top"><span class="rival-no">01 / ROOKIE</span><span class="rival-rating">ELO 800</span></span>
       <span class="rival-model-wrap"><svg class="rival-model" viewBox="0 0 180 180" aria-hidden="true"><defs><linearGradient id="gPawn" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff4d5"/><stop offset=".42" stop-color="#a9d8e8"/><stop offset="1" stop-color="#536d9d"/></linearGradient><linearGradient id="gPawnSide" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#30476d"/><stop offset="1" stop-color="#8db5d0"/></linearGradient></defs><ellipse cx="91" cy="158" rx="55" ry="10" fill="#6dcfff" opacity=".2"/><path d="M43 144 Q48 132 66 130 L114 130 Q132 132 137 144 L130 153 L51 153Z" fill="url(#gPawnSide)" stroke="#d4f5ff" stroke-opacity=".65"/><path d="M55 133 Q90 123 125 133 L130 144 Q91 153 51 144Z" fill="url(#gPawn)"/><path d="M68 127 Q78 113 80 96 L100 96 Q102 113 112 127Z" fill="url(#gPawnSide)" stroke="#e7f8ff" stroke-opacity=".6"/><path d="M75 99 Q67 91 68 78 Q70 56 90 53 Q110 56 112 78 Q113 91 105 99Z" fill="url(#gPawn)" stroke="#effaff" stroke-opacity=".7"/><circle cx="90" cy="38" r="20" fill="url(#gPawn)" stroke="#f5ffff" stroke-width="1.5"/><path d="M76 30 Q88 17 101 29" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/></svg><span class="model-aura"></span></span><span class="rival-name">Tân binh</span><span class="rival-desc">Chậm rãi · Dễ làm quen</span>
-      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
+      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b class="rv-pick">CHỌN ĐỐI THỦ ↗</b><span class="rival-start" role="button" tabindex="0">▶ VÀO TRẬN</span></span>
     </button>
     <button class="rival-card rival-medium" data-mode="medium">
       <span class="rival-top"><span class="rival-no">02 / STRATEGIST</span><span class="rival-rating">ELO 1200</span></span>
@@ -728,17 +737,17 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
 <circle cx="103" cy="55" r="4" fill="#77f4ff"/><path d="M121 77 L137 82 L124 87 L113 82Z" fill="#27294d"/>
 <path d="M78 105 Q88 112 99 107" fill="none" stroke="#f8f3ff" stroke-opacity=".7" stroke-width="2"/>
 </svg><span class="model-aura"></span></span><span class="rival-name">Chiến lược gia</span><span class="rival-desc">Biết tính toán · Có thử thách</span>
-      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
+      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b class="rv-pick">CHỌN ĐỐI THỦ ↗</b><span class="rival-start" role="button" tabindex="0">▶ VÀO TRẬN</span></span>
     </button>
     <button class="rival-card rival-hard" data-mode="hard">
       <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2700</span></span>
       <span class="rival-model-wrap"><svg class="rival-model" viewBox="0 0 180 180" aria-hidden="true"><defs><linearGradient id="gBishop" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0c7"/><stop offset=".4" stop-color="#e3ad61"/><stop offset="1" stop-color="#87502f"/></linearGradient><linearGradient id="gBishopSide"><stop stop-color="#57351f"/><stop offset="1" stop-color="#c18b4c"/></linearGradient></defs><ellipse cx="90" cy="158" rx="56" ry="10" fill="#ffc16b" opacity=".2"/><path d="M40 144 Q47 131 66 130 L114 130 Q133 131 140 144 L132 154 L48 154Z" fill="url(#gBishopSide)" stroke="#ffe4ad" stroke-opacity=".7"/><path d="M51 133 Q90 124 129 133 L133 145 L47 145Z" fill="url(#gBishop)"/><path d="M66 129 Q82 109 80 89 Q68 73 75 53 Q81 33 90 24 Q99 33 105 53 Q112 73 100 89 Q98 109 114 129Z" fill="url(#gBishop)" stroke="#fff0d0" stroke-opacity=".75" stroke-width="2"/><path d="M91 25 L85 61 L95 72 L82 99 L91 125 L105 129 Q98 109 100 89 Q112 73 105 53Z" fill="url(#gBishopSide)" opacity=".75"/><path d="M74 63 L107 48" stroke="#fff5d8" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="18" r="6" fill="#fff0c8"/><path d="M70 128 Q90 119 110 128" fill="none" stroke="#fff1d2" stroke-width="2"/></svg><span class="model-aura"></span></span><span class="rival-name">Đại kiện tướng</span><span class="rival-desc">Áp lực cao · Ít sai lầm</span>
-      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
+      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b class="rv-pick">CHỌN ĐỐI THỦ ↗</b><span class="rival-start" role="button" tabindex="0">▶ VÀO TRẬN</span></span>
     </button>
     <button class="rival-card rival-hell" data-mode="hell">
       <span class="rival-top"><span class="rival-no">04 / THE ABYSS</span><span class="rival-rating">ELO 3000+</span></span>
       <span class="rival-model-wrap"><svg class="rival-model" viewBox="0 0 180 180" aria-hidden="true"><defs><linearGradient id="gHellKing" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0f8"/><stop offset=".32" stop-color="#ff70b5"/><stop offset="1" stop-color="#70245f"/></linearGradient><linearGradient id="gKingSide"><stop stop-color="#42133e"/><stop offset="1" stop-color="#b83e83"/></linearGradient></defs><ellipse cx="90" cy="158" rx="61" ry="11" fill="#ff4baf" opacity=".25"/><path d="M32 145 Q39 129 62 128 L118 128 Q141 130 148 145 L139 155 L41 155Z" fill="url(#gKingSide)" stroke="#ffc0e2" stroke-opacity=".7"/><path d="M43 133 Q90 121 137 133 L141 146 L39 146Z" fill="url(#gHellKing)"/><path d="M60 129 Q75 111 75 93 L64 74 L77 64 L90 82 L103 64 L116 74 L105 93 Q105 111 120 129Z" fill="url(#gHellKing)" stroke="#ffe2f3" stroke-opacity=".7" stroke-width="2"/><path d="M90 81 L90 34 M70 58 L58 39 M110 58 L122 39" stroke="#ffe6f5" stroke-width="7" stroke-linecap="round"/><path d="M90 21 L90 45 M78 33 L102 33" stroke="#fff0f8" stroke-width="7" stroke-linecap="round"/><path d="M77 94 Q90 102 103 94" fill="none" stroke="#74225d" stroke-width="3"/><path d="M72 128 Q90 118 108 128" fill="none" stroke="#fff0f8" stroke-width="2"/></svg><span class="model-aura"></span></span><span class="rival-name">Địa ngục</span><span class="rival-desc">Celestial Max · Không khoan nhượng</span>
-      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>THÁCH ĐẤU ↗</b></span>
+      <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b class="rv-pick">THÁCH ĐẤU ↗</b><span class="rival-start" role="button" tabindex="0">▶ VÀO TRẬN</span></span>
       <span class="hell-stamp">MAX</span>
     </button>
   </div>
@@ -1457,6 +1466,11 @@ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>tab(b.dataset.t
 document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{
   mode=b.dataset.mode;
   document.querySelectorAll("[data-mode]").forEach(x=>x.classList.toggle("selected",x===b));
+});
+document.querySelectorAll(".rival-start").forEach(el=>{
+  const go=e=>{ e.preventDefault(); e.stopPropagation(); const card=el.closest("[data-mode]"); if(card) mode=card.dataset.mode; startGame(); };
+  el.addEventListener("click",go);
+  el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" ") go(e); });
 });
 
 function renderUser(){
