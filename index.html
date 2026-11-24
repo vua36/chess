@@ -740,7 +740,7 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b class="rv-pick">CHỌN ĐỐI THỦ ↗</b><span class="rival-start" role="button" tabindex="0">▶ VÀO TRẬN</span></span>
     </button>
     <button class="rival-card rival-hard" data-mode="hard">
-      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2700</span></span>
+      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2900</span></span>
       <span class="rival-model-wrap"><svg class="rival-model" viewBox="0 0 180 180" aria-hidden="true"><defs><linearGradient id="gBishop" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0c7"/><stop offset=".4" stop-color="#e3ad61"/><stop offset="1" stop-color="#87502f"/></linearGradient><linearGradient id="gBishopSide"><stop stop-color="#57351f"/><stop offset="1" stop-color="#c18b4c"/></linearGradient></defs><ellipse cx="90" cy="158" rx="56" ry="10" fill="#ffc16b" opacity=".2"/><path d="M40 144 Q47 131 66 130 L114 130 Q133 131 140 144 L132 154 L48 154Z" fill="url(#gBishopSide)" stroke="#ffe4ad" stroke-opacity=".7"/><path d="M51 133 Q90 124 129 133 L133 145 L47 145Z" fill="url(#gBishop)"/><path d="M66 129 Q82 109 80 89 Q68 73 75 53 Q81 33 90 24 Q99 33 105 53 Q112 73 100 89 Q98 109 114 129Z" fill="url(#gBishop)" stroke="#fff0d0" stroke-opacity=".75" stroke-width="2"/><path d="M91 25 L85 61 L95 72 L82 99 L91 125 L105 129 Q98 109 100 89 Q112 73 105 53Z" fill="url(#gBishopSide)" opacity=".75"/><path d="M74 63 L107 48" stroke="#fff5d8" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="18" r="6" fill="#fff0c8"/><path d="M70 128 Q90 119 110 128" fill="none" stroke="#fff1d2" stroke-width="2"/></svg><span class="model-aura"></span></span><span class="rival-name">Đại kiện tướng</span><span class="rival-desc">Áp lực cao · Ít sai lầm</span>
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b class="rv-pick">CHỌN ĐỐI THỦ ↗</b><span class="rival-start" role="button" tabindex="0">▶ VÀO TRẬN</span></span>
     </button>
@@ -1114,7 +1114,7 @@ try {
 const BOT_ELO_TABLE = {
   easy:   { win: +8,  draw: -2,  loss: -15, label: "Bot Khởi đầu (Elo ~600)",   botElo: 600  },
   medium: { win: +15, draw: +2,  loss: -12, label: "Bot Thử thách (Elo ~1000)",  botElo: 1000 },
-  hard:   { win: +40, draw: +10, loss: -6,  label: "Bot Đại kiện tướng (Elo ~2700)", botElo: 2700 },
+  hard:   { win: +40, draw: +10, loss: -6,  label: "Bot Đại kiện tướng (Elo ~2900)", botElo: 2900 },
   hell:   { win: +70, draw: +20, loss: -3,  label: "Bot Địa ngục (Elo ~3400+)", botElo: 3400 }
 };
 
@@ -1218,7 +1218,7 @@ const DIFFICULTY = {
   // easy/medium đã nerf cho đúng Elo. hell BUFF MAX: nghĩ lâu gấp ~2x, không giới hạn depth
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
-  hard:   { skill: 17, elo: 2700, depth: 0, movetime: 5000 }, // Đại kiện tướng ~2400+: SF19 dùng UCI_Elo 2500 (SF10 dùng Skill 15), không giới hạn depth, tối đa 3s/nước, CÓ ponder + dừng sớm khi nước đi đã chín
+  hard:   { skill: 18, elo: 2900, depth: 0, movetime: 5000 }, // Đại kiện tướng ~2400+: SF19 dùng UCI_Elo 2500 (SF10 dùng Skill 15), không giới hạn depth, tối đa 3s/nước, CÓ ponder + dừng sớm khi nước đi đã chín
   hell:   { skill: 20, depth: 0,  movetime: 7000 } // Địa ngục: Skill tối đa, ngân sách tìm kiếm tối đa 7 giây/nước
 };
 const PONDER_MAX_BY_MODE = { hell: 7000, hard: 8000 }; // thời gian tối đa mỗi lượt nghĩ-ké
@@ -2143,13 +2143,13 @@ function startGame(){
   selected = null;
   hintArrow = null;
   human = $("colorChoice").value;
-  botStartPending = human === "b";
+  botStartPending = human === "b" && mode === "hell"; // chỉ Địa ngục mới chờ nút Bắt đầu; các bot khác đi luôn
   flipped = human === "b";
   saveEnabled = true;
   clockSeconds = Number($("timeChoice").value);
   remaining = { w: clockSeconds, b: clockSeconds };
 
-  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":mode==="hard"?"Celestial GM (Elo ~2700)":"Celestial Bot"}`;
+  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":mode==="hard"?"Celestial GM (Elo ~2900)":"Celestial Bot"}`;
   $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
   document.body.classList.toggle("hell", mode === "hell");
@@ -2176,10 +2176,13 @@ function startGame(){
 
   tab("game");
   render();
-  if(human === "b"){
+  if(botStartPending){
     stopClock();
     adminNote("Bot đang chờ bạn chuẩn bị. Có thể xoá bớt quân Trắng của bot rồi bấm Bắt đầu.");
-  } else startClock();
+  } else {
+    startClock();
+    if(human === "b") setTimeout(() => { if(!isOnlineGame && !botStartPending && !game.game_over() && !matchRecorded && game.turn() !== human && !engineBusy) botMove(); }, 250); // bot cầm Trắng đi luôn
+  }
 }
 
 $("startBtn").onclick = startGame;
