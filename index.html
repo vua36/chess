@@ -648,6 +648,18 @@ main{width:auto!important;max-width:1560px!important;margin:0 auto 0 92px!import
 <style>
 body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;opacity:.32!important;filter:grayscale(.85)!important;cursor:not-allowed}
 </style>
+<style>
+#liveRow{margin:8px 0 0;padding:10px 12px;border:1px solid #6a6ab155;border-radius:12px;background:#151a32}
+#liveRow .live-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#liveRow .live-title{font-size:11px;letter-spacing:1px;font-weight:800;color:#8fddff;text-transform:uppercase}
+#liveToggle{min-height:34px;padding:6px 12px;font-size:12px}
+.live-chips{display:grid;gap:6px;margin-top:8px}
+.live-chip{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;background:#0d1226;border:1px solid #ffffff12;font-size:12.5px;line-height:1.35}
+.live-chip>i,.mv-b{font-style:normal;display:inline-grid;place-items:center;flex:none;color:#fff;font-weight:800}
+.live-chip>i{width:26px;height:26px;border-radius:50%;font-size:12px;border:1.5px solid #fff}
+.live-chip small{display:block;color:#9aa4c8;font-size:11px}
+.mv-b{min-width:15px;height:15px;border-radius:8px;font-size:9px;margin-left:4px;padding:0 3px;vertical-align:middle}
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -719,7 +731,7 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
     </button>
     <button class="rival-card rival-hard" data-mode="hard">
-      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2400</span></span>
+      <span class="rival-top"><span class="rival-no">03 / GRANDMASTER</span><span class="rival-rating">ELO 2700</span></span>
       <span class="rival-model-wrap"><svg class="rival-model" viewBox="0 0 180 180" aria-hidden="true"><defs><linearGradient id="gBishop" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0c7"/><stop offset=".4" stop-color="#e3ad61"/><stop offset="1" stop-color="#87502f"/></linearGradient><linearGradient id="gBishopSide"><stop stop-color="#57351f"/><stop offset="1" stop-color="#c18b4c"/></linearGradient></defs><ellipse cx="90" cy="158" rx="56" ry="10" fill="#ffc16b" opacity=".2"/><path d="M40 144 Q47 131 66 130 L114 130 Q133 131 140 144 L132 154 L48 154Z" fill="url(#gBishopSide)" stroke="#ffe4ad" stroke-opacity=".7"/><path d="M51 133 Q90 124 129 133 L133 145 L47 145Z" fill="url(#gBishop)"/><path d="M66 129 Q82 109 80 89 Q68 73 75 53 Q81 33 90 24 Q99 33 105 53 Q112 73 100 89 Q98 109 114 129Z" fill="url(#gBishop)" stroke="#fff0d0" stroke-opacity=".75" stroke-width="2"/><path d="M91 25 L85 61 L95 72 L82 99 L91 125 L105 129 Q98 109 100 89 Q112 73 105 53Z" fill="url(#gBishopSide)" opacity=".75"/><path d="M74 63 L107 48" stroke="#fff5d8" stroke-width="5" stroke-linecap="round"/><circle cx="90" cy="18" r="6" fill="#fff0c8"/><path d="M70 128 Q90 119 110 128" fill="none" stroke="#fff1d2" stroke-width="2"/></svg><span class="model-aura"></span></span><span class="rival-name">Đại kiện tướng</span><span class="rival-desc">Áp lực cao · Ít sai lầm</span>
       <span class="rival-bottom"><span class="rival-dots"><i></i><i></i><i></i><i></i><i></i></span><b>CHỌN ĐỐI THỦ ↗</b></span>
     </button>
@@ -754,6 +766,11 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
         <div id="evalRow" class="eval-row" hidden>
           <button id="evalBtn">🔍 Đánh giá</button>
           <span class="notice" id="analysisText">Sẵn sàng phân tích cho Admin.</span>
+        </div>
+        <!-- ĐÁNH GIÁ NƯỚC ĐI TRỰC TIẾP: CHỈ HIỆN VỚI QUẢN TRỊ VIÊN -->
+        <div id="liveRow" hidden>
+          <div class="live-top"><span class="live-title">🏅 Đánh giá nước đi (Admin)</span><button id="liveToggle" type="button">Bật</button></div>
+          <div class="live-chips" id="liveChips"></div>
         </div>
         <div class="playerbar"><strong id="bottomName">Bạn</strong><span id="bottomClock">∞</span></div>
         <div class="cap" id="bottomCap"></div>
@@ -1088,7 +1105,7 @@ try {
 const BOT_ELO_TABLE = {
   easy:   { win: +8,  draw: -2,  loss: -15, label: "Bot Khởi đầu (Elo ~600)",   botElo: 600  },
   medium: { win: +15, draw: +2,  loss: -12, label: "Bot Thử thách (Elo ~1000)",  botElo: 1000 },
-  hard:   { win: +40, draw: +10, loss: -6,  label: "Bot Đại kiện tướng (Elo ~2400)", botElo: 2400 },
+  hard:   { win: +40, draw: +10, loss: -6,  label: "Bot Đại kiện tướng (Elo ~2700)", botElo: 2700 },
   hell:   { win: +70, draw: +20, loss: -3,  label: "Bot Địa ngục (Elo ~3400+)", botElo: 3400 }
 };
 
@@ -1192,12 +1209,16 @@ const DIFFICULTY = {
   // easy/medium đã nerf cho đúng Elo. hell BUFF MAX: nghĩ lâu gấp ~2x, không giới hạn depth
   easy:   { skill: 1,  depth: 3,  movetime: 120  },
   medium: { skill: 5,  depth: 6,  movetime: 300  },
-  hard:   { skill: 11, depth: 12, movetime: 1200 }, // Đại kiện tướng: ĐÃ NERF (skill 11, giới hạn depth 12, ~1.2s), KHÔNG ponder, không dừng-sớm-thông-minh
+  hard:   { skill: 17, elo: 2700, depth: 0, movetime: 5000 }, // Đại kiện tướng ~2400+: SF19 dùng UCI_Elo 2500 (SF10 dùng Skill 15), không giới hạn depth, tối đa 3s/nước, CÓ ponder + dừng sớm khi nước đi đã chín
   hell:   { skill: 20, depth: 0,  movetime: 7000 } // Địa ngục: Skill tối đa, ngân sách tìm kiếm tối đa 7 giây/nước
 };
+const PONDER_MAX_BY_MODE = { hell: 7000, hard: 8000 }; // thời gian tối đa mỗi lượt nghĩ-ké
+const PONDER_MODES = { hell: true, hard: true };
+const PONDER_HIT_MODES = { hard: true }; // chế độ đi NGAY khi đoán trúng nước người chơi
+const GM_INSTANT_DEPTH = 20;
 const BLUNDER_RATE = { easy: 0.55, medium: 0.28, hard: 0, hell: 0 };
-const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 8, hell: 14 };
-const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 7000, HARD_MAX_THINK_MS = 2500; // TRẦN CỨNG Địa ngục: 7 giây/nước
+const OPENING_BOOK_PLY = { easy: 2, medium: 6, hard: 12, hell: 14 };
+const MAX_THINK_MS = 4000, HELL_MAX_THINK_MS = 7000, HARD_MAX_THINK_MS = 5000; // TRẦN CỨNG Địa ngục: 7 giây/nước
 
 let evalLines = {}; // Admin phân tích: các phương án engine đưa ra
 let adminDrawMode = false;
@@ -1235,7 +1256,22 @@ let engineKind = "sf10", botWatch = null, earlyStop = null, shownDepth = 0, mpv 
 let reviewMode = false, reviewData = null, reviewPly = 0, reviewJob = null, reviewFull = null, swallowBest = false;
 // Địa ngục "nghĩ ké" ở lượt người chơi (ponder). on = đang tìm kiếm nền, stopping = đã gửi stop, đợi engine trả bestmove.
 const PONDER_MAX_MS = 7000, HELL_MIN_STOP_DEPTH = 20, HELL_CONTEMPT = 40;
-const ponder = { on:false, stopping:false, depth:0, cp:null, timer:null, thens:[], pred:null, hit:false };
+const ponder = { on:false, stopping:false, depth:0, cp:null, timer:null, thens:[], pred:null, hit:false, t0:0, best:null, bestPred:null, bestDepth:0, done:false, fenKey:null };
+let ponderHitTimer = null;
+// Đặt sức mạnh cho engine: SF19 có UCI_Elo (giới hạn sức mạnh theo Elo), SF10 chỉ có Skill Level.
+function applyBotStrength(cfg){
+  if(!engine) return;
+  engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
+  if(engineKind === "sf19"){
+    if(cfg.elo){ engine.postMessage("setoption name UCI_LimitStrength value true"); engine.postMessage(`setoption name UCI_Elo value ${cfg.elo}`); }
+    else engine.postMessage("setoption name UCI_LimitStrength value false");
+  }
+}
+function setFullStrength(){ // nghĩ-ké / phân tích / xem lại ván: luôn dùng hết sức
+  if(!engine) return;
+  engine.postMessage("setoption name Skill Level value 20");
+  if(engineKind === "sf19") engine.postMessage("setoption name UCI_LimitStrength value false");
+}
 let botPred = null; // nước người chơi mà engine dự đoán (từ "bestmove X ponder Y") → nghĩ-ké đúng thế đó
 let hellTimer = null;
 
@@ -1289,7 +1325,7 @@ async function initEngine(forceCdn){
       if(swallowBest && line.startsWith("bestmove")){ swallowBest = false; return; }
       if(reviewJob){ reviewLine(line); return; }
       if(ponder.on || ponder.stopping){
-        if(line.startsWith("bestmove")){ if(ponder.stopping) finishPonderStop(); else ponder.on = false; return; }
+        if(line.startsWith("bestmove")){ if(ponder.stopping) finishPonderStop(); else { ponderDone(line); ponder.on = false; } return; }
         if(line.startsWith("info ")){ if(ponder.on) ponderInfo(line); return; }
       }
       if(line === "uciok") { const mobileDev = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
@@ -1335,7 +1371,7 @@ async function initEngine(forceCdn){
         const bmParts = line.split(" ");
         let uci = bmParts[1];
         const bmPred = bmParts[2] === "ponder" ? (bmParts[3] || null) : null;
-        clearTimeout(botWatch);
+        clearTimeout(botWatch); clearTimeout(ponderHitTimer);
         earlyStop = null;
         engineBusy = false;
         if(!uci || uci === "(none)") return;
@@ -1370,7 +1406,7 @@ async function initEngine(forceCdn){
           engine.postMessage(`setoption name Contempt value ${mode === "hell" ? HELL_CONTEMPT : 24}`);
           adminDrawMode = false;
           const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
-          engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
+          applyBotStrength(cfg);
           render();
           setTimeout(startPonder, 60);
           return;
@@ -1378,7 +1414,7 @@ async function initEngine(forceCdn){
 
         const uci0 = uci;
         uci = pickVariety(uci);
-        botPred = (mode === "hell" && uci === uci0) ? bmPred : null; // đổi nước (đa dạng khai cuộc) thì dự đoán không còn đúng
+        botPred = (PONDER_MODES[mode] && uci === uci0) ? bmPred : null; // đổi nước (đa dạng khai cuộc) thì dự đoán không còn đúng
         applyBotUci(uci);
       }
     };
@@ -1443,6 +1479,7 @@ function renderUser(){
   $("adminBadge").hidden = !admin;
   $("adminTabBtn").hidden = !admin;
   $("evalRow").hidden = !admin;
+  $("liveRow").hidden = !admin;
   if(!admin) {
     hintArrow = null;
     if(document.querySelector("#admin.section.active")) tab("home");
@@ -1935,7 +1972,7 @@ function drawBoardCanvas() {
   const mvKey = lastMove ? dc.histLen + lastMove.from + lastMove.to : "";
   if (mvKey !== lastGlowKey) { lastGlowKey = mvKey; moveGlowStart = nowT; }
   const gAge = nowT - moveGlowStart, gK = Math.max(0, 1 - gAge / 2200), gPulse = 0.5 + 0.5 * Math.sin(gAge / 120);
-  const rvm0 = (reviewMode && reviewPly > 0 && reviewData) ? reviewData.moves[reviewPly - 1] : null, rvm = rvm0 && !rvm0.del ? rvm0 : null;
+  const rvm0 = (reviewMode && reviewPly > 0 && reviewData) ? reviewData.moves[reviewPly - 1] : null, rvm = (rvm0 && !rvm0.del ? rvm0 : null) || liveBadgeForLast();
   // Disabled continuous glow RAF (caused green flashing on Android)
   // if (gK > 0 && lastMove && !glowRaf) glowRaf = requestAnimationFrame(() => { glowRaf = null; drawBoardCanvas(); });
 
@@ -2098,7 +2135,7 @@ function startGame(){
   clockSeconds = Number($("timeChoice").value);
   remaining = { w: clockSeconds, b: clockSeconds };
 
-  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":"Celestial Bot"}`;
+  $("gameTitle").textContent = `${modeNames[mode]} · ${mode==="hell"?"Celestial Max (Elo ~3000+)":mode==="hard"?"Celestial GM (Elo ~2700)":"Celestial Bot"}`;
   $("topName").textContent = human==="w" ? `Celestial (${modeNames[mode]}) · Đen` : `Celestial (${modeNames[mode]}) · Trắng`;
   $("bottomName").textContent = user ? (user.displayName || user.email) : "Bạn";
   document.body.classList.toggle("hell", mode === "hell");
@@ -2117,7 +2154,7 @@ function startGame(){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     botPred = null; ponder.pred = null; ponder.hit = false;
     engine.postMessage("ucinewgame");
-    engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
+    applyBotStrength(cfg);
     if(mode === "hell") {
       engine.postMessage(`setoption name Contempt value ${HELL_CONTEMPT}`); engine.postMessage("setoption name Move Overhead value 10");
     } else { engine.postMessage("setoption name Contempt value 24"); } // mặc định, tránh dính Contempt của ván Địa ngục trước
@@ -2138,7 +2175,7 @@ function gameInProgress(){
 function stopBotThinking(){
   pendingBot = false; earlyStop = null; engineBusy = false;
   botStartPending = false; preStartDeleteMode = false;
-  clearInterval(hellTimer); hellTimer = null; stopPonder();
+  clearInterval(hellTimer); hellTimer = null; stopPonder(); clearTimeout(ponderHitTimer);
   clearTimeout(botWatch);
   try{ if(engine) engine.postMessage("stop"); }catch(e){}
 }
@@ -2165,6 +2202,7 @@ $("newBtn").onclick = async () => {
 };
 
 function render(){
+  liveSync();
   updateMatchLock();
   syncAdminDeleteUI();
   drawBoardCanvas();
@@ -2176,7 +2214,7 @@ function render(){
     const frag = document.createDocumentFragment();
     for(let i=0;i<hist.length;i+=2){
       const row=document.createElement("div"); row.className="move-row";
-      row.innerHTML=`<span>${i/2+1}.</span><span>${hist[i]||""}</span><span>${hist[i+1]||""}</span>`;
+      row.innerHTML=`<span>${i/2+1}.</span><span>${hist[i]||""}${liveMoveBadge(i)}</span><span>${hist[i+1]||""}${liveMoveBadge(i+1)}</span>`;
       frag.append(row);
     }
     const ml = $("moveList"); ml.textContent = ""; ml.append(frag); ml.scrollTop = ml.scrollHeight;
@@ -2195,8 +2233,177 @@ function render(){
   const canUndo = hist.length > (game._adm ? game._adm.pre.length : 0) && !isOnlineGame && !reviewMode && (isAdminUser() || mode === "easy");
   $("undoBtn").disabled = !canUndo;
   if(mlChanged) renderCaptured();
+  liveUI();
   saveGame();
 }
+
+
+// ============================================================================
+// ADMIN: ĐÁNH GIÁ NƯỚC ĐI NGAY TRONG TRẬN (Thiên tài / Tuyệt vời / Tốt nhất / ... / Sai lầm nghiêm trọng)
+// ============================================================================
+// Dùng một engine PHỤ riêng (worker thứ 2) nên không làm gián đoạn bot đang tính hay nghĩ-ké.
+// Mỗi nước (của cả hai bên) được so với nước tốt nhất của engine ở thế trước đó, theo xác suất thắng - cùng thang điểm với "Xem lại trận".
+const LIVE_MS = 450;
+const live = { on: (()=>{ try{ return localStorage.getItem("liveRate") !== "0"; }catch(e){ return true; } })(),
+  worker:null, kind:null, ready:false, initing:false, busy:false, queue:[], cur:null, cache:new Map(),
+  ratings:[], hist:"", adm:"", sig:null, minIdx:0, retried:false };
+const lkey = f => f.split(" ").slice(0,4).join(" ");
+function liveActive(){ return live.on && !reviewMode && isAdminUser(); }
+
+function liveReplay(){
+  try{
+    const own = ownMoves(game), g = baseChess(game), fens = [g.fen()], mv = [];
+    for(const m of own){ const r = g.move({ from:m.from, to:m.to, promotion:m.promotion }); if(!r) return null; mv.push(r); fens.push(g.fen()); }
+    return { fens, mv, off: game._adm ? game._adm.pre.length : 0 };
+  }catch(e){ return null; }
+}
+async function liveInitWorker(forceCdn){
+  if(live.worker || live.initing) return;
+  live.initing = true;
+  try{
+    let w = null, kind = "sf10";
+    if(!forceCdn){
+      try{
+        const head = await fetch(LOCAL_SF, { method:"HEAD", cache:"no-store" });
+        if(head.ok && /javascript/.test(head.headers.get("content-type") || "")){ w = new Worker(LOCAL_SF); kind = "sf19"; }
+      }catch(e){}
+    }
+    if(!w){
+      const res = await fetch(CELESTIAL_CDN), t = await res.text();
+      w = new Worker(URL.createObjectURL(new Blob([t], { type:"application/javascript" })));
+    }
+    live.worker = w; live.kind = kind; live.ready = false; live.busy = false;
+    w.onmessage = e => liveMsg(String(e.data || "").trim());
+    w.onerror = () => {
+      const k = live.kind;
+      try{ w.terminate(); }catch(e){}
+      live.worker = null; live.ready = false; live.busy = false; live.initing = false;
+      if(k === "sf19" && !live.retried){ live.retried = true; liveInitWorker(true); }
+    };
+    w.postMessage("uci");
+    if(kind === "sf19") setTimeout(() => { if(live.worker === w && !live.ready && !live.retried){ live.retried = true; try{ w.terminate(); }catch(e){} live.worker = null; live.initing = false; liveInitWorker(true); } }, 12000);
+  }catch(err){ console.warn("Không tải được engine đánh giá:", err); }
+  live.initing = false;
+}
+function liveMsg(line){
+  const w = live.worker; if(!w) return;
+  if(line === "uciok"){
+    w.postMessage("setoption name Hash value 32"); w.postMessage("setoption name Threads value 1");
+    w.postMessage("setoption name MultiPV value 2");
+    if(live.kind === "sf19") w.postMessage("setoption name UCI_LimitStrength value false");
+    w.postMessage("setoption name Skill Level value 20"); w.postMessage("isready");
+  }else if(line === "readyok"){ live.ready = true; liveNext(); }
+  else if(live.cur && line.startsWith("info ") && line.includes(" score ") && !/bound/.test(line)){
+    const pv = Number((line.match(/multipv (\d+)/) || [0, 1])[1]);
+    const mt = line.match(/score mate (-?\d+)/), cp = line.match(/score cp (-?\d+)/);
+    if(mt){ const v = Number(mt[1]); live.cur.s[pv] = v > 0 ? 10000 - v : -10000 - v; }
+    else if(cp) live.cur.s[pv] = Number(cp[1]);
+  }else if(line.startsWith("bestmove") && live.cur){
+    const b = line.split(" ")[1], c = live.cur;
+    live.cache.set(c.k, { s1: c.s[1] ?? 0, s2: c.s[2] ?? null, best: (b && b !== "(none)") ? b : null });
+    if(live.cache.size > 500){ const first = live.cache.keys().next().value; live.cache.delete(first); }
+    live.cur = null; live.busy = false;
+    liveRate(); liveNext();
+  }
+}
+function liveEnqueue(fen){
+  const k = lkey(fen);
+  if(live.cache.has(k) || (live.cur && live.cur.k === k) || live.queue.some(f => lkey(f) === k)) return;
+  try{ const t = new Chess(fen); if(t.game_over()){ live.cache.set(k, { s1: t.in_checkmate() ? -10000 : 0, s2:null, best:null }); return; } }catch(e){ return; }
+  live.queue.push(fen);
+}
+function liveNext(){
+  if(!live.worker || !live.ready || live.busy || !live.queue.length || !live.on) return;
+  const fen = live.queue.shift();
+  live.cur = { k: lkey(fen), s:{} }; live.busy = true;
+  live.worker.postMessage("position fen " + fen);
+  live.worker.postMessage("go movetime " + LIVE_MS);
+}
+function liveClassify(a, b, m, fenAfter){
+  const wB = winPct(a.s1), wA = winPct(-b.s1), loss = Math.max(0, wB - wA);
+  const uci = m.from + m.to + (m.promotion || "");
+  let k = (loss <= 0.5 || uci === a.best) ? "best" : loss <= 2 ? "excellent" : loss <= 5 ? "good" : loss <= 10 ? "inacc" : loss <= 20 ? "mistake" : "blunder";
+  if((k === "best" || k === "excellent") && wB < 90 && wA >= 45 && isSac(fenAfter, m)) k = "brilliant";
+  else if(k === "best" && a.s2 != null && wB - winPct(a.s2) >= 15) k = "great";
+  return { k, loss, uci };
+}
+function liveRate(){
+  if(!liveActive()) return;
+  const R = liveReplay(); if(!R) return;
+  let changed = false;
+  for(let i = live.minIdx; i < R.mv.length; i++){
+    const abs = R.off + i;
+    if(live.ratings[abs]) continue;
+    const a = live.cache.get(lkey(R.fens[i])), b = live.cache.get(lkey(R.fens[i + 1]));
+    if(!a || !b) continue;
+    const m = R.mv[i], c = liveClassify(a, b, m, R.fens[i + 1]);
+    let bestSan = null;
+    if(a.best && c.uci !== a.best){
+      try{ const r = new Chess(R.fens[i]).move({ from:a.best.slice(0,2), to:a.best.slice(2,4), promotion:a.best[4] || "q" }); bestSan = r ? r.san : null; }catch(e){}
+    }
+    live.ratings[abs] = { side:m.color, piece:m.piece, san:m.san, k:c.k, loss:c.loss, bestSan };
+    changed = true;
+  }
+  if(changed){ lastMoveListKey = null; render(); }
+}
+// Gọi ở đầu render(): phát hiện nước mới / hoàn tác / ván mới / xoá quân, rồi xếp hàng các thế cần phân tích.
+function liveSync(){
+  if(!liveActive()) return;
+  const hs = game.history().join(" "), adm = game._adm ? String(game._adm.id) : "";
+  if(live.sig === hs + "|" + adm) return;
+  const extend = live.sig !== null && live.adm === adm && hs.startsWith(live.hist) && (live.hist === "" || hs.length === live.hist.length || hs[live.hist.length] === " ");
+  live.sig = hs + "|" + adm; live.hist = hs; live.adm = adm;
+  const R = liveReplay(); if(!R) return;
+  if(!extend){ live.ratings = []; live.queue = []; live.minIdx = Math.max(0, R.mv.length - 4); }
+  for(let i = live.minIdx; i < R.fens.length; i++) liveEnqueue(R.fens[i]);
+  if(!live.worker) liveInitWorker(); else liveNext();
+  liveRate();
+}
+function liveBadgeForLast(){
+  if(!liveActive()) return null;
+  const r = live.ratings[game.history().length - 1];
+  return r ? { k: r.k } : null;
+}
+function liveMoveBadge(idx){
+  if(!liveActive()) return "";
+  const r = live.ratings[idx]; if(!r) return "";
+  const B = BADGES[r.k];
+  return `<i class="mv-b" style="background:${B.c}" title="${B.name}">${B.sym}</i>`;
+}
+function liveUI(){
+  const row = $("liveRow"); if(!row) return;
+  const admin = isAdminUser();
+  row.hidden = !admin;
+  if(!admin) return;
+  $("liveToggle").textContent = live.on ? "Đang bật · Tắt" : "Đang tắt · Bật";
+  const box = $("liveChips");
+  if(!live.on || reviewMode){ box.textContent = ""; return; }
+  const hv = game.history({verbose:true}), n = hv.length, off = game._adm ? game._adm.pre.length : 0;
+  let html = "";
+  for(let p = n - 1; p >= Math.max(0, n - 2, off); p--){
+    const m = hv[p], r = live.ratings[p], who = m.color === "w" ? "Trắng" : "Đen";
+    const mv = `${glyph[m.color][m.piece]} ${m.san}`;
+    if(r){
+      const B = BADGES[r.k];
+      let extra = "";
+      if(r.k === "inacc" || r.k === "mistake" || r.k === "blunder"){
+        extra = `<small>Mất ~${Math.max(1, Math.round(r.loss))}% cơ hội thắng${r.bestSan ? " · Nước tốt hơn: " + r.bestSan : ""}</small>`;
+      }
+      html += `<div class="live-chip"><i style="background:${B.c}">${B.sym}</i><span><b>${who}</b> ${mv} — <b style="color:${B.c}">${B.name}</b>${extra}</span></div>`;
+    }else if(p === n - 1 && p >= live.minIdx + off){
+      html += `<div class="live-chip"><i style="background:#555c7a">…</i><span><b>${who}</b> ${mv} — đang đánh giá…</span></div>`;
+    }
+  }
+  box.innerHTML = html;
+}
+$("liveToggle").onclick = () => {
+  if(!isAdminUser()) return;
+  live.on = !live.on;
+  try{ localStorage.setItem("liveRate", live.on ? "1" : "0"); }catch(e){}
+  if(live.on){ live.sig = null; live.queue = []; }
+  else { live.queue = []; }
+  lastMoveListKey = null; render();
+};
 
 // ============================================================================
 // ADMIN: XOÁ QUÂN CỦA BOT TRÊN BÀN CỜ (quân bị xoá được tính là đã bị ăn)
@@ -2392,6 +2599,18 @@ function shouldStopEarly(hist, elapsedMs, budgetMs){
     const cps = last.map(x => x.cp);
     return Math.max(...cps) - Math.min(...cps) <= scoreSwing;
   }
+  if(mode === "hard"){ // Đại kiện tướng: nước hiển nhiên đi rất nhanh, nước khó dùng tới 5s
+    const opening = game.history().length < 20, n = hist.length;
+    const swing = k => { const c = hist.slice(-k).map(x => x.cp); return Math.max(...c) - Math.min(...c); };
+    const same = k => hist.slice(-k).every(x => x.mv === hist[n - 1].mv);
+    const last = n ? hist[n - 1] : null; if(!last) return false;
+    if(opening) return elapsedMs >= 150 && n >= 3 && last.d >= 10 && same(3) && swing(3) <= 20;
+    // Cấp 1 — hiển nhiên (ăn lại quân, nước duy nhất tốt, thế đã rõ): 5 độ sâu liền một nước, điểm gần như không đổi
+    if(elapsedMs >= 200 && n >= 5 && last.d >= 12 && same(5) && swing(5) <= 10) return true;
+    // Cấp 2 — thường: nghĩ ít nhất ~0,8s, depth >= 16, nước đi ổn định, điểm không tụt
+    if(elapsedMs >= 800 && n >= 4 && last.d >= 16 && same(4) && swing(4) <= 15 && hist[n - 4].cp - last.cp <= 25) return true;
+    return false; // thế khó / còn dao động → tiếp tục tới trần cứng
+  }
   if(elapsedMs < Math.max(400, budgetMs * 0.5)) return false;
   if(hist.length < 4) return false;
   const last = hist.slice(-4);
@@ -2421,7 +2640,7 @@ function trackEarlyStop(line){
 // Bảng băm (Hash) được giữ nguyên nên khi bạn đi xong, lượt tìm kiếm thật của bot bắt đầu từ một cây đã
 // được đào sâu sẵn → cùng 15s nhưng nhìn sâu hơn hẳn. Bạn đi càng lâu, bot càng "chín".
 function canPonder(){
-  return mode === "hell" && engineReady && !!engine && !isOnlineGame && !reviewMode && !reviewJob &&
+  return !!PONDER_MODES[mode] && engineReady && !!engine && !isOnlineGame && !reviewMode && !reviewJob &&
          !matchRecorded && !game.game_over() && !engineBusy && !pendingBot &&
          game.turn() === human && game.history().length > 0 && !ponder.on && !ponder.stopping;
 }
@@ -2429,18 +2648,32 @@ function startPonder(){
   if(!canPonder()) return;
   try{
     ponder.on = true; ponder.stopping = false; ponder.depth = 0; ponder.cp = null; ponder.hit = false;
+    ponder.t0 = performance.now(); ponder.best = null; ponder.bestPred = null; ponder.bestDepth = 0; ponder.done = false; ponder.fenKey = null;
     // Nghĩ-ké ĐÚNG THẾ: nếu có nước dự đoán của người chơi → tìm kiếm ngay ở thế sau nước đó (bot tới lượt).
-    // Người chơi đi đúng nước → lượt tìm thật bắt đầu từ bàn băm đã sâu sẵn ở đúng thế này (đi nhanh + mạnh).
-    // Không có / sai dự đoán → vẫn có lợi từ bàn băm như cũ.
+    // Người chơi đi đúng nước → bot dùng luôn kết quả đã tính (đi ngay hoặc nghĩ tiếp phần còn lại, không bắt đầu lại).
     let pcmd = botPositionCmd(); ponder.pred = null;
-    if(botPred && game.moves({verbose:true}).some(m => m.from + m.to + (m.promotion || "") === botPred)){
-      ponder.pred = botPred; pcmd += (pcmd.indexOf(" moves ") >= 0 ? " " : " moves ") + botPred;
+    if(botPred){
+      const pm = game.moves({verbose:true}).find(m => m.from + m.to + (m.promotion || "") === botPred);
+      if(pm){
+        try{
+          const t = new Chess(game.fen());
+          t.move({ from:pm.from, to:pm.to, promotion:pm.promotion || "q" });
+          ponder.fenKey = t.fen().split(" ").slice(0,4).join(" ");
+          ponder.pred = botPred; pcmd += (pcmd.indexOf(" moves ") >= 0 ? " " : " moves ") + botPred;
+        }catch(e){ ponder.pred = null; ponder.fenKey = null; }
+      }
     }
-    engine.postMessage("setoption name Skill Level value 20");
+    setFullStrength();
     engine.postMessage("setoption name MultiPV value 1");
     engine.postMessage(pcmd);
-    engine.postMessage(`go movetime ${PONDER_MAX_MS}`);
+    engine.postMessage(`go movetime ${PONDER_MAX_BY_MODE[mode] || 7000}`);
   }catch(e){ ponder.on = false; }
+}
+// Lượt nghĩ-ké kết thúc tự nhiên (hết giờ) → lưu nước tốt nhất ở thế dự đoán để đi ngay nếu người chơi đi đúng.
+function ponderDone(line){
+  if(!ponder.pred) return;
+  const p = line.split(" ");
+  if(p[1] && p[1] !== "(none)"){ ponder.best = p[1]; ponder.bestPred = p[2] === "ponder" ? (p[3] || null) : null; ponder.done = true; }
 }
 function flushPonder(){
   const cbs = ponder.thens; ponder.thens = [];
@@ -2452,6 +2685,51 @@ function finishPonderStop(){
   flushPonder();
 }
 function resetPonder(){ finishPonderStop(); }
+// ĐẠI KIỆN TƯỚNG: nếu người chơi đi ĐÚNG nước đã dự đoán → dùng luôn kết quả nghĩ-ké.
+//  - Lượt nghĩ-ké đã xong / đủ ngân sách (3s) / đã đủ sâu → đi NGAY.
+//  - Chưa đủ → không bắt đầu lại: biến lượt nghĩ-ké thành lượt tìm kiếm thật, chỉ nghĩ nốt phần còn thiếu (tổng ≤ 3s).
+function ponderHitMove(){
+  if(!PONDER_HIT_MODES[mode] || !ponder.pred || !ponder.fenKey) return false;
+  if(isOnlineGame || reviewMode || reviewJob || matchRecorded || game.game_over() || game.turn() === human || engineBusy || pendingBot || game._adm) return false;
+  if(ponder.stopping || !(ponder.on || ponder.done)) return false;
+  const lm = game.history({verbose:true}).slice(-1)[0];
+  if(!lm || (lm.from + lm.to + (lm.promotion || "")) !== ponder.pred) return false;
+  if(game.fen().split(" ").slice(0,4).join(" ") !== ponder.fenKey) return false; // thế cờ thật phải trùng thế đã nghĩ-ké
+  if(bookMove() || wantVariety()) return false;                                   // khai cuộc: giữ đa dạng nước đi
+  const legal = game.moves({verbose:true}), legalUci = legal.map(m => m.from + m.to + (m.promotion || ""));
+  if(legal.length < 2) return false;
+  const allowed = getNonRepeatingBotMoves(1), restricted = allowed.length < legalUci.length;
+  const budget = Math.min(HARD_MAX_THINK_MS, (DIFFICULTY.hard.movetime || 3000));
+  const leftMs = clockSeconds ? remaining[game.turn()] * 1000 : null;
+  const cap = leftMs != null ? Math.min(budget, Math.max(250, leftMs / 30 - 200)) : budget;
+  if(ponder.done){ // đã nghĩ xong trước khi bạn đi → đi ngay
+    const b = ponder.best;
+    if(!b || !legalUci.includes(b) || (restricted && !allowed.includes(b))) return false;
+    const next = ponder.bestPred, fen0 = game.fen();
+    ponder.hit = true; ponder.pred = null; ponder.fenKey = null; ponder.done = false; botPred = null;
+    engineBusy = true; render();
+    setTimeout(() => {
+      engineBusy = false;
+      if(game.fen() === fen0 && !reviewMode && !matchRecorded && !game.game_over() && game.turn() !== human){ botPred = next; applyBotUci(b); }
+      else { render(); if(!isOnlineGame && !game.game_over() && game.turn() !== human) setTimeout(botMove, 0); }
+    }, 60);
+    return true;
+  }
+  // đang nghĩ-ké → nhận làm lượt tìm kiếm thật (không đợi, không làm lại)
+  if(restricted) return false;                       // cần searchmoves (tránh lặp thế) → để nhánh thường lo
+  const elapsed = performance.now() - ponder.t0;
+  const remain = (ponder.depth >= GM_INSTANT_DEPTH) ? 0 : Math.max(0, cap - elapsed);
+  clearTimeout(ponder.timer); clearTimeout(ponderHitTimer);
+  ponder.on = false; ponder.stopping = false; ponder.hit = true;
+  ponder.pred = null; ponder.fenKey = null; botPred = null;
+  engineBusy = true; engineMode = "play"; earlyStop = null; mpv = null; shownDepth = ponder.depth;
+  clearInterval(hellTimer); hellTimer = null;
+  render();
+  const sendStop = () => { if(engineBusy && engineMode === "play"){ try{ engine.postMessage("stop"); }catch(e){} } };
+  if(remain <= 40) sendStop(); else ponderHitTimer = setTimeout(sendStop, remain);
+  armBotWatch(remain + 3500);
+  return true;
+}
 // Dừng ponder rồi mới chạy cb: phải đợi engine trả bestmove của lượt nền, nếu không nó sẽ bị nhầm với bestmove thật.
 function stopPonder(then){
   if(then) ponder.thens.push(then);
@@ -2469,11 +2747,13 @@ function ponderInfo(line){
   { const sm = line.match(/score (cp|mate) (-?\d+)/); // điểm theo góc nhìn người chơi (bên đang tới lượt)
     if(sm && !/bound/.test(line)){ let v = Number(sm[2]); if(ponder.pred) v = -v; /* thế dự đoán: bên tới lượt là bot → đổi về góc nhìn người chơi */ ponder.cp = sm[1] === "mate" ? (v > 0 ? 1 : -1) * (100000 - Math.abs(v)) : v; } }
   const d = Number(dm[1]);
+  { const pvm = line.match(/ pv ([a-h][1-8][a-h][1-8][qrbn]?)/), mpm = line.match(/ multipv (\d+)/);
+    if(pvm && !/bound/.test(line) && (!mpm || mpm[1] === "1")){ ponder.best = pvm[1]; ponder.bestDepth = d; } }
   if(d <= ponder.depth) return;
   ponder.depth = d;
   if(engineBusy || reviewMode || matchRecorded || game.game_over() || game.turn() !== human) return;
   const turn = game.turn() === "w" ? "Trắng" : "Đen";
-  $("gameStatus").textContent = `${turn} đi${game.in_check() ? " · Đang bị chiếu!" : ""} · 🧠 Địa ngục đang nghĩ trước (d${d})`;
+  $("gameStatus").textContent = `${turn} đi${game.in_check() ? " · Đang bị chiếu!" : ""} · 🧠 ${mode === "hell" ? "Địa ngục" : "Đại kiện tướng"} đang nghĩ trước (d${d})${ponder.pred ? " · dự đoán " + ponder.pred : ""}`;
 }
 document.addEventListener("visibilitychange", () => {
   if(document.hidden) stopPonder();            // ẩn tab/app → nghỉ cho đỡ nóng máy, hao pin
@@ -2785,6 +3065,7 @@ function applyBotUci(uci){
 
 function botMove(){
   if(isOnlineGame || game.game_over() || game.turn()===human || engineBusy) return;
+  if(ponderHitMove()) return;                                                  // đoán trúng nước người chơi → đi ngay / nghĩ nốt
   if(ponder.on || ponder.stopping){ stopPonder(() => botMove()); return; } // dừng nghĩ nền rồi mới đi
   { const lm = game.history({verbose:true}).slice(-1)[0];
     ponder.hit = !!(ponder.pred && lm && (lm.from + lm.to + (lm.promotion || "")) === ponder.pred); }
@@ -2805,23 +3086,38 @@ function botMove(){
       engineBusy = false;
       if(game.fen() === fen0 && !reviewMode && !game.game_over() && game.turn() !== human) applyBotUci(bk);
       else { render(); if(!isOnlineGame && !game.game_over() && game.turn() !== human) setTimeout(botMove, 0); }
-    }, mode === "hell" ? 120 + Math.random() * 180 : 300 + Math.random() * 500);
+    }, (mode === "hell" || mode === "hard") ? 100 + Math.random() * 150 : 300 + Math.random() * 500);
     return;
+  }
+  if(mode === "hard" && !game._adm){ // nước duy nhất: đi ngay, không cần tính
+    const lg = game.moves({verbose:true});
+    if(lg.length === 1){
+      const u = lg[0].from + lg[0].to + (lg[0].promotion || ""), fen0 = game.fen();
+      engineBusy = true; render(); botPred = null;
+      setTimeout(() => {
+        engineBusy = false;
+        if(game.fen() === fen0 && !reviewMode && !matchRecorded && !game.game_over() && game.turn() !== human) applyBotUci(u);
+        else { render(); if(!isOnlineGame && !game.game_over() && game.turn() !== human) setTimeout(botMove, 0); }
+      }, 80);
+      return;
+    }
   }
   if(engineReady && engine){
     const cfg = DIFFICULTY[mode] || DIFFICULTY.easy;
     const hell = mode === "hell";
     const leftMs = clockSeconds ? remaining[game.turn()] * 1000 : null;
-    const gm = mode === "hard", deep = hell; // Đại kiện tướng đã nerf: không dùng quản lý thời gian sâu/ dừng sớm; chỉ Địa ngục mới deep // deep = bot dùng quản lý thời gian thông minh + dừng sớm khi chín
-    const think = Math.min(hell ? HELL_MAX_THINK_MS : gm ? HARD_MAX_THINK_MS : MAX_THINK_MS, hell
+    const gm = mode === "hard", deep = hell || gm; // Đại kiện tướng đã nerf: không dùng quản lý thời gian sâu/ dừng sớm; chỉ Địa ngục mới deep // deep = bot dùng quản lý thời gian thông minh + dừng sớm khi chín
+    let think = Math.min(hell ? HELL_MAX_THINK_MS : gm ? HARD_MAX_THINK_MS : MAX_THINK_MS, hell
       ? hellThinkMs(cfg.movetime, leftMs)
       : gm ? Math.min(cfg.movetime, leftMs != null ? Math.max(250, leftMs / 30 - 200) : cfg.movetime)
       : (leftMs != null ? Math.min(cfg.movetime, Math.max(250, leftMs / 30 - 200)) : cfg.movetime));
+    // Đại kiện tướng: khai cuộc đi rất nhanh (hết sách vẫn chỉ nghĩ ngắn), trung cuộc/tàn cuộc mới dùng đủ 3s
+    if(gm){ const pl = game.history().length; think = Math.min(think, pl < 20 ? 600 : pl < 30 ? 1500 : think); }
     ponder.pred = null; ponder.hit = false; ponder.depth = 0; botPred = null; // đã dùng xong cho nước này
     engineBusy = true;
     engineMode = "play";
     render();
-    engine.postMessage(`setoption name Skill Level value ${cfg.skill}`);
+    applyBotStrength(cfg);
     const variety = wantVariety();
     engine.postMessage(`setoption name MultiPV value ${variety ? 4 : 1}`);
     mpv = variety ? { d: 0, lines: {}, tol: hell ? 3 : 25 } : null;
@@ -2832,7 +3128,7 @@ function botMove(){
     const forced = game.moves().length === 1;
     const hardMs = hell
       ? (forced ? think : (leftMs != null ? Math.min(HELL_MAX_THINK_MS, Math.max(think, Math.round(leftMs / 10))) : HELL_MAX_THINK_MS))
-      : gm ? (forced ? think : Math.min(HARD_MAX_THINK_MS, Math.round(think * 1.4)))
+      : gm ? (forced ? Math.min(think, 400) : Math.min(HARD_MAX_THINK_MS, think))
       : think;
     earlyStop = deep ? { t0: performance.now(), budget: think, hard: hardMs, minDepth: HELL_MIN_STOP_DEPTH, hist: [], lastDepth: 0, sent: false } : null;
     // hell: khi không kém thế (điểm bot >= -100cp) thì TRÁNH mọi nước lặp thế cờ (ép thắng thay vì hoà lặp);
@@ -3068,7 +3364,7 @@ $("evalBtn").onclick=()=>{
     : adminMaterial.imbalanced
       ? `Thế chấp quân/lệch chất (${adminMaterial.diff >= 0 ? "+" : ""}${adminMaterial.diff.toFixed(1)} điểm): đang tính phương án chiến thuật sâu (tối đa 7 giây)...`
       : "Celestial đang phân tích sâu, cân bằng công thủ (tối đa 7 giây)...";
-  engine.postMessage("setoption name Skill Level value 20");
+  setFullStrength();
   engine.postMessage(botPositionCmd());
   engine.postMessage("go movetime 7000");
 };
@@ -3113,7 +3409,7 @@ function startReview(){
   engineBusy = true;
   $("reviewModal").hidden = false; $("rvSummary").hidden = true; $("rvStart").hidden = true; $("rvProgress").hidden = false;
   engine.postMessage("ucinewgame");
-  engine.postMessage("setoption name Skill Level value 20");
+  setFullStrength();
   engine.postMessage("setoption name MultiPV value 2");
   reviewNext();
 }
