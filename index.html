@@ -2326,7 +2326,7 @@ async function liveInitWorker(forceCdn){
 function liveMsg(line){
   const w = live.worker; if(!w) return;
   if(line === "uciok"){
-    w.postMessage("setoption name Hash value 32"); w.postMessage("setoption name Threads value 1");
+    w.postMessage("setoption name Hash value 32"); if(live.kind === "sf19") w.postMessage("setoption name Threads value 1"); /* Stockfish 10: đặt Threads=1 làm engine không trả readyok */
     w.postMessage("setoption name MultiPV value 2");
     if(live.kind === "sf19") w.postMessage("setoption name UCI_LimitStrength value false");
     w.postMessage("setoption name Skill Level value 20"); w.postMessage("isready");
@@ -2583,7 +2583,12 @@ function adminUseClassicEngine(){
     try{ live.worker.terminate(); }catch(e){}
     live.worker = null; live.ready = false; live.busy = false; live.cur = null; live.initing = false;
     live.retried = true; live.sig = null; live.queue = [];
-    liveInitWorker(true);
+    // Stockfish 10 treo nếu 2 engine cùng khởi động một lúc → chờ engine của bot sẵn sàng rồi mới nạp engine đánh giá
+    const startLive = n => {
+      if(!engineReady && n < 40){ setTimeout(() => startLive(n + 1), 500); return; }
+      setTimeout(() => { if(!live.worker) liveInitWorker(true); }, 800);
+    };
+    startLive(0);
   }
   return switched;
 }
