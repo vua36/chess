@@ -1313,7 +1313,7 @@ function armBotWatch(ms){
 const LOCAL_SF = "stockfish-19-lite-single.js";
 
 async function makeWorker(forceCdn){
-  if(!forceCdn){
+  if(!forceCdn && !classicNeeded()){
     try {
       const head = await fetch(LOCAL_SF, { method: "HEAD", cache: "no-store" });
       if(head.ok && /javascript/.test(head.headers.get("content-type") || "")){
@@ -2300,7 +2300,7 @@ async function liveInitWorker(forceCdn){
   live.initing = true;
   try{
     let w = null, kind = "sf10";
-    if(!forceCdn){
+    if(!forceCdn && !classicNeeded()){
       try{
         const head = await fetch(LOCAL_SF, { method:"HEAD", cache:"no-store" });
         if(head.ok && /javascript/.test(head.headers.get("content-type") || "")){ w = new Worker(LOCAL_SF); kind = "sf19"; }
@@ -2564,12 +2564,29 @@ $("botStartBtn").onclick = () => {
   updateBotPreStartUI();
   startClock();
   render();
+  if(!engineReady || !engine){ pendingBot = true; return; } // engine đang nạp lại → chờ readyok rồi bot mới đi
   setTimeout(() => { if(!isOnlineGame && !game.game_over() && game.turn() !== human) botMove(); }, 80);
 };
 
 // ============================================================================
 // ADMIN: ĐỔI QUÂN (cả 2 bên) - ví dụ đổi Tốt thành Hậu. Dùng cùng cơ chế dựng lại ván từ FEN như "Xoá quân".
 // ============================================================================
+// Stockfish 19 (NNUE) bị sập hẳn với một số thế cờ lạ (vd. 7 Mã, 3 Tượng cùng ô, nhiều Hậu ở hàng sau) → bot đứng im, đánh giá không hiện.
+// Stockfish 10 (đánh giá cổ điển) chạy ổn với mọi thế cờ, nên ván đã đổi quân sẽ dùng engine này.
+function classicNeeded(){
+  try{ return !!(game && game._adm && Array.isArray(game._adm.cuts) && game._adm.cuts.some(c => c.rep)); }catch(e){ return false; }
+}
+function adminUseClassicEngine(){
+  let switched = false;
+  if(!isOnlineGame && engineKind === "sf19"){ pendingBot = false; useCdnEngine(); switched = true; }
+  if(live.worker && live.kind === "sf19"){
+    try{ live.worker.terminate(); }catch(e){}
+    live.worker = null; live.ready = false; live.busy = false; live.cur = null; live.initing = false;
+    live.retried = true; live.sig = null; live.queue = [];
+    liveInitWorker(true);
+  }
+  return switched;
+}
 const ADM_NAMES = { q:"Hậu", r:"Xe", b:"Tượng", n:"Mã", p:"Tốt" };
 function adminChangePiece(sq){
   if(!isAdminUser() || reviewMode || matchRecorded || game.game_over()) return;
@@ -2611,9 +2628,11 @@ function adminChangePiece(sq){
     positionHistory = new Map(); checkCustomRepetition();
     selected = null; hintArrow = null; drawCache = null;
     playSound("move");
+    adminChangeMode = false; // tự tắt sau mỗi lần đổi để không chặn việc đi quân; bấm lại nút để đổi tiếp
+    const switchedEngine = adminUseClassicEngine();
     renderCaptured();
     render();
-    adminNote("🔄 Đã đổi " + ADM_NAMES[p.type] + " → " + ADM_NAMES[nt] + " ở " + sq + ". Bấm quân khác để đổi tiếp.");
+    adminNote("🔄 Đã đổi " + ADM_NAMES[p.type] + " → " + ADM_NAMES[nt] + " ở " + sq + ". Chế độ đổi quân đã tắt, bấm lại nút nếu muốn đổi tiếp.");
     if(isOnlineGame && roomId && fbReady){
       try{
         update(ref(db, `rooms/${roomId}`), {
@@ -2624,7 +2643,8 @@ function adminChangePiece(sq){
     }
     if(game.game_over()){ checkGameOver(); return; }
     if(!isOnlineGame && !botStartPending){
-      if(game.turn() !== human) setTimeout(() => { if(!botStartPending && !game.game_over() && !matchRecorded && game.turn() !== human && !engineBusy) botMove(); }, 900);
+      if(switchedEngine){ if(game.turn() !== human) pendingBot = true; } // engine mới nạp xong (readyok) sẽ tự cho bot đi / nghĩ-ké
+      else if(game.turn() !== human) setTimeout(() => { if(!botStartPending && !game.game_over() && !matchRecorded && game.turn() !== human && !engineBusy) botMove(); }, 900);
       else setTimeout(startPonder, 40);
     }
   });
@@ -4060,6 +4080,7 @@ function restoreSavedGame(){
   $("bottomName").textContent = (user && (user.displayName || user.email)) || "Bạn";
   document.body.classList.toggle("hell", mode === "hell");
   saveEnabled = true;
+  if(classicNeeded() && engineKind === "sf19" && engineReady) adminUseClassicEngine();
   tab("game"); render();
   if(!game.game_over() && !matchRecorded){
     startClock();
