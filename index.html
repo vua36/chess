@@ -247,6 +247,7 @@ body.hell .board-shell{box-shadow:0 0 0 2px #ef8a8acc,0 0 40px #e0404044,0 20px 
 .rank-3{background:linear-gradient(135deg,#cd7f32,#8b4513);color:#fff}
 
 .admin-box{margin-top:10px;padding:12px;border-radius:12px;border:1px dashed #e0c07a55;background:#131f2e99}
+.chg-btn{padding:8px 12px;border-radius:10px;border:1px solid #e0c07a66;background:#1a2638;color:inherit;cursor:pointer;font-weight:700}.chg-btn.on{background:#e0c07a;color:#111;border-color:#e0c07a}
 .admin-box-title{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);margin-bottom:8px;font-weight:700;display:flex;align-items:center;gap:6px}
 
 .modal-backdrop{position:fixed;inset:0;background:#05080fcc;backdrop-filter:blur(10px);display:none;place-items:center;z-index:50;padding:16px}
@@ -805,6 +806,18 @@ body.in-match .tabs button,body.in-match .brand{pointer-events:none!important;op
             <button id="resignBtn" class="danger" hidden>🏳️ Đầu hàng</button>
             <button id="forceBotBtn" class="danger" hidden>👑 Ép bot thua (Admin)</button>
             <button id="adminDeleteBtn" class="danger" hidden>🗑 Xoá quân (Admin)</button>
+            <button id="adminChangeBtn" class="danger" hidden>🔄 Đổi quân (Admin)</button>
+          </div>
+          <div id="adminChangePicker" class="admin-box" hidden>
+            <div class="admin-box-title">🔄 Đổi quân thành:</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <button type="button" class="chg-btn" data-t="q">♕ Hậu</button>
+              <button type="button" class="chg-btn" data-t="r">♖ Xe</button>
+              <button type="button" class="chg-btn" data-t="b">♗ Tượng</button>
+              <button type="button" class="chg-btn" data-t="n">♘ Mã</button>
+              <button type="button" class="chg-btn" data-t="p">♙ Tốt</button>
+            </div>
+            <div class="notice" style="margin:8px 0 0">Chọn loại quân rồi bấm vào quân bất kỳ của cả 2 bên (trừ Vua) để đổi. Màu quân giữ nguyên.</div>
           </div>
         </div>
       </div>
@@ -2060,6 +2073,13 @@ function drawBoardCanvas() {
         const alw = ctx.lineWidth / 2; ctx.strokeRect(x + alw, y + alw, sqSize - 2 * alw, sqSize - 2 * alw);
         ctx.restore();
       }
+      if (adminChangeMode && piece && piece.type !== "k") {
+        ctx.save();
+        ctx.fillStyle = "rgba(52, 152, 219, 0.22)"; ctx.fillRect(x, y, sqSize, sqSize);
+        ctx.strokeStyle = "rgba(52, 152, 219, 0.95)"; ctx.lineWidth = Math.max(2, sqSize * 0.05);
+        const clw = ctx.lineWidth / 2; ctx.strokeRect(x + clw, y + clw, sqSize - 2 * clw, sqSize - 2 * clw);
+        ctx.restore();
+      }
       if (rvm && lastMove && lastMove.to === sq) {
         const B = BADGES[rvm.k], bx = x + sqSize * 0.8, by = y + sqSize * 0.2, br = sqSize * 0.19;
         ctx.save();
@@ -2242,6 +2262,7 @@ function render(){
     $("gameStatus").textContent = engineBusy ? "⏳ Celestial đang tính nước đi..." : turn+" đi"+(game.in_check()?" · Đang bị chiếu!":"");
   }
   if(adminDeleteMode && !game.game_over()) $("gameStatus").textContent = "🗑 Chế độ xoá (Admin): bấm vào quân bất kỳ (trừ Vua) để xoá — bên đối diện được tính là đã ăn quân đó.";
+  if(adminChangeMode && !game.game_over() && !/^🔄 Đã đổi/.test($("gameStatus").textContent)) $("gameStatus").textContent = "🔄 Chế độ đổi quân (Admin): chọn loại quân bên dưới rồi bấm vào quân bất kỳ (trừ Vua) để đổi.";
   updateBotPreStartUI();
   const over = game.game_over() || reviewMode, topSide = human === "w" ? "b" : "w";
   $("topName").classList.toggle("thinking", !over && game.turn() === topSide);
@@ -2427,7 +2448,7 @@ $("liveToggle").onclick = () => {
 // ============================================================================
 // chess.js không có "xoá quân" trong lịch sử nước đi, nên mỗi lần xoá ta dựng ván mới từ FEN sau khi xoá
 // và nối lịch sử cũ vào phía trước (game._adm). Nhờ vậy danh sách nước đi, lưu/khôi phục ván, engine đều chạy đúng.
-let adminDeleteMode = false, _admGameRef = null;
+let adminDeleteMode = false, _admGameRef = null, adminChangeMode = false, adminChangeType = "q";
 // Khi người chơi chọn quân Đen, cho phép chỉnh quân Trắng (bot) trước khi bot thực hiện nước đầu tiên.
 let botStartPending = false, preStartDeleteMode = false;
 function patchAdminHistory(g, st){
@@ -2443,12 +2464,21 @@ function ownMoves(g){ // các nước đi thật sau lần xoá quân gần nh�
 function baseChess(g){ return new Chess(g._adm ? g._adm.fen : undefined); }
 function adminNote(msg){ $("gameStatus").textContent = msg; }
 function syncAdminDeleteUI(){
-  if(_admGameRef !== game){ _admGameRef = game; adminDeleteMode = false; }
+  if(_admGameRef !== game){ _admGameRef = game; adminDeleteMode = false; adminChangeMode = false; }
   const btn = $("adminDeleteBtn"); if(!btn) return;
   const ok = isAdminUser() && !reviewMode && !matchRecorded && !game.game_over() && (saveEnabled || isOnlineGame); // online (đấu bạn bè) không bật saveEnabled nên phải xét riêng
   btn.hidden = !ok;
-  if(!ok) adminDeleteMode = false;
+  if(!ok){ adminDeleteMode = false; adminChangeMode = false; }
   btn.textContent = adminDeleteMode ? "✅ Tắt chế độ xoá" : "🗑 Xoá quân (Admin)";
+  const cb = $("adminChangeBtn"), pk = $("adminChangePicker");
+  if(cb){
+    cb.hidden = !ok;
+    cb.textContent = adminChangeMode ? "✅ Tắt chế độ đổi quân" : "🔄 Đổi quân (Admin)";
+    if(pk){
+      pk.hidden = !(ok && adminChangeMode);
+      pk.querySelectorAll(".chg-btn").forEach(b => b.classList.toggle("on", b.dataset.t === adminChangeType));
+    }
+  }
 }
 function updateBotPreStartUI(){
   const wrap = $("botPreStartControls"), del = $("preStartDeleteBtn"), start = $("botStartBtn");
@@ -2519,7 +2549,7 @@ function adminDeletePiece(sq, setupRemoval=false){
 }
 $("adminDeleteBtn").onclick = () => {
   if(!isAdminUser()) return;
-  adminDeleteMode = !adminDeleteMode; selected = null; hintArrow = null;
+  adminDeleteMode = !adminDeleteMode; if(adminDeleteMode) adminChangeMode = false; selected = null; hintArrow = null;
   render();
 };
 $("preStartDeleteBtn").onclick = () => {
@@ -2537,8 +2567,79 @@ $("botStartBtn").onclick = () => {
   setTimeout(() => { if(!isOnlineGame && !game.game_over() && game.turn() !== human) botMove(); }, 80);
 };
 
+// ============================================================================
+// ADMIN: ĐỔI QUÂN (cả 2 bên) - ví dụ đổi Tốt thành Hậu. Dùng cùng cơ chế dựng lại ván từ FEN như "Xoá quân".
+// ============================================================================
+const ADM_NAMES = { q:"Hậu", r:"Xe", b:"Tượng", n:"Mã", p:"Tốt" };
+function adminChangePiece(sq){
+  if(!isAdminUser() || reviewMode || matchRecorded || game.game_over()) return;
+  const p = game.get(sq);
+  if(!p){ adminNote("🔄 Hãy bấm vào một quân cờ để đổi."); return; }
+  if(p.type === "k"){ adminNote("🔄 Không thể đổi Vua."); return; }
+  const nt = adminChangeType;
+  if(p.type === nt){ adminNote("🔄 Quân này đã là " + ADM_NAMES[nt] + " rồi."); return; }
+  if(nt === "p" && (sq[1] === "1" || sq[1] === "8")){ adminNote("🔄 Tốt không thể đứng ở hàng 1 hoặc hàng 8."); return; }
+  const mover = game.turn(), fenBefore = game.fen();
+  let parts;
+  try{
+    const t = new Chess(fenBefore); t.remove(sq);
+    if(!t.put({ type:nt, color:p.color }, sq)) throw new Error("put");
+    parts = t.fen().split(" ");
+  }catch(e){ adminNote("🔄 Không đổi được quân này."); return; }
+  if(p.type === "r"){ // xe đổi thành quân khác thì mất quyền nhập thành phía đó
+    const home = { a1:"Q", h1:"K", a8:"q", h8:"k" }[sq];
+    if(home && (home === home.toUpperCase()) === (p.color === "w") && parts[2] !== "-") parts[2] = parts[2].replace(home, "") || "-";
+  }
+  parts[3] = "-"; parts[4] = "0"; // bỏ bắt tốt qua đường, reset bộ đếm 50 nước
+  const newFen = parts.join(" ");
+  if(!game.validate_fen(newFen).valid){ adminNote("🔄 Không đổi được quân này (thế cờ không hợp lệ)."); return; }
+  const flip = parts.slice(); flip[1] = mover === "w" ? "b" : "w"; flip[3] = "-";
+  if(new Chess(flip.join(" ")).in_check()){ adminNote("🔄 Không thể đổi: Vua của bên kia sẽ bị chiếu ngay (thế cờ không hợp lệ)."); return; }
+  const prev = game._adm;
+  if(!isOnlineGame && (engineBusy || pendingBot)) stopBotThinking();
+  stopPonder(() => {
+    if(matchRecorded || game.game_over() || game.fen() !== fenBefore) return;
+    const st = {
+      id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+      fen:newFen, pre:game.history(), preV:game.history({verbose:true}),
+      caps:(prev ? prev.caps : []).slice(), // đổi quân không tính là ăn quân
+      cuts:(prev && prev.cuts ? prev.cuts : []).concat([{ n:game.history().length, fen:newFen, sq, t:nt, pc:p.color, f:p.type, rep:true }])
+    };
+    game = patchAdminHistory(new Chess(newFen), st);
+    _admGameRef = game;
+    botPred = null; ponder.pred = null; ponder.hit = false; ponder.cp = null;
+    positionHistory = new Map(); checkCustomRepetition();
+    selected = null; hintArrow = null; drawCache = null;
+    playSound("move");
+    renderCaptured();
+    render();
+    adminNote("🔄 Đã đổi " + ADM_NAMES[p.type] + " → " + ADM_NAMES[nt] + " ở " + sq + ". Bấm quân khác để đổi tiếp.");
+    if(isOnlineGame && roomId && fbReady){
+      try{
+        update(ref(db, `rooms/${roomId}`), {
+          fen: game.fen(), pgn: game.pgn(), movesCount: game.history().length, turn: game.turn(),
+          adm: JSON.parse(JSON.stringify(st)), updatedAt: serverTimestamp()
+        }).catch(()=>{});
+      }catch(e){}
+    }
+    if(game.game_over()){ checkGameOver(); return; }
+    if(!isOnlineGame && !botStartPending){
+      if(game.turn() !== human) setTimeout(() => { if(!botStartPending && !game.game_over() && !matchRecorded && game.turn() !== human && !engineBusy) botMove(); }, 900);
+      else setTimeout(startPonder, 40);
+    }
+  });
+}
+$("adminChangeBtn").onclick = () => {
+  if(!isAdminUser()) return;
+  adminChangeMode = !adminChangeMode; if(adminChangeMode) adminDeleteMode = false;
+  selected = null; hintArrow = null;
+  render();
+};
+document.querySelectorAll("#adminChangePicker .chg-btn").forEach(b => { b.onclick = () => { adminChangeType = b.dataset.t; render(); }; });
+
 async function squareClick(sq){
   if(preStartDeleteMode && botStartPending){ adminDeletePiece(sq, true); return; }
+  if(adminChangeMode){ adminChangePiece(sq); return; }
   if(adminDeleteMode){ adminDeletePiece(sq); return; }
   if(reviewMode || game.game_over() || engineBusy || matchRecorded) return;
   if(game.turn() !== human) return;
@@ -3417,9 +3518,9 @@ function startReview(){
   const hist = game.history({verbose:true});
   if(!hist.length) return;
   const adm = game._adm;
-  if(adm && !(Array.isArray(adm.cuts) && adm.cuts.length === adm.caps.length)){ alert("Ván này tạo từ phiên bản cũ nên chưa phân tích được."); return; }
+  if(adm && !(Array.isArray(adm.cuts) && adm.cuts.filter(c => !c.rep).length === adm.caps.length)){ alert("Ván này tạo từ phiên bản cũ nên chưa phân tích được."); return; }
   let g = new Chess(); const fens = [g.fen()], items = [], cuts = adm ? adm.cuts : []; let ci = 0;
-  const pushCuts = i => { while(ci < cuts.length && cuts[ci].n <= i){ const c = cuts[ci++]; items.push({ del:true, san:"🗑", fen:c.fen, sq:c.sq, piece:c.t, pc:c.pc }); g = new Chess(c.fen); fens.push(g.fen()); } };
+  const pushCuts = i => { while(ci < cuts.length && cuts[ci].n <= i){ const c = cuts[ci++]; items.push({ del:true, rep:!!c.rep, ft:c.f, san:c.rep ? "🔄" : "🗑", fen:c.fen, sq:c.sq, piece:c.t, pc:c.pc }); g = new Chess(c.fen); fens.push(g.fen()); } };
   hist.forEach((m, i) => { pushCuts(i); g.move(m.san); fens.push(g.fen()); items.push(m); });
   pushCuts(hist.length);
   reviewJob = { fens, hist:items, i:0, res:[], cur:{} };
@@ -3467,7 +3568,7 @@ function finishReview(){
   engine.postMessage("setoption name MultiPV value 1");
   const evals = j.res.map((r, i) => j.fens[i].split(" ")[1] === "w" ? r.s1 : -r.s1);
   const moves = j.hist.map((m, idx) => {
-    if(m.del) return { side:null, san:m.san, k:"del", del:true, piece:m.piece, pc:m.pc, sq:m.sq, bestSan:null, acc:null };
+    if(m.del) return { side:null, san:m.san, k:"del", del:true, rep:m.rep, ft:m.ft, piece:m.piece, pc:m.pc, sq:m.sq, bestSan:null, acc:null };
     const a = j.res[idx], b = j.res[idx + 1];
     const wB = winPct(a.s1), wA = winPct(-b.s1), loss = Math.max(0, wB - wA);
     const uci = m.from + m.to + (m.promotion || "");
@@ -3500,7 +3601,7 @@ function gotoPly(k){
   for(let i = 0; i < reviewPly; i++){
     const it = d.hist[i];
     if(it.del){ // Admin xoá quân: dựng lại ván từ thế cờ sau khi xoá, bên đối diện được tính là đã ăn
-      rcaps.push({ c: it.pc === "w" ? "b" : "w", t: it.piece });
+      if(!it.rep) rcaps.push({ c: it.pc === "w" ? "b" : "w", t: it.piece });
       g = patchAdminHistory(new Chess(it.fen), { id:"rv" + i, fen:it.fen, pre:g.history(), preV:g.history({verbose:true}), caps:rcaps.slice(), cuts:[] });
     } else g.move(it.san);
   }
@@ -3510,7 +3611,7 @@ function gotoPly(k){
   selected = null; hintArrow = null; render();
   const m = reviewPly > 0 ? d.moves[reviewPly - 1] : null, B = m && BADGES[m.k], ev = d.evals[reviewPly];
   $("rvBadge").hidden = !m;
-  if(m){ $("rvBadge").textContent = B.sym; $("rvBadge").style.background = B.c; { const f = d.fens[reviewPly - 1].split(" "); $("rvMove").textContent = m.del ? `🗑 Admin xoá ${glyph[m.pc][m.piece]} ở ${m.sq}` : `${f[5]}${f[1] === "w" ? "." : "…"} ${m.san}`; } $("rvName").textContent = B.name; $("rvName").style.color = B.c; }
+  if(m){ $("rvBadge").textContent = B.sym; $("rvBadge").style.background = B.c; { const f = d.fens[reviewPly - 1].split(" "); $("rvMove").textContent = m.del ? (m.rep ? `🔄 Admin đổi ${glyph[m.pc][m.ft || "p"]} → ${glyph[m.pc][m.piece]} ở ${m.sq}` : `🗑 Admin xoá ${glyph[m.pc][m.piece]} ở ${m.sq}`) : `${f[5]}${f[1] === "w" ? "." : "…"} ${m.san}`; } $("rvName").textContent = m.rep ? "Admin đổi quân" : B.name; $("rvName").style.color = B.c; }
   else { $("rvMove").textContent = "Vị trí xuất phát"; $("rvName").textContent = ""; }
   let sub = `Đánh giá: ${Math.abs(ev) >= 9000 ? "Chiếu hết" : (ev > 0 ? "+" : "") + (ev / 100).toFixed(2)} · ${reviewPly}/${n}`;
   if(m && m.bestSan) sub += ` · Nước tốt hơn: ${m.bestSan}`;
